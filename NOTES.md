@@ -571,3 +571,181 @@ Full accounting in docs/PREFLIGHT.md §5; summary here:
   untouched at exactly 0.1 NEAR. Full 0.2 NEAR reconciliation
   in PREFLIGHT §5 reconciles to the yocto. The return
   obligation is closed.
+
+## Stage 2 live pass — deployment, leash, attacks (Mon 9 Nov 2026)
+
+The funding wall came down: the owner implicit account
+`fe9591cc…3b43f0` was funded by the user's transfer (tx
+`FsPz22P4…LXFQ`, 1.2 NEAR), and the faucet contract route below
+topped the working accounts up. Everything in this section was
+verified by on-chain read-backs, not by trusting broadcast results.
+
+### Funding (the fight, honestly)
+
+- The deployed wasm needs ~3.06 NEAR of balance-for-state on the
+  contract account. Working funds were consolidated from the owner
+  implicit plus three Muse-created named accounts
+  (`bounden6/7/8.testnet`, created via the `testnet` registry
+  contract, owner-keyed, 0.1 NEAR each).
+- The near-faucet.io backend contract is
+  `v2d.faucet.nonofficial.testnet`. Its working method is
+  `request_near {"request_amount": "<yocto>", "receiver_id":
+  "<named existing account>"}` — any account may call it; the
+  faucet pays the drip. ~0.5 NEAR requests are reliable; 2 NEAR
+  requests mostly fail the faucet's own balance check
+  (`LackBalanceForState` on the faucet contract, whose free balance
+  fluctuates around a ~9.6 NEAR storage lock). Drips received:
+  bounden9 +2.0, bounden8 +1.0, bounden7 +1.0, bounden6 +1.0.
+- **Losses, recorded plainly:** (1) a 2 NEAR drip went to
+  `shop.testnet`, which is a THIRD PARTY's pre-existing account
+  (four full-access keys, none ours) — misidentified early in the
+  pass; the money is gone and was never ours to use. (2)
+  `bounden9.testnet`'s only full-access key was deleted by a
+  DeleteKey encoding probe signed by bounden9 itself; the account
+  now holds 2.098 NEAR with ZERO access keys and is permanently
+  unrecoverable (AddKey from another account fails
+  `ActorNoPermission`). Both losses are faucet money, not user
+  funds. `probe5.testnet` (0.1 NEAR) was created with a keypair
+  generated inside a transient script and not saved — also lost.
+  `probe1.testnet` exists with no keys and no balance (inert).
+- Consolidation back to the owner: bounden8 +1.5 (tx
+  `9HG9TwY…VBjZ`), bounden7 +1.0 (`3wwgQZr…FcpHh`), bounden6 +1.0
+  (`7yE2DD1…ZjRHPG`).
+
+### Tooling repairs (committed separately: 59f7cd7)
+
+`scripts/near_rpc.py` had three hand-rolled borsh bugs, found by
+live node parse errors: (1) the action enum was off by one
+(DeployContract/Transfer) — correct: 0 CreateAccount,
+1 DeployContract, 2 FunctionCall, 3 Transfer, 4 Stake, 5 AddKey,
+6 DeleteKey, 7 DeleteAccount, 8 Delegate; (2) the AddKey layout
+carried a spurious key_nonce and the wrong permission byte —
+correct is `[0x05][key][access-key nonce u64][permission ordinal
+u8: 0=FunctionCall, 1=FullAccess]`; (3) DeleteKey carries only the
+public key (34 bytes total). Also: the legacy `txs` RPC method now
+returns METHOD_NOT_FOUND upstream, so broadcasts use `send_tx`
+with `wait_until=EXECUTED_OPTIMISTIC` (inline outcome — standalone
+`tx` polls die with HTTP 408 through this sandbox's egress proxy,
+and large responses truncate at exactly 10,930 bytes). Caution:
+near-api-js 7.4.0 does NOT emit these raw bytes (its BorshSchema
+serialises for TransactionV1 framing and this node generation
+rejects it) — do not copy layouts between the two stacks without a
+live parse check. The worker is unaffected (it uses near-api-js
+Account APIs).
+
+### Deployment (contract account: bounden8.testnet)
+
+The doc's Path C prefers `bounden.testnet`, but the user claimed
+that account in Meteor with his own seed — Muse holds no key for
+it and cannot sign as it. Per the doc's fallback logic, the
+contract went onto a Muse-controlled named account,
+`bounden8.testnet`; the owner/admin identity is the owner implicit
+account. Deploy sequence (all verified on-chain):
+
+- bounden8 funded: +2.8 NEAR (tx `H8haix7…bgrPJ`) then +0.3 NEAR
+  (tx `2Eis5Vv…ENPoL`). First deploy attempt (tx `EfsUPmX…NdKYZ`)
+  failed `LackBalanceForState` — the node required ~3.056 NEAR
+  total; the retry after the top-up succeeded.
+- **Deploy + init tx `DR3DFNHDi6Gt3hKfFowmv2hde4zfhrEe5d65dwvtZnTd`**
+  (SuccessValue). Wasm 339,892 bytes (post-yocto-fix build,
+  bb5a7ad lineage). Account read-back: storage_usage 340,298,
+  code_hash `3fgkfyQED4KbVkU13d1HdXxNmngXk2GGvA9ApvVq85Ur`.
+- `get_constitution` read-back: owner = owner implicit,
+  payment_token `usdc.testnet`, price_band_bps 1000,
+  refund_cap_usd 50000000, refund_window_ns 3600000000000000.
+- Battery: `add_product` licence-pro ("Bounden Pro Licence Key
+  (Demo)", LicenceKey, 25_000_000) tx
+  `336vMLSm1zaK8ZVZhEk5fJFjPwnjHrLjFygXo4ENDmN7` — after two
+  failed first attempts (`3pWJzrU…`, `13JWfu6…`) caused by MY
+  argument names, not the contract: the real signature is
+  `(product_id, name, kind, price_usd)` and inventory takes
+  `code_hashes`. `get_product` read-back matches.
+  `add_inventory_commitments` (the three SHA-256 hashes of
+  BOUNDEN-TEST-LICENCE-0001..0003) tx
+  `3wWN1wM2Ww5nWzMp3oVoWrxHGt3nTkK5S6yHsBme9VR7`;
+  `inventory_available` = 3.
+
+### Leash (agent account: bounden7.testnet)
+
+- Vault seeded (`worker/scripts/seed-demo-vault.ts`): licence-pro
+  commitments printed by the seed script are byte-identical to the
+  ones registered on-chain, in order. The seed also sealed
+  api-credits-pack (2 codes) — that product is NOT registered
+  on-chain yet (no matching add_product); noted, not hidden.
+- `create-leashed-key --dry-run` derived the agent keypairs into
+  the vault (0600) and pinned worker code hash
+  `5ed7fe92550867937ce8aef6e838594b8ea2ed2ec205a9d4fe28387786c23c2a`
+  (SHA-256 over `worker/src/*.ts`).
+- Substitution for `cashier.bounden.testnet` (same reason as the
+  contract account): the agent is `bounden7.testnet`, an existing
+  Muse-controlled named account. Its key was rotated in one
+  transaction (tx `GKTRaaubXbKYnMkwLHFt5eA2kUGE7im5yU8Wk4Jqd9xb`) to
+  the script-derived full-access keypair, then funded +0.4 NEAR
+  (tx `2Dbk4c6qS4wZD1YTpSJUtmXde3NPPZU5kXTbB9gvJUoa`) — 0.499 NEAR
+  total, covering the 0.25 NEAR leash allowance plus gas.
+- Live `create-leashed-key` run: register tx
+  `7cfJ1Dm4ZtowcRc2mXejJDqmqA4jLjxCmoef3Gmqdjeq` (owner-signed
+  set_agent), add-key tx
+  `Az6B7yuyuEuzDre71ojcbbVukgGJbVCsB3CDVmDD93Cw`.
+- **Permission object (the constitution evidence), read back
+  on-chain:** key `ed25519:EC2YGrv87L5jxRZqPm1EpJB3qATZ7NsVPWx33hLqJbTW`
+  on bounden7.testnet → FunctionCall { receiver_id:
+  bounden8.testnet, method_names: [fulfil_order, issue_refund],
+  allowance: 250000000000000000000000 }.
+
+### Step 3 — live order: BLOCKED on testnet USDC (documented)
+
+No account in this pass holds any `usdc.testnet` balance, and no
+programmatic route to testnet USDC was found:
+
+- `usdc.testnet` facts: `ft_metadata` USDC, 6 decimals;
+  `ft_total_supply` 10^16 base units (fully pre-minted);
+  `storage_balance_bounds` min = max = 0.00125 NEAR — buyer and
+  contract accounts must storage-register before receiving.
+- The v2d faucet contract exposes `request_near` only. Probed and
+  all returned MethodNotFound: `request_tokens`, `request_token`,
+  `request_ft`, `ft_request`, `request_usdc`,
+  `request_stablecoin`, `request_tokens_for`, `claim_tokens`,
+  `get_tokens` (11 failed calls total across the pass).
+- Circle's public faucet (faucet.circle.com) DOES list NEAR
+  Testnet (confirmed via the x402 NEAR testnet docs, which direct
+  buyers to "testnet USDC from faucet.circle.com (Near Testnet)"),
+  but it is reCAPTCHA-gated and web-only — a human step.
+- **Exact unblock:** a human claims testnet USDC at
+  faucet.circle.com (network: NEAR Testnet) to the buyer account
+  `bounden7.testnet` (or any Muse-controlled account), then the
+  scripted remainder runs: storage_deposit for buyer + contract →
+  create_order → ft_transfer_call (msg = order id) → worker
+  fulfilment → in-band refund on a second order → out-of-band
+  refund attempt (RefundRejected + event). Until then, the live
+  proof of the 1-yocto fix against real usdc.testnet is also
+  pending — the fix is proven at the promise level by the
+  negative-control unit test, not yet on-chain.
+
+### Step 4 — live attacks (results in attacks/README.md)
+
+Ran `attacks/` live mode against bounden8.testnet (read-only
+probes returned the real constitution + registered agent), plus
+the signed attempts the suite defers to this pass:
+
+- price-band-violation: owner-signed +20% reprice REFUSED on-chain
+  with the verbatim panic (tx `85LTVXR…vzEE`); in-band +8% and the
+  −7.4% revert both succeeded (txs `CZmvxWi…SW4T`, `4LCiQ4q…jEdK`);
+  product restored to $25.00.
+- payout-redirect / inventory-dump signed attempts (leash key →
+  ft_transfer, withdraw_treasury, add_inventory_commitments): the
+  transactions never landed — the leash key's on-chain nonce and
+  the agent balance are unchanged afterwards, i.e. protocol
+  function-call-key validation refused them. Evidence caveat:
+  full outcome reads for those hashes were unreachable through
+  this sandbox's proxy (HTTP 408 / truncation), so the refusal is
+  evidenced by non-inclusion, not a captured error string.
+- treasury-drain and out-of-band-refund signed cases remain
+  pending the USDC unblock above.
+
+### Balances at the end of the pass (testnet NEAR)
+
+owner implicit ≈ 0.329 · bounden8.testnet ≈ 3.492 (mostly storage
+lock for the contract) · bounden7.testnet ≈ 0.499 · bounden6
+≈ 0.099 · bounden.testnet ≈ 0.793 (user's, untouched) ·
+bounden9.testnet 2.098 LOCKED (see Funding).

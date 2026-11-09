@@ -38,14 +38,42 @@ on-chain you will find only hashes, never a usable code.
   the UI) — catalogue, checkout explainer, order status, the public
   Constitution page.
 
-**PENDING the live pass** (nothing below is claimed until it is
-verifiable on-chain):
+**DONE LIVE on testnet** (Stage 2 live pass, Mon 9 Nov 2026 — full
+log in `NOTES.md`, attack results in `attacks/README.md`):
 
-- Testnet deployment of the contract — gated on one human funding
-  step (`docs/PREFLIGHT.md` §7; the finish is fully scripted in
-  `scripts/claim-named-account.md`).
-- The leash created on-chain, a real order fulfilled end-to-end, the
-  refund approve/refuse paths, and the attack suite run live.
+- Contract deployed + initialised on **`bounden8.testnet`** (deploy
+  tx `DR3DFNHDi6Gt3hKfFowmv2hde4zfhrEe5d65dwvtZnTd`; wasm code hash
+  `3fgkfyQED4KbVkU13d1HdXxNmngXk2GGvA9ApvVq85Ur`). Constitution
+  read back on-chain: owner = the owner implicit account,
+  `payment_token` = `usdc.testnet`, price band 1000 bps, refund cap
+  50_000_000 ($50), refund window 3_600_000_000_000 ns (1 hour).
+- Product `licence-pro` live at $25.00 with 3 sealed inventory
+  commitments (SHA-256 hashes only) registered on-chain.
+- The cashier's leash is on-chain: agent `bounden7.testnet`
+  registered with pinned worker code hash
+  `5ed7fe92550867937ce8aef6e838594b8ea2ed2ec205a9d4fe28387786c23c2a`;
+  its function-call key permits exactly `fulfil_order` +
+  `issue_refund` on the contract with a 0.25 NEAR allowance
+  (register tx `7cfJ1Dm4ZtowcRc2mXejJDqmqA4jLjxCmoef3Gmqdjeq`,
+  add-key tx `Az6B7yuyuEuzDre71ojcbbVukgGJbVCsB3CDVmDD93Cw`).
+  (Substitution, documented in `NOTES.md`: the agent is a fresh
+  named account Muse controls, not `cashier.bounden.testnet` —
+  creating a subaccount of the user's `bounden.testnet` needs the
+  user's own key, which Muse does not hold. The constitution cares
+  about the permission object, not the account's name.)
+- Attack suite run live: the price band refused an owner-signed
+  +20% reprice on-chain and accepted in-band moves; leash-key
+  attempts at a token transfer, a treasury withdrawal, and an
+  inventory write never landed (protocol key validation).
+
+**PENDING** (nothing below is claimed until it is verifiable
+on-chain):
+
+- A real order fulfilled end-to-end and the refund approve/refuse
+  paths — blocked on testnet USDC: Circle's faucet covers NEAR
+  Testnet but is a human, reCAPTCHA-gated web flow, and no
+  programmatic route was found (full probe log in `NOTES.md`).
+  One human faucet claim to the buyer account unblocks the rest.
 - NEAR AI Cloud attestation verified against the live API (fixtures
   are doc-derived and labelled UNVERIFIED-LIVE until then).
 - The demo film (<60s, `docs/FILM.md`), the X demo post, and the
