@@ -749,3 +749,76 @@ owner implicit ≈ 0.329 · bounden8.testnet ≈ 3.492 (mostly storage
 lock for the contract) · bounden7.testnet ≈ 0.499 · bounden6
 ≈ 0.099 · bounden.testnet ≈ 0.793 (user's, untouched) ·
 bounden9.testnet 2.098 LOCKED (see Funding).
+
+## NEAR AI Cloud — connector + first live API verification (9 Nov 2026)
+
+The owner entered his NEAR AI Cloud API key through the secure
+page. Connector `custom.near-ai-cloud` (host cloud-api.near.ai,
+bearer key) is registered, with its doc and helper at
+`~/workspace/custom-connectors/custom.near-ai-cloud/`. The key
+value was never printed, logged or written to a file. First live
+calls, made through the connector helper:
+
+- `GET /v1/models` — HTTP 200, 64 model ids. The doc-derived
+  fixture's illustrative id `openai/gpt-oss-120b` is NOT in the
+  live list. Small open-weight chat models present include
+  `Qwen/Qwen3.6-35B-A3B-FP8` (used below), `Qwen/Qwen3.8-27B`,
+  `deepseek/deepseek-v4.1-flash` and `z-ai/glm-5.3-flash`.
+- `POST /v1/chat/completions` — **HTTP 402**, verbatim error:
+  "No spending limit configured. Please contact support to set
+  up credits." (type `no_limit_configured`). Inference is
+  blocked until a spending limit or credits are set up on the
+  account. **No live chat completion has been captured**, so
+  `worker/test/fixtures/chat-completion.json` remains
+  DOC-DERIVED and UNVERIFIED-LIVE. The error body is saved as
+  `worker/test/fixtures/chat-completion-error-no-limit.verified-live-2026-11-09.json`.
+- `GET /v1/attestation/report?model=Qwen/Qwen3.6-35B-A3B-FP8` —
+  HTTP 200, saved verbatim (309,359 bytes) as
+  `worker/test/fixtures/attestation-report.verified-live-2026-11-09.json`.
+
+### Attestation shape diff (input to the Stage 3 parser pass)
+
+`parseAttestationReport` in `worker/src/ai-cloud.ts` would THROW
+on the live report, twice over. No parser code was changed in
+this pass; this diff is the narrowing input.
+
+- Top level of the live report: `gateway_attestation` (object),
+  `model_attestations` (array), `ohttp_attestation` (object),
+  `ohttp_key_config` (string). There is NO top-level `model` or
+  `model_id`, which the parser requires first.
+- The model binding lives at `model_attestations[0].model_name`
+  and matched the requested id exactly.
+- None of the parser's recognised evidence fields sit at the top
+  level either. They are nested: `gateway_attestation` carries
+  `intel_quote`, `report_data`, `event_log`, `vm_config`,
+  `signing_address`, `signing_algo`, `request_nonce` and an
+  `info` block (dstack TCB info). `model_attestations[0]`
+  carries `intel_quote`, `nvidia_payload`, `event_log`,
+  `signing_address`, `signing_public_key`, `request_nonce`, a
+  `compose_manager_attestation` block (its own `quote`,
+  `report_data`, `event_log`, `vm_config`) and an `info` block.
+- Fixture field verdicts: `intel_quote` right name, wrong level.
+  `model` wrong (live uses `model_attestations[].model_name`).
+  `nvidia_payload` right name, wrong level and wrong type (live
+  is a stringified JSON string of about 98 KB, not an object).
+  `report_data` and `signing_address` right names, nested.
+  The fixture missed the gateway/model split, the OHTTP
+  sections, the compose-manager attestation and `request_nonce`.
+- Chat completions: whether a live response carries any
+  attestation material inline is still UNVERIFIED, because no
+  completion has ever been returned (402). Per the docs, the
+  attestation surface is this report endpoint plus a response
+  `inference-id` header used for billing lookups.
+
+### Credit evidence
+
+No balance, credit or spending-limit figure appears in any
+response body or header obtained (the only identifier header is
+`x-request-id`). The single billing statement the API made is
+the 402 above: as seen by this key, no spending limit is
+configured and credits are not set up, whatever credit the
+owner believes is attached. Docs routes to a balance, none of
+them readable with this key today: the console Credits section,
+per-request costs via `POST /v1/billing/costs` (needs an
+`inference-id` from a successful completion), and org usage
+reporting (needs a separate `rpt-` reporting token).
