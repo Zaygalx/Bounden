@@ -117,6 +117,68 @@ SDK friction worth remembering:
 - `env::attached_deposit()` returns `NearToken` in near-sdk 5.30;
   compare via `.as_yoctonear()`.
 
+## Stage 2 pre-build — leashed worker + attack suite (Mon 9 Nov 2026)
+
+Built everything that does not need a live testnet account; the live
+end-to-end pass waits on the same faucet wall as deployment
+(PREFLIGHT §7). Commits: worker `b57be5e`, attacks `c0975cb`.
+
+- **Client library decision: near-api-js 7.4.0, exact-pinned** (with
+  typescript 7.0.2, @types/node 24.10.1, vitest 4.0.18 — all exact;
+  package-lock committed). Why not wrap scripts/near_rpc.py: the worker
+  is a long-lived TypeScript daemon, and shelling out to Python per
+  call would couple its liveness to a CLI-shaped tool and complicate
+  signing/nonce handling. near-api-js is the maintained client; its
+  v7 API was verified against the installed type definitions AND a
+  live testnet view call (usdc.testnet ft_metadata) before use. v7
+  gotchas: secret keys are the branded `KeyPairString` type;
+  `signAndSendTransaction` waitUntil uses `"FINAL"`, not
+  `"FINALITY_REACHED"`; the provider's view method is `callFunction`
+  with `{contractId, method, args}` while Account's change method
+  takes `methodName`.
+- **npm in this sandbox:** `vitest@4.1.0` does not exist (registry
+  tops at 4.0.18 — always check before pinning); a combined
+  `npm install` of all four deps crashed npm's arborist
+  (`edgesOut` on null) — installing in two steps worked. npm also
+  rewrites package.json (minified, caret ranges) on `npm install <pkg>`;
+  the committed manifest restores exact pins (the lockfile agrees).
+- **Worker design points worth remembering:**
+  - The contract has NO list-orders view. The worker discovers orders
+    by probing sequential `get_order` ids to the first null — exact,
+    since ids are sequential from 0.
+  - Refund band pre-check happens worker-side (state/cap/window) so
+    doomed calls never burn the leash key's gas allowance; the
+    contract remains the enforcing layer.
+  - `issue_refund` needs exactly 1 yocto attached (contract assert,
+    for the token's ft_transfer).
+  - The vault's FIFO order must match the order commitments were
+    registered on-chain — the contract consumes its first unconsumed
+    commitment. seed-demo-vault prints them in order.
+  - Agent code hash = SHA-256 over worker `src/*.ts` (names+contents,
+    sorted); cross-verified against an independent Python computation.
+    The create-leashed-key CLI resolves `../../src` from dist — the
+    hash is over SOURCE, not build output.
+  - Timestamps: `paid_at` arrives as a JSON number (~1.7e18 ns); a
+    double loses ~256 ns — irrelevant vs the 1-hour window. Amounts
+    are strings → BigInt throughout. No floats near money.
+- **Verification (all local, honestly labelled):** worker typecheck
+  PASS (strict), 30/30 vitest tests PASS, build PASS; smoke runs:
+  seed-demo-vault sealed 5 demo codes with ZERO plaintext in the state
+  file; create-leashed-key --dry-run derived two distinct keypairs
+  (0600) into a temp vault; the compiled daemon, pointed at live
+  testnet with a nonexistent agent account, refused to start with
+  "access key not found on-chain" — the startup leash check works.
+  Attacks: typecheck/build PASS, mock mode prints 5/5 expected
+  refusals.
+- **Live pass needs (once any testnet account is funded):** deploy +
+  init per scripts/claim-named-account.md → seed-demo-vault against
+  the real vault → register the printed commitments → create the agent
+  account with the dry-run full-access public key → create-leashed-key
+  live run → start worker → place a real order (buyer needs testnet
+  USDC from the usdc.testnet faucet flow) → watch fulfilment →
+  run attacks live. Also verify on testnet whether the agent FC key's
+  allowance accounting behaves with the 1-yocto refund deposit.
+
 ## Repo conventions
 
 - All commits authored as Hassan Dosunmu <Dosunmuh070@gmail.com>

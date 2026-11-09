@@ -49,6 +49,19 @@ Full plan: [docs/PLAN.md](docs/PLAN.md) · Pre-flight evidence:
 **Stage 1 contract implemented and verified locally** (23 unit tests
 passing; release wasm builds at ~332 KB). Not yet deployed — deployment
 waits for the `bounden.testnet` account claim (see docs/PREFLIGHT.md).
+
+**Stage 2 worker pre-built and verified locally** (`worker/`, 30 unit
+tests passing, all chain access mocked): the leashed cashier with its
+runtime allowlist guard, the `create-leashed-key` setup procedure,
+the AES-256-GCM sealed-inventory vault, local refund-band pre-checks,
+and the Stage 3 attestation seam. **Attack suite v1** (`attacks/`)
+ships the five named cases with mock mode runnable now. The live
+end-to-end pass — real testnet deployment, leash setup on-chain, a
+paid order fulfilled by the leashed key — is pending the same account
+funding as Stage 1 deployment. Nothing in Stage 2 has touched a live
+chain yet beyond read-only probes; the worker daemon refuses to start
+against a contract where its leash is not verifiably in place.
+
 Honest limits right now:
 
 - Testnet only. Mainnet is out of scope for this build; a dust-value
