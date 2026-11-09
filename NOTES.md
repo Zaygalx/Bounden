@@ -519,3 +519,33 @@ Full accounting in docs/PREFLIGHT.md §5; summary here:
   transfer path), not a proven root cause. **Close-out path:** one
   send of the same amount via a standard maintained client
   (near-api-js) or a wallet, then record the tx in PREFLIGHT §5.
+- **Return via near-api-js — attempted, NOT sent (the close-out
+  path above was executed and it failed on arithmetic, not on
+  signing).** near-api-js 7.4.0 from the worker (notes for the next
+  person: v7's breaking shape — no `connect`/`keyStores` exports;
+  `new Account(accountId, nodeUrlString, keyPairString)`;
+  `account.transfer({ receiverId, amount })`; `getState()` returns
+  `{ balance: { total, … } }`, not the classic `amount` field; the
+  worker's own Stage 2 code already uses this API correctly — a
+  one-off script written from classic-API memory cost two
+  pre-signing failures before the real attempt). The real attempt:
+  balance re-asserted fresh at exactly
+  92,555,849,887,227,500,000,000 yocto, vault key confirmed as the
+  account's on-chain FullAccess key (nonce read live), and the
+  transfer of the agreed 90,555,849,887,227,500,000,000 yocto to
+  the user's address was refused by the client **before
+  broadcast**: "Not enough balance … (balance:
+  92555849887227500000000, cost: 98163292343477500000000)". The cost
+  uplift over the amount is 5,607,442,546,000,000,000,000 yocto
+  (≈0.0056 NEAR) — matching ~5.6×10^19 yocto/byte × 100 bytes, the
+  standard new-account minimum balance (working reading, not
+  proven: the client prices recipient-account creation into a
+  plain transfer). The agreed 0.002 NEAR reserve cannot cover it,
+  so the return as agreed **cannot be sent from this account
+  today** (max sendable under the demanded cost ≈0.0869 NEAR). No
+  tx was signed or broadcast; balances re-verified unchanged
+  yocto-exact, recipient still UNKNOWN_ACCOUNT. Per the
+  real-funds rule: no reduced amount improvised, no third path.
+  **The 0.0905558498872275 NEAR debt to the user stands** (full
+  accounting: PREFLIGHT §5); closing it is now an owner decision
+  (larger reserve / different route / top-up).

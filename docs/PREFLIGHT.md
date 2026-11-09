@@ -166,6 +166,41 @@ From docs.near.ai (Quickstart + API reference, crawled 9 Nov 2026):
     then record the return tx here. Until then the implicit account
     continues to hold 0.0925558498872275 NEAR, of which
     0.0905558498872275 NEAR is owed to the user.
+  - **Return via near-api-js (later, Mon 9 Nov) — ALSO NOT SENT;
+    the amount does not fit, and no funds moved:** a follow-up run
+    executed exactly the close-out step above with near-api-js
+    7.4.0 (the worker's pinned client): fresh `view_account`
+    re-confirmed the implicit balance at exactly
+    92,555,849,887,227,500,000,000 yocto, the key was verified
+    on-chain as the account's FullAccess key, and
+    `Account.transfer` of the agreed 90,555,849,887,227,500,000,000
+    yocto to the user's address was attempted. The client refused
+    **locally, before broadcast**, with: "Not enough balance for
+    fe9591cc…43f0 (balance: 92555849887227500000000, cost:
+    98163292343477500000000)". The demanded cost — amount +
+    5,607,442,546,000,000,000,000 yocto (≈0.0056 NEAR) of
+    client-computed transaction cost — exceeds the agreed 0.002
+    NEAR reserve. No transaction was signed or broadcast;
+    re-verified afterwards: implicit balance unchanged to the
+    yocto, recipient still UNKNOWN_ACCOUNT. Working reading
+    (labelled as such, not a proven root cause): the demanded
+    uplift matches a storage price of ~5.6×10^19 yocto/byte × 100
+    bytes — the standard minimum balance of a freshly created
+    account — i.e. the client prices creating the recipient's
+    implicit account into a plain transfer; whatever its origin,
+    the arithmetic is the chain's/client's, not a figure this
+    project can negotiate. **Consequence, stated plainly:** from
+    this implicit account, a return of 0.0905558498872275 NEAR is
+    impossible today — at most ≈0.0869 NEAR can leave while
+    covering the demanded cost — and the run was forbidden to
+    improvise: no reduced amount was sent and no third signing
+    path was tried. **The debt stands unchanged:** the implicit
+    account still holds 0.0925558498872275 NEAR, of which
+    **0.0905558498872275 NEAR is owed to the user** at
+    `395665c1e9e898b79a67f41ea5fbe1d45d3eb4e2b3ca242b4b2e58a158f5140e`.
+    Closing it needs a decision from the owner: a slightly larger
+    gas reserve (a smaller return), a different return route, or
+    a top-up — not another automated attempt.
 
 ## 7. Deployment run (Mon 9 Nov 2026) — testnet account creation BLOCKED at the faucet wall
 
