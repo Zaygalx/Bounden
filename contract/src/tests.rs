@@ -3,9 +3,41 @@
 //! exact payment, fulfilment, refund band (cap + window), treasury lock.
 
 use super::*;
-use near_sdk::test_utils::{accounts, get_logs, VMContextBuilder};
+use near_sdk::test_utils::{accounts, get_created_receipts, get_logs, VMContextBuilder};
 use near_sdk::testing_env;
 use near_sdk::NearToken;
+
+/// Regression guard for the 1-yocto ft_transfer defect (see NOTES.md):
+/// find the recorded receipt this call created for an `ft_transfer` to
+/// `receiver` and assert the promise attached exactly 1 yoctoNEAR —
+/// the deposit NEP-141 requires. The mock environment records the
+/// promise this contract schedules for dispatch (the receipt appears
+/// once the returned promise is consumed — hence the `drop(...)` calls
+/// in the two tests that use this helper) without executing it, so this
+/// proves the deposit is attached to the call this contract creates;
+/// it cannot prove the token contract accepts it on-chain (that is a
+/// testnet check, in the deployment stage).
+fn assert_ft_transfer_receipt(receiver: &AccountId) {
+    let receipts = get_created_receipts();
+    let receipt = receipts
+        .iter()
+        .find(|r| &r.receiver_id == receiver)
+        .unwrap_or_else(|| panic!("no receipt created for {}", receiver));
+    assert!(
+        receipt.actions.iter().any(|a| matches!(
+            a,
+            near_sdk::mock::MockAction::FunctionCallWeight {
+                method_name,
+                attached_deposit,
+                ..
+            } if method_name == b"ft_transfer"
+                && *attached_deposit == NearToken::from_yoctonear(1)
+        )),
+        "ft_transfer to {} must carry exactly 1 yoctoNEAR; actions: {:?}",
+        receiver,
+        receipt.actions
+    );
+}
 
 const PRICE: u128 = 10_000_000; // $10.00 in 6-decimal base units
 const CAP: u128 = 50_000_000; // refund cap $50.00
@@ -60,6 +92,7 @@ fn stocked_shop() -> BoundenShop {
     );
     shop
 }
+
 
 /// Drive an order to Paid through the real ft_on_transfer path.
 fn paid_order(shop: &mut BoundenShop) -> u64 {
@@ -131,9 +164,14 @@ fn owner_withdraws_treasury_to_owner() {
     testing_env!(context(&owner(), T0 + 2, 1).build());
     // Reaching here without a panic is the assertion: the transfer promise
     // targets the owner because the method hard-codes the destination.
-    let _promise = shop.withdraw_treasury(U128(PRICE));
+    let promise = shop.withdraw_treasury(U128(PRICE));
     let logs = get_logs();
     assert!(logs.iter().any(|l| l.contains("bounden_treasury_withdrawn")));
+    // The transfer goes to the token contract carrying exactly 1 yocto.
+    // (The promise must be consumed first: near-sdk registers the receipt
+    // when the returned promise is returned-or-dropped, not at creation.)
+    drop(promise);
+    assert_ft_transfer_receipt(&token());
 }
 
 #[test]
@@ -258,6 +296,11 @@ fn refund_within_cap_and_window_succeeds() {
     assert_eq!(shop.get_order(id).unwrap().state, OrderState::Refunded);
     assert_eq!(shop.fulfilment_log_len(), 1);
     assert_eq!(shop.get_fulfilment_log(None, None)[0].action, "refund");
+    // The refund transfer goes to the token contract carrying exactly
+    // 1 yocto — the regression guard for the defect in NOTES.md.
+    // (Drop the promise first: its receipt registers on drop/return.)
+    drop(result);
+    assert_ft_transfer_receipt(&token());
 }
 
 #[test]
@@ -343,3 +386,8 @@ fn duplicate_commitment_rejected() {
     testing_env!(context(&owner(), T0, 0).build());
     shop.add_inventory_commitments("licence-pro".to_string(), vec!["b".repeat(64)]);
 }
+
+
+
+
+

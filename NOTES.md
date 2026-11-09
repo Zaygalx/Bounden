@@ -117,6 +117,65 @@ SDK friction worth remembering:
 - `env::attached_deposit()` returns `NearToken` in near-sdk 5.30;
   compare via `.as_yoctonear()`.
 
+## Stage 1 fix — 1 yocto on outbound ft_transfer (Mon 9 Nov 2026)
+
+**Finding — CONFIRMED, real latent defect** (flagged by the Stage 2
+worker build's close reading; verified line by line before fixing).
+Every `ft_transfer` promise the shop contract creates was built with
+0 attached deposit. NEP-141 `ft_transfer` asserts exactly 1 yoctoNEAR,
+so on the real settlement token both payout paths would have failed
+at `usdc.testnet` — after this contract had already recorded the
+state change ordering the transfer: a refund's order would sit in
+`Refunded` with the buyer's money never moved, and a treasury
+withdrawal's event would claim funds that never left. The 23 unit
+tests could not see it: they asserted state, log lines and that a
+promise was returned — never its deposit.
+
+**Complete site audit.** The contract contains exactly two outbound
+`ft_transfer` call sites, and both were defective:
+`withdraw_treasury` (pays the owner) and `issue_refund` (pays the
+buyer). `ft_on_transfer` creates NO token transfers — rejections
+return the amount as `PromiseOrValue::Value(amount)` (the NEP-141
+unused-balance mechanism; the token refunds the sender itself) and
+acceptance returns `U128(0)` — so there is no third site.
+
+**Fix.** Both sites now chain `.with_attached_deposit(ONE_YOCTO)`
+(ext-builder API), with `ONE_YOCTO = NearToken::from_yoctonear(1)`
+as a named constant at the top of `contract/src/lib.rs` and a comment
+at each site explaining that the deposit is load-bearing. No other
+behaviour changed: both methods already required the *caller* to
+attach exactly 1 yocto inbound — that assert was about the caller's
+deposit and never covered the outbound promise; the two are easy to
+conflate, which is how the defect survived review.
+
+**Regression protection.** `assert_ft_transfer_receipt` in
+`contract/src/tests.rs` (used by `owner_withdraws_treasury_to_owner`
+and `refund_within_cap_and_window_succeeds`) reads the mocked
+environment's recorded receipts (`get_created_receipts`) and asserts
+the `ft_transfer` receipt to the token carries
+`attached_deposit == 1 yocto`. Negative control run: stripping
+`.with_attached_deposit(...)` from both sites makes exactly those
+two tests fail, showing `attached_deposit: NearToken { inner: 0 }` —
+the original defect, caught. With the fix: **23 passed, 0 failed,
+0 warnings** — same count as before, because the guard extends two
+existing tests rather than adding new ones.
+
+One mock-environment subtlety worth remembering: near-sdk registers
+the scheduled receipt when the returned promise is *consumed* (the
+runtime returning it, or a test dropping it), not at creation — so
+the tests `drop(...)` the promise before asserting. A held,
+never-consumed promise shows zero created receipts in the mock, which
+looks exactly like "the call never happened" until you know this.
+
+**What unit tests can and cannot prove here.** They prove the
+promise this contract schedules carries the 1-yocto deposit. They do
+NOT prove the transfer succeeds on-chain: the mock records receipts
+without executing them against a real token contract. The true
+verification is a live testnet refund and treasury withdrawal
+against `usdc.testnet` in the deployment stage (still gated on the
+testnet funding step — PREFLIGHT §7). Release wasm rebuilt:
+**339,892 bytes** — identical size to the pre-fix build.
+
 ## Stage 2 pre-build — leashed worker + attack suite (Mon 9 Nov 2026)
 
 Built everything that does not need a live testnet account; the live

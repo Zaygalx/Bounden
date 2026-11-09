@@ -26,7 +26,14 @@
 // near-sdk 5.x conflicts if borsh derives are also applied manually.
 use near_sdk::collections::{LookupMap, UnorderedMap, Vector};
 use near_sdk::json_types::U128;
-use near_sdk::{env, ext_contract, near, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue, Timestamp};
+use near_sdk::{env, ext_contract, near, AccountId, BorshStorageKey, NearToken, PanicOnDefault, Promise, PromiseOrValue, Timestamp};
+
+/// Exactly 1 yoctoNEAR — the deposit NEP-141 requires on every
+/// `ft_transfer` call. Outbound transfer promises MUST attach this (see
+/// `withdraw_treasury` and `issue_refund`); without it the token contract
+/// rejects the call, after this contract has already recorded the state
+/// change that ordered the transfer.
+const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
 use near_contract_standards::fungible_token::receiver::FungibleTokenReceiver;
 
 /// Cross-contract interface for the NEP-141 settlement token, used to send
@@ -438,11 +445,17 @@ impl BoundenShop {
                 amount.0
             ),
         );
-        ext_ft::ext(self.payment_token.clone()).ft_transfer(
-            self.owner_id.clone(),
-            amount,
-            Some("Bounden treasury withdrawal".to_string()),
-        )
+        // NEP-141 requires exactly 1 yoctoNEAR attached to ft_transfer;
+        // without it the token contract rejects the call — after this
+        // contract has already emitted the withdrawal event. ONE_YOCTO is
+        // not optional decoration; omitting it silently breaks the payout.
+        ext_ft::ext(self.payment_token.clone())
+            .with_attached_deposit(ONE_YOCTO)
+            .ft_transfer(
+                self.owner_id.clone(),
+                amount,
+                Some("Bounden treasury withdrawal".to_string()),
+            )
     }
 
     // ---- Buyer flow: create, pay, (cancel). ----
@@ -639,11 +652,19 @@ impl BoundenShop {
             env::attached_deposit().as_yoctonear() == 1,
             "exactly 1 yoctoNEAR must be attached for ft_transfer"
         );
-        PromiseOrValue::Promise(ext_ft::ext(self.payment_token.clone()).ft_transfer(
-            buyer,
-            order.amount_usd,
-            Some(format!("Bounden refund for order {}", order_id)),
-        ))
+        // NEP-141 requires exactly 1 yoctoNEAR attached to ft_transfer;
+        // without it the token contract rejects the call — while the order
+        // above is already recorded Refunded. ONE_YOCTO is load-bearing:
+        // omitting it strands the buyer's money while the books say paid.
+        PromiseOrValue::Promise(
+            ext_ft::ext(self.payment_token.clone())
+                .with_attached_deposit(ONE_YOCTO)
+                .ft_transfer(
+                    buyer,
+                    order.amount_usd,
+                    Some(format!("Bounden refund for order {}", order_id)),
+                ),
+        )
     }
 
     // ---- Views ----
