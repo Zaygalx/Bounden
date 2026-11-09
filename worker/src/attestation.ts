@@ -29,6 +29,13 @@ export interface AttestationRequest {
   buyer: string;
   productId: string;
   amountUsd: string;
+  /**
+   * Optional free-text summary of the buyer's history, for judgement
+   * providers (Stage 3). This is the ONLY buyer context ever sent to a
+   * model — never the raw account's records, never any inventory
+   * material. Absent means "no history recorded".
+   */
+  buyerHistorySummary?: string;
 }
 
 export interface AttestationProvider {

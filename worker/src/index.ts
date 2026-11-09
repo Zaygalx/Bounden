@@ -1,7 +1,7 @@
 import { loadWorkerConfig, loadCredentialsFile } from "./config.js";
 import { NearChainClient, LeashedChainClient } from "./chain.js";
 import { FileVault } from "./vault.js";
-import { NullAttestationProvider } from "./attestation.js";
+import { selectAttestationProvider } from "./ai-cloud-attestation.js";
 import { BoundenWorker } from "./worker.js";
 import { assertLeashEvidence } from "./leash.js";
 import { consoleLogger as logger } from "./logger.js";
@@ -58,7 +58,9 @@ async function main(): Promise<void> {
   });
 
   const vault = FileVault.open(config.vaultDir, FileVault.loadKeyFile(config.vaultKeyFile));
-  const attestation = new NullAttestationProvider();
+  // Stage 3: BOUNDEN_ATTESTATION_PROVIDER selects the judgement layer
+  // ("null" default = Stage 2 behaviour; "near-ai" = NEAR AI Cloud).
+  const attestation = selectAttestationProvider(process.env, logger);
   logger.info("attestation provider", { provider: attestation.name });
 
   const worker = new BoundenWorker({
