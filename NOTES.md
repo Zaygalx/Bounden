@@ -822,3 +822,50 @@ them readable with this key today: the console Credits section,
 per-request costs via `POST /v1/billing/costs` (needs an
 `inference-id` from a successful completion), and org usage
 reporting (needs a separate `rpt-` reporting token).
+
+## Stage 3 live pass — NEAR AI Cloud (Mon 9 Nov 2026, ~12:20 WAT)
+
+- The owner's AI Cloud key arrived via the secure flow and is used
+  only through the registered connector `custom.near-ai-cloud`
+  (helper `bin/near_ai_api.py` in the connector folder; the key
+  itself never enters this repo or any log).
+- AUTH PROVEN: `GET /v1/models` → 200, 64 models listed.
+- MODEL CORRECTION: `openai/gpt-oss-120b` (the doc-derived fixture
+  model, carried over from the Groq work) is NOT valid on this API —
+  attestation for it returned 400 "not a valid model name or alias"
+  and it is absent from the model list. Verified judgement model:
+  `deepseek/deepseek-v3.2`.
+- ATTESTATION VERIFIED-LIVE: `GET /v1/attestation/report?model=
+  deepseek/deepseek-v3.2` → 200. Real shape: top-level
+  `gateway_attestation` (dstack TEE: intel_quote, report_data,
+  signing_address), `model_attestations` (per-model entries:
+  `model`, `quote_b64`, `gpu_evidence` x8, `gpu_verdict` PASS,
+  `verified` true, `tcb_status` UpToDate, provider chutes),
+  `ohttp_attestation`, `ohttp_key_config`. The model binding lives
+  INSIDE the entries — the flat shape the pre-build parser expected
+  does not exist live. A parallel capture the same morning (commit
+  482d9e4) took the Qwen/Qwen3.6-35B-A3B-FP8 report verbatim
+  (`attestation-report.verified-live-2026-11-09.json`): its entry
+  binds via `model_name` with `intel_quote` / `nvidia_payload` —
+  entry field names are PROVIDER-DEPENDENT. Parser narrowed to
+  accept both verified forms (live branch first, legacy flat shape
+  still accepted), fail-closed tests added for both; worker suite
+  green, typecheck clean. The default fixture is now a redacted
+  real capture (strings >200 chars truncated to 48 + marker;
+  structure and short values verbatim), labelled VERIFIED-LIVE in
+  `worker/test/fixtures/README.md`.
+- COMPLETIONS GATED (402): a real judgement-shaped request built by
+  the worker's own `buildJudgementRequestBody` returned 402 "No
+  spending limit configured. Please contact support to set up
+  credits." Inference needs credits / a spending limit in the
+  cloud.near.ai dashboard (expected route: the $10 NEAR Builders
+  credit, PREFLIGHT §4) — a user dashboard step. Until then the
+  chat-completion fixture stays DOC-DERIVED (model field corrected)
+  and NO live judgement or on-chain `near-ai:` hash can be produced.
+  Remaining Stage 3 live items, in order: (1) credits set up →
+  capture one real completion, replace fixture, mark fully
+  VERIFIED-LIVE; (2) with the USDC unblock, run the worker with
+  `BOUNDEN_ATTESTATION_PROVIDER=near-ai` +
+  `NEAR_AI_CLOUD_MODEL=deepseek/deepseek-v3.2` and confirm a
+  `near-ai:` hash lands on-chain via `get_order`; (3) exercise both
+  refund judgement paths on testnet before the Stage 5 film.

@@ -154,14 +154,16 @@ never logged.
 - No API key (or no model id) → the provider is DISABLED: it logs
   loudly and returns null (null-provider behaviour). It never
   fabricates a hash.
-- **Unverified-live:** the attestation report's exact response shape
-  has not been seen from the real API (no key exists in the build
-  environment). Parsing is defensive — a report must bind to the
-  requested model and carry a recognisable TEE evidence field, else a
-  typed `AiCloudShapeError` fails the decision closed. Fixtures are
-  doc-derived and labelled as such (`test/fixtures/README.md`);
-  verifying the shape against the live API is the first hour of the
-  Stage 3 live pass.
+- **Verified-live (9 Nov 2026):** the attestation report's real
+  shape has been captured from the live API and the parser narrowed
+  to it — the model binding lives in a `model_attestations` entry
+  whose `quote_b64` / `gpu_evidence` are the evidence, and anything
+  unrecognised still fails closed with a typed `AiCloudShapeError`.
+  The attestation fixture is a redacted real capture
+  (`test/fixtures/README.md`). Still doc-derived: the chat
+  completion fixture — live inference returned 402 (no spending
+  limit / credits configured) on 9 Nov 2026, so a real completion
+  capture is owed once credits are set up in the dashboard.
 
 ## Status
 

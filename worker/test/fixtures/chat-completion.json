@@ -1,1 +1,21 @@
-{"choices":[{"finish_reason":"stop","index":0,"message":{"content":"{\"decision\":\"approve\",\"reason\":\"Repeat buyer, amount matches the product price, nothing unusual.\"}","role":"assistant"}}],"created":1794200000,"id":"chatcmpl-DOC-DERIVED-FIXTURE","model":"openai/gpt-oss-120b","object":"chat.completion","usage":{"completion_tokens":24,"prompt_tokens":212,"total_tokens":236}}
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "{\"decision\":\"approve\",\"reason\":\"Repeat buyer, amount matches the product price, nothing unusual.\"}",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1794200000,
+  "id": "chatcmpl-DOC-DERIVED-FIXTURE",
+  "model": "deepseek/deepseek-v3.2",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 24,
+    "prompt_tokens": 212,
+    "total_tokens": 236
+  }
+}

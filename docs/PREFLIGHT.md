@@ -82,6 +82,22 @@ From docs.near.ai (Quickstart + API reference, crawled 9 Nov 2026):
   on-chain per judgement (contract field
   `judgement_attestation_hash`); full verification stays possible via
   the report endpoint + Verification Center.
+- **Verified live (9 Nov 2026, Stage 3 live pass, via the registered
+  `custom.near-ai-cloud` connector; key in the secure vault only):**
+  auth proven (`GET /v1/models` → 200, 64 models). The attestation
+  endpoint works without inference credits and its real shape is
+  captured (redacted) in `worker/test/fixtures/` — top level
+  `gateway_attestation` / `model_attestations` / `ohttp_attestation`
+  / `ohttp_key_config`, model binding inside the
+  `model_attestations` entries. `openai/gpt-oss-120b` is NOT a valid
+  model on this API (400, absent from the model list); the verified
+  judgement model is `deepseek/deepseek-v3.2` (report entry:
+  `gpu_verdict` PASS, `verified` true, TCB `UpToDate`).
+  **Chat completions are gated:** a real judgement request returned
+  **402 "No spending limit configured"** — inference needs credits /
+  a spending limit set up in the cloud.near.ai dashboard (the $10
+  Builders credit above is the expected route) before the first live
+  judgement can run. [USER STEP, dashboard only]
 
 ## 5. Mainnet payout account (`bounden.near`) — funding brief (updated 9 Nov, deployment run)
 

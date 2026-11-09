@@ -1,1 +1,309 @@
-{"intel_quote":"DOC-DERIVED-PLACEHOLDER-TDX-QUOTE","model":"openai/gpt-oss-120b","nvidia_payload":{"note":"Placeholder object standing in for the NVIDIA confidential-computing attestation payload. Field set unverified against the live API.","status":"DOC-DERIVED-PLACEHOLDER"},"report_data":"DOC-DERIVED-PLACEHOLDER","signing_address":"0xDOC-DERIVED-PLACEHOLDER-NOT-A-REAL-ADDRESS"}
+{
+  "gateway_attestation": {
+    "event_log": "[{\"imr\":0,\"event_type\":2147483659,\"digest\":\"2e07...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+    "info": {
+      "app_cert": "-----BEGIN CERTIFICATE-----\nMIIa/jCCGqSgAwIBAgIU...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+      "app_id": "f550fdfb4eb8ad787c1bcd423f091cbb4a4431ae",
+      "app_name": "dstack-0.5.12",
+      "compose_hash": "cdb7727578dbbac45b27d46933d4ce84da093891af9eed3ff490ef0d41d1d096",
+      "device_id": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "instance_id": "a5b901f162579a58e56e5a48b5466d8c95bc8807",
+      "key_provider_info": "{\"name\":\"kms\",\"id\":\"3059301306072a8648ce3d020106...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+      "mr_aggregated": "7136da2bf6159169138ab5c52bec89350b4b3b6223e8e7127501dca89c048d3f",
+      "os_image_hash": "8db40cb23008d6213668b5816702d100b37b859a8a5bfd18d938ae3a1b3715bd",
+      "tcb_info": {
+        "app_compose": "{\"manifest_version\":2,\"name\":\"dstack-0.5.12\",\"ru...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+        "compose_hash": "cdb7727578dbbac45b27d46933d4ce84da093891af9eed3ff490ef0d41d1d096",
+        "device_id": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "event_log": [
+          {
+            "digest": "2e070cda358b5aa00f27cca25c47381bb564f4be3a84d059805a73cbbde764ed8341f7e09915b5e7b370f9c08a743fbd",
+            "event": "",
+            "event_payload": "095464785461626c65000100000000000000af96bb93f2b9b84e9462e0ba745642360090800000000000",
+            "event_type": 2147483659,
+            "imr": 0
+          },
+          {
+            "digest": "344bc51c980ba621aaa00da3ed7436f7d6e549197dfe699515dfa2c6583d95e6412af21c097d473155875ffd561d6790",
+            "event": "",
+            "event_payload": "2946762858585858585858582d585858582d585858582d585858582d58585858585858585858585829000000c0ff000000000040080000000000",
+            "event_type": 2147483658,
+            "imr": 0
+          },
+          {
+            "digest": "9dc3a1f80bcec915391dcda5ffbb15e7419f77eab462bbf72b42166fb70d50325e37b36f93537a863769bcf9bedae6fb",
+            "event": "",
+            "event_payload": "61dfe48bca93d211aa0d00e098032b8c0a00000000000000000000000000000053006500630075007200650042006f006f007400",
+            "event_type": 2147483649,
+            "imr": 0
+          },
+          {
+            "digest": "6f2e3cbc14f9def86980f5f66fd85e99d63e69a73014ed8a5633ce56eca5b64b692108c56110e22acadcef58c3250f1b",
+            "event": "",
+            "event_payload": "61dfe48bca93d211aa0d00e098032b8c0200000000000000000000000000000050004b00",
+            "event_type": 2147483649,
+            "imr": 0
+          },
+          {
+            "digest": "d607c0efb41c0d757d69bca0615c3a9ac0b1db06c557d992e906c6b7dee40e0e031640c7bfd7bcd35844ef9edeadc6f9",
+            "event": "",
+            "event_payload": "61dfe48bca93d211aa0d00e098032b8c030000000000000000000000000000004b0045004b00",
+            "event_type": 2147483649,
+            "imr": 0
+          },
+          {
+            "digest": "08a74f8963b337acb6c93682f934496373679dd26af1089cb4eaf0c30cf260a12e814856385ab8843e56a9acea19e127",
+            "event": "",
+            "event_payload": "cbb219d73a3d9645a3bcdad00e67656f0200000000000000000000000000000064006200",
+            "event_type": 2147483649,
+            "imr": 0
+          },
+          {
+            "digest": "18cc6e01f0c6ea99aa23f8a280423e94ad81d96d0aeb5180504fc0f7a40cb3619dd39bd6a95ec1680a86ed6ab0f9828d",
+            "event": "",
+            "event_payload": "cbb219d73a3d9645a3bcdad00e67656f03000000000000000000000000000000640062007800",
+            "event_type": 2147483649,
+            "imr": 0
+          },
+          {
+            "digest": "394341b7182cd227c5c6b07ef8000cdfd86136c4292b8e576573ad7ed9ae41019f5818b4b971c9effc60e1ad9f1289f0",
+            "event": "",
+            "event_payload": "00000000",
+            "event_type": 4,
+            "imr": 0
+          },
+          {
+            "digest": "05c95712d2254a1d418dfc9abd53fa60e63b874327fbfefeeb19868643c1a6b94dbf6b73a090f7a1d1bb04405c2f528b",
+            "event": "",
+            "event_payload": "414350492044415441",
+            "event_type": 10,
+            "imr": 0
+          },
+          {
+            "digest": "bcf576f33bfaca1ede8d8f964ff7d219cde03043c3c305c34ff9869d8e1f8f5943f17aacb707cdf6f601598e505e2960",
+            "event": "",
+            "event_payload": "414350492044415441",
+            "event_type": 10,
+            "imr": 0
+          },
+          {
+            "digest": "1ff25d173a9b9a877a2f354410e62300d5c42514affae09d1389fb1e70bc7dd036612cbd8557c7d30c8668cc639ade37",
+            "event": "",
+            "event_payload": "414350492044415441",
+            "event_type": 10,
+            "imr": 0
+          },
+          {
+            "digest": "48368ab87e5b8fecfb216bc26bbccfe13081bf8b67d4d2ee7de708e91819eeb56227db2349fc3b04ad5f5719ffd11809",
+            "event": "",
+            "event_payload": "18e0fd7a00000000008485000000000000000000000000002a000000000000000403140072f728144ab61e44b8c39ebdd7f893c7040412006b00650072006e0065006c0000007fff0400",
+            "event_type": 2147483651,
+            "imr": 1
+          },
+          {
+            "digest": "1dd6f7b457ad880d840d41c961283bab688e94e4b59359ea45686581e90feccea3c624b1226113f824f315eb60ae0a7c",
+            "event": "",
+            "event_payload": "61dfe48bca93d211aa0d00e098032b8c0900000000000000020000000000000042006f006f0074004f0072006400650072000000",
+            "event_type": 2147483650,
+            "imr": 0
+          },
+          {
+            "digest": "23ada07f5261f12f34a0bd8e46760962d6b4d576a416f1fea1c64bc656b1d28eacf7047ae6e967c58fd2a98bfa74c298",
+            "event": "",
+            "event_payload": "61dfe48bca93d211aa0d00e098032b8c0800000000000000...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+            "event_type": 2147483650,
+            "imr": 0
+          },
+          {
+            "digest": "77a0dab2312b4e1e57a84d865a21e5b2ee8d677a21012ada819d0a98988078d3d740f6346bfe0abaa938ca20439a8d71",
+            "event": "",
+            "event_payload": "43616c6c696e6720454649204170706c69636174696f6e2066726f6d20426f6f74204f7074696f6e",
+            "event_type": 2147483655,
+            "imr": 1
+          },
+          {
+            "digest": "394341b7182cd227c5c6b07ef8000cdfd86136c4292b8e576573ad7ed9ae41019f5818b4b971c9effc60e1ad9f1289f0",
+            "event": "",
+            "event_payload": "00000000",
+            "event_type": 4,
+            "imr": 1
+          },
+          {
+            "digest": "549e21b8d8898430a0be6e53191717f1d30d66588bdafe0055b20d197e415fae963b06ec925f14b027267812d3734fea",
+            "event": "",
+            "event_payload": "ed223b8f1a0000004c4f414445445f494d4147453a3a4c6f61644f7074696f6e7300",
+            "event_type": 6,
+            "imr": 2
+          },
+          {
+            "digest": "fd01285d396a483667123c1a1a64d83b2dd5c6cef2b8803c97522be00c5255ff27feb79f6ea9b46c6856bbe2769bad66",
+            "event": "",
+            "event_payload": "ec223b8f0d0000004c696e757820696e6974726400",
+            "event_type": 6,
+            "imr": 2
+          },
+          {
+            "digest": "214b0bef1379756011344877743fdc2a5382bac6e70362d624ccf3f654407c1b4badf7d8f9295dd3dabdef65b27677e0",
+            "event": "",
+            "event_payload": "4578697420426f6f7420536572766963657320496e766f636174696f6e",
+            "event_type": 2147483655,
+            "imr": 1
+          },
+          {
+            "digest": "0a2e01c85deae718a530ad8c6d20a84009babe6c8989269e950d8cf440c6e997695e64d455c4174a652cd080f6230b74",
+            "event": "",
+            "event_payload": "4578697420426f6f742053657276696365732052657475726e656420776974682053756363657373",
+            "event_type": 2147483655,
+            "imr": 1
+          },
+          {
+            "digest": "f9974020ef507068183313d0ca808e0d1ca9b2d1ad0c61f5784e7157c362c06536f5ddacdad4451693f48fcc72fff624",
+            "event": "system-preparing",
+            "event_payload": "",
+            "event_type": 134217729,
+            "imr": 3
+          },
+          {
+            "digest": "6fe75c63216de0f223bd4bb71a46a508f6cd5a51db447e9eaae7d356d716ac4a2a23fa64d04dfaedae5e29d5dba7cb6e",
+            "event": "app-id",
+            "event_payload": "f550fdfb4eb8ad787c1bcd423f091cbb4a4431ae",
+            "event_type": 134217729,
+            "imr": 3
+          },
+          {
+            "digest": "fd930a0bd2bf2cfcb9f0164eb70670989cf903b17ac80000a6501df119319dcebf3bcbbe0308c5d7d4adaf69d60ca8bb",
+            "event": "compose-hash",
+            "event_payload": "cdb7727578dbbac45b27d46933d4ce84da093891af9eed3ff490ef0d41d1d096",
+            "event_type": 134217729,
+            "imr": 3
+          },
+          {
+            "digest": "e25066dd2af3812f1ed09152ee7ff6b0ddd9159abbcaaf59a872c4a4bec4a0433b2f3786b647cde37b31736fc92a908d",
+            "event": "instance-id",
+            "event_payload": "a5b901f162579a58e56e5a48b5466d8c95bc8807",
+            "event_type": 134217729,
+            "imr": 3
+          },
+          {
+            "digest": "98bd7e6bd3952720b65027fd494834045d06b4a714bf737a06b874638b3ea00ff402f7f583e3e3b05e921c8570433ac6",
+            "event": "boot-mr-done",
+            "event_payload": "",
+            "event_type": 134217729,
+            "imr": 3
+          },
+          {
+            "digest": "4eab9203bdacdb5ecd598d9e39cb9e3e26b49e0fd362852b2861e22b71ce615035e14020695e12431f58d5fdf9828e25",
+            "event": "mr-kms",
+            "event_payload": "22a6652c0ce74e50b549c0f9c21d53c5861598ec4d58cf3286d158104923bc56",
+            "event_type": 134217729,
+            "imr": 3
+          },
+          {
+            "digest": "9381eb17a317a6ebabc892bd4601743106b3f7415f2a82fe73c24b1b12d9fb982a26e7c49632fe2fae01ffbae6bf5ea2",
+            "event": "os-image-hash",
+            "event_payload": "8db40cb23008d6213668b5816702d100b37b859a8a5bfd18d938ae3a1b3715bd",
+            "event_type": 134217729,
+            "imr": 3
+          },
+          {
+            "digest": "9de6782ab6dfadb59a95bab8378e28a748331441c6f3acc822bcebc5cf01ceada3d5b2bb7d985aae8ac2482756895fe8",
+            "event": "key-provider",
+            "event_payload": "7b226e616d65223a226b6d73222c226964223a2233303539...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+            "event_type": 134217729,
+            "imr": 3
+          },
+          {
+            "digest": "ba51104636900268b0e059fa3d266419d079d1e94aea26fb9fcbb8d764bf4c89a67ac271b8a0d1a3989945132a111fc7",
+            "event": "storage-fs",
+            "event_payload": "7a6673",
+            "event_type": 134217729,
+            "imr": 3
+          },
+          {
+            "digest": "1a76b2a80a0be71eae59f80945d876351a7a3fb8e9fd1ff1cede5734aa84ea11fd72b4edfbb6f04e5a85edd114c751bd",
+            "event": "system-ready",
+            "event_payload": "",
+            "event_type": 134217729,
+            "imr": 3
+          }
+        ],
+        "mrtd": "7fe60787222bd394cb516abca2435f22f035ab2cc9c0a4b4b3b148e46297f3d931a237b72f359052c6e657d8c1409173",
+        "os_image_hash": "8db40cb23008d6213668b5816702d100b37b859a8a5bfd18d938ae3a1b3715bd",
+        "rtmr0": "d090162bff4b1d1dc74dc59dc548838efc4b811b173da8536efa8e2a9c045da70ee092301293ad90afebee448bcd0211",
+        "rtmr1": "4ae609807c765916a31d724786ed74bcb97e168a9d937b04936aeef2015c907eba5ac352c6bcd749c246fd62ffb659ec",
+        "rtmr2": "764489f277a8540189761e72b4238ba36d4d647e11bd958d8ab5522af2a4867b0ff63e06b0c4967f1857236244040a5d",
+        "rtmr3": "99e8f3ebc8a02336b3bfd341df55f3259fb0ce98340e61bab0831cd3544f5557a66736c7488b84de1148cc4a3d9b49ad"
+      },
+      "vm_config": "{\"os_image_hash\":\"8db40cb23008d6213668b5816702d1...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]"
+    },
+    "intel_quote": "040002008100000000000000939a7233f79c4ca9940a0db3...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+    "report_data": "40599fb284f43953bb356b09080fd803c960fc10285ad90eca462ca711ad4acb495f518bada56b928d8b595c0df1a5eed122ec7d81461936bf5954cbaec5cff3",
+    "request_nonce": "495f518bada56b928d8b595c0df1a5eed122ec7d81461936bf5954cbaec5cff3",
+    "signing_address": "40599fb284f43953bb356b09080fd803c960fc10285ad90eca462ca711ad4acb",
+    "signing_algo": "ed25519"
+  },
+  "model_attestations": [
+    {
+      "certificate_b64": "MIIEwDCCAqigAwIBAgIBATANBgkqhkiG9w0BAQsFADA8MQ8w...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+      "e2e_pubkey": "VUOR+YiLkKREl3lEF2GGR8FtGMUPscUZJmS445yyvcBJezNr...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+      "gpu_evidence": [
+        {
+          "arch": "HOPPER",
+          "certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURmREND...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+          "evidence": "EeAB//klhKY8toRD5Xj+Er/P4neXn06V8XyEBhiz5E75e0R1...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]"
+        },
+        {
+          "arch": "HOPPER",
+          "certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURmREND...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+          "evidence": "EeAB//klhKY8toRD5Xj+Er/P4neXn06V8XyEBhiz5E75e0R1...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]"
+        },
+        {
+          "arch": "HOPPER",
+          "certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURmVEND...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+          "evidence": "EeAB//klhKY8toRD5Xj+Er/P4neXn06V8XyEBhiz5E75e0R1...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]"
+        },
+        {
+          "arch": "HOPPER",
+          "certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURmVEND...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+          "evidence": "EeAB//klhKY8toRD5Xj+Er/P4neXn06V8XyEBhiz5E75e0R1...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]"
+        },
+        {
+          "arch": "HOPPER",
+          "certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURmREND...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+          "evidence": "EeAB//klhKY8toRD5Xj+Er/P4neXn06V8XyEBhiz5E75e0R1...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]"
+        },
+        {
+          "arch": "HOPPER",
+          "certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURlekND...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+          "evidence": "EeAB//klhKY8toRD5Xj+Er/P4neXn06V8XyEBhiz5E75e0R1...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]"
+        },
+        {
+          "arch": "HOPPER",
+          "certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURmVEND...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+          "evidence": "EeAB//klhKY8toRD5Xj+Er/P4neXn06V8XyEBhiz5E75e0R1...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]"
+        },
+        {
+          "arch": "HOPPER",
+          "certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURmVEND...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+          "evidence": "EeAB//klhKY8toRD5Xj+Er/P4neXn06V8XyEBhiz5E75e0R1...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]"
+        }
+      ],
+      "gpu_verdict": "PASS",
+      "instance_id": "5057fae3-9876-40a2-b402-3feff613ecb5",
+      "measurement_config": "8xh200 [10.2.1, numa-188c-1128g-nvsw-node1] v1.5.0",
+      "model": "deepseek/deepseek-v3.2",
+      "nonce": "fa246721eee1fcf6e629b36bb916219e69fed0e87bca5be9c354db3c376159ab",
+      "provider": "chutes",
+      "quote_b64": "BAACAIEAAAAAAAAAk5pyM/ecTKmUCg2zlX8GBz/8RhO2bauB...[TRUNCATED IN FIXTURE - full value captured live 2026-11-09]",
+      "tcb_status": "UpToDate",
+      "verified": true
+    }
+  ],
+  "ohttp_attestation": {
+    "key_config": "010020e4e354364111f2295e2d2ed97ce1103c9fdcb261459ec626d9bd8a6e15f0d11600080001000100010003",
+    "signature": "823086655feb1660e7975d8dfdbfd728af36cc7776f69f7b5f713753306d5a8a96b1bc49298800ef36c06ccccfeed13e1fbc4b48233496af3a3a514b6d61680b",
+    "signing_algo": "ed25519",
+    "signing_key": "40599fb284f43953bb356b09080fd803c960fc10285ad90eca462ca711ad4acb"
+  },
+  "ohttp_key_config": "010020e4e354364111f2295e2d2ed97ce1103c9fdcb261459ec626d9bd8a6e15f0d11600080001000100010003"
+}

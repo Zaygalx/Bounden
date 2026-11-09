@@ -74,8 +74,12 @@ on-chain):
   Testnet but is a human, reCAPTCHA-gated web flow, and no
   programmatic route was found (full probe log in `NOTES.md`).
   One human faucet claim to the buyer account unblocks the rest.
-- NEAR AI Cloud attestation verified against the live API (fixtures
-  are doc-derived and labelled UNVERIFIED-LIVE until then).
+- NEAR AI Cloud attestation verified against the live API —
+  DONE 9 Nov 2026 for the attestation report (redacted real capture
+  in `worker/test/fixtures/`, parser narrowed to the observed live
+  shape). Still open: one live chat completion — inference on the
+  account is gated on credits (402 until a spending limit or the
+  $10 Builders credit is set up in the dashboard).
 - The demo film (<60s, `docs/FILM.md`), the X demo post, and the
   submission itself (`docs/SUBMISSION.md`).
 - Stage 4 (Shade Agent / TEE): spiked and designed, **not shipped** —
@@ -180,13 +184,16 @@ deterministic attestation hash — SHA-256 over the canonicalised
 on-chain as `near-ai:<hex>`. It fails closed: malformed model output
 escalates and never approves, a non-approval blocks the on-chain call,
 and with no API key the provider refuses loudly rather than
-fabricating a hash. 21 new unit tests (51 worker tests total, all
-passing, all network access faked). **Honest limit: the attestation
-report's live response shape is NOT yet verified** — the fixtures are
-hand-built from the docs and labelled DOC-DERIVED, UNVERIFIED-LIVE
-(`worker/test/fixtures/README.md`); the parser throws a typed error
-on any unrecognised shape, and verifying against the real API is the
-first hour of the live pass. The **storefront** (`web/`, Next.js)
+fabricating a hash. 22 new unit tests (52 worker tests total, all
+passing, all network access faked). **Attestation shape VERIFIED-LIVE
+9 Nov 2026:** the live report binds the model inside a
+`model_attestations` array (not the flat shape the docs suggested);
+the fixture is now a redacted real capture and the parser was
+narrowed to the observed shape, still failing closed on anything
+unrecognised (`worker/test/fixtures/README.md`). The chat-completion
+fixture remains doc-derived: live inference is gated on account
+credits (402 on 9 Nov 2026), so one real completion capture is still
+owed once credits are set up. The **storefront** (`web/`, Next.js)
 builds and demos today in fixture mode: catalogue, product pages, a
 checkout explainer (payment is a wallet action — the cashier never
 touches it), order status, the public Constitution page rendering the

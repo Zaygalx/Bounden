@@ -11,14 +11,21 @@ import type { AttestationRequest } from "./attestation.js";
  *
  * DEFENSIVE PARSING, BY DESIGN. The chat-completions shape is the
  * standard OpenAI shape and is coded against it strictly. The
- * attestation report's exact live field set has NOT been verified
- * against the live API yet (no API key exists in this environment —
- * see worker/test/fixtures/README.md). The parser therefore:
- *   - requires the report to be a JSON object bound to the requested
- *     model (`model` or `model_id`),
- *   - requires at least one recognisable TEE evidence field,
+ * attestation report's live shape was VERIFIED-LIVE on 9 Nov 2026
+ * (Stage 3 live pass; see worker/test/fixtures/README.md): the report
+ * carries a `model_attestations` array whose entries bind a model id
+ * to TEE evidence, plus a `gateway_attestation` object. Entry field
+ * names vary by serving provider (`model` + `quote_b64` /
+ * `gpu_evidence` in one verified capture, `model_name` +
+ * `intel_quote` / `nvidia_payload` in another). The parser therefore:
+ *   - requires the report to be a JSON object with a
+ *     `model_attestations` entry bound to the requested model,
+ *   - requires that entry to carry TEE evidence,
  *   - keeps the ENTIRE raw report for the attestation hash, and
  *   - throws a loud, typed AiCloudShapeError on any mismatch.
+ * A legacy flat shape (`model`/`model_id` plus a top-level evidence
+ * field, the docs-derived form used before the live pass) is still
+ * accepted so older fixtures and captures keep parsing.
  * A shape mismatch can never become a silent pass: no hash is produced
  * from a report we could not recognise, and no judgement is approved
  * from a completion we could not parse.
@@ -319,11 +326,11 @@ export function parseChatCompletion(raw: unknown): ChatCompletionResult {
 }
 
 /**
- * Evidence fields recognised in an attestation report. The live field
- * set is UNVERIFIED (see fixtures README); this list is deliberately
- * generous across the documented TEE vocabulary (Intel TDX quote,
- * NVIDIA confidential-computing payload, dstack-style event log). The
- * live pass narrows it to the observed set.
+ * Evidence fields recognised in the LEGACY flat attestation shape.
+ * The live shape (verified 9 Nov 2026) binds evidence inside
+ * `model_attestations` entries instead — `quote_b64` and
+ * `gpu_evidence` — and is checked by the live branch of
+ * parseAttestationReport. This list serves only the flat shape.
  */
 const ATTESTATION_EVIDENCE_FIELDS = [
   "attestation",
@@ -357,6 +364,46 @@ export function parseAttestationReport(
     throw new AiCloudShapeError("attestation report is not a JSON object");
   }
   const obj = raw as Record<string, unknown>;
+  // Live shape (VERIFIED-LIVE 9 Nov 2026, two captures): a
+  // `model_attestations` array binds the report to the requested
+  // model, but the entry's field names depend on the serving
+  // provider. The DeepSeek capture binds via `model` with
+  // `quote_b64` / `gpu_evidence`; the Qwen capture binds via
+  // `model_name` with `intel_quote` / `nvidia_payload`. Accept
+  // either verified form; fail closed when no entry matches or the
+  // matching entry carries no evidence.
+  const entries = obj["model_attestations"];
+  if (Array.isArray(entries)) {
+    const entry = entries.find(
+      (e): e is Record<string, unknown> =>
+        e !== null &&
+        typeof e === "object" &&
+        !Array.isArray(e) &&
+        ((e as Record<string, unknown>)["model"] ??
+          (e as Record<string, unknown>)["model_name"]) === expectedModel,
+    );
+    if (!entry) {
+      throw new AiCloudShapeError(
+        `attestation report has no model_attestations entry for model "${expectedModel}"`,
+      );
+    }
+    const nonEmpty = (v: unknown): boolean =>
+      (typeof v === "string" && v.length > 0) ||
+      (Array.isArray(v) && v.length > 0) ||
+      (v !== null && typeof v === "object" && !Array.isArray(v));
+    const hasEvidence =
+      nonEmpty(entry["quote_b64"]) ||
+      nonEmpty(entry["gpu_evidence"]) ||
+      nonEmpty(entry["intel_quote"]) ||
+      nonEmpty(entry["nvidia_payload"]);
+    if (!hasEvidence) {
+      throw new AiCloudShapeError(
+        `model_attestations entry for "${expectedModel}" carries no TEE evidence ` +
+          "(looked for: quote_b64, gpu_evidence, intel_quote, nvidia_payload)",
+      );
+    }
+    return { model: expectedModel, raw: obj };
+  }
   const modelField = obj["model"] ?? obj["model_id"];
   if (typeof modelField !== "string" || modelField === "") {
     throw new AiCloudShapeError(

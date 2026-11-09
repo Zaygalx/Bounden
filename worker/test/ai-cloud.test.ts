@@ -22,14 +22,15 @@ import { MemoryLogger } from "../src/logger.js";
 import type { AttestationRequest } from "../src/attestation.js";
 
 /**
- * Stage 3 judgement-layer tests. ALL network access is a fake fetch;
- * fixtures are DOC-DERIVED and UNVERIFIED-LIVE (see fixtures/README.md).
+ * Stage 3 judgement-layer tests. ALL network access is a fake fetch.
+ * The attestation fixture is a redacted REAL capture, VERIFIED-LIVE
+ * 9 Nov 2026; the chat-completion fixture is still DOC-DERIVED (live
+ * completions are gated on account credits — see fixtures/README.md).
  * These tests prove claims about OUR code — parsing strictness, hash
- * determinism, fail-closed behaviour, payload hygiene — never claims
- * about the live NEAR AI Cloud API.
+ * determinism, fail-closed behaviour, payload hygiene.
  */
 
-const MODEL = "openai/gpt-oss-120b";
+const MODEL = "deepseek/deepseek-v3.2";
 
 function loadFixture(name: string): Record<string, unknown> {
   const raw = fs.readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
@@ -133,10 +134,25 @@ describe("parseChatCompletion", () => {
 });
 
 describe("parseAttestationReport", () => {
-  it("accepts the doc-derived fixture bound to the requested model", () => {
+  it("accepts the verified-live fixture bound to the requested model", () => {
     const r = parseAttestationReport(reportFixture, MODEL);
     expect(r.model).toBe(MODEL);
     expect(r.raw).toBe(reportFixture);
+  });
+
+  it("throws loudly when the matching live entry carries no evidence", () => {
+    const bare = {
+      model_attestations: [{ model: MODEL, verified: true }],
+      gateway_attestation: { intel_quote: "x" },
+    };
+    expect(() => parseAttestationReport(bare, MODEL)).toThrow(AiCloudShapeError);
+  });
+
+  it("accepts the second verified-live capture (Qwen, model_name binding)", () => {
+    const qwen = loadFixture("attestation-report.verified-live-2026-11-09.json");
+    const r = parseAttestationReport(qwen, "Qwen/Qwen3.6-35B-A3B-FP8");
+    expect(r.model).toBe("Qwen/Qwen3.6-35B-A3B-FP8");
+    expect(() => parseAttestationReport(qwen, MODEL)).toThrow(AiCloudShapeError);
   });
 
   it("throws loudly on a report for a different model", () => {
