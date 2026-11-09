@@ -1,0 +1,53 @@
+# Bounden — gitleaks configuration.
+#
+# This file EXTENDS the default gitleaks ruleset unchanged and adds only
+# two narrow allowlists to the single rule `generic-api-key`, for material
+# that is public by design and was flagged by that rule's high-entropy
+# heuristic during the pre-publication scan (11 findings, all classified
+# by hand; see docs/NOTES.md, Stage 5 entry). Nothing else is allowlisted:
+# no rule is disabled and no directory is exempted.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+
+# (a) Circle's NEAR testnet USDC token contract address
+#     3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af
+#     This exact string is a public on-chain identifier: it is the
+#     payment_token recorded in the shop contract's constitution, it is
+#     printed by every NEAR explorer, and Circle's own developer docs
+#     list it as the NEAR Testnet USDC contract. It grants access to
+#     nothing. It appears in docs/NOTES.md inside constitution read-back
+#     lines, which is where the rule matched it. The allowlist covers
+#     this one exact string only.
+[[rules.allowlists]]
+description = "Circle NEAR testnet USDC contract address (public on-chain identifier)"
+regexes = ["3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af"]
+
+# (b) Public key material inside the NEAR AI Cloud attestation report
+#     fixtures (worker/test/fixtures/attestation-report.json and
+#     attestation-report.verified-live-2026-11-09.json). An attestation
+#     report is a public verification artefact: its ohttp key_config is
+#     the OHTTP *public* key configuration that NEAR AI Cloud publishes
+#     for any client to fetch and encrypt requests with, and the
+#     key_config / signing_key values in the gateway and model
+#     attestations are the public verification keys from the TEE
+#     quotes, published so anyone can verify the signatures. No private
+#     key material exists in these files.
+#     Scoping note: in gitleaks 8.30.1 the conditions inside one
+#     allowlist are OR'd, so combining the fixture paths with a field
+#     regex would exempt EVERY generic-api-key match in those files
+#     (proven by a negative control: a planted fake api_secret line in
+#     a fixture was not flagged under a paths+regex entry). The
+#     narrower construct, used here, is the field-shape regex alone:
+#     only a match that is literally an attestation key_config /
+#     signing_key field assignment is allowlisted, wherever it sits,
+#     and any other high-entropy string still flags.
+[[rules.allowlists]]
+description = "Public attestation key material: key_config / signing_key field assignments in NEAR AI Cloud attestation reports"
+regexTarget = "match"
+regexes = [
+  '''(?i)(key_config|signing_key)"\s*:\s*"[0-9a-f]+''',
+]
