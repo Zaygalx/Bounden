@@ -122,6 +122,51 @@ From docs.near.ai (Quickstart + API reference, crawled 9 Nov 2026):
   verifies on-chain. **Nothing was spent in pre-flight or in the
   deployment run.**
 
+- **EXECUTED (Mon 9 Nov 2026) — claim done, accounting closed,
+  return STOPPED after two attempts (see the return entry):**
+  the user's exchange minimum withdrawal was 0.2 NEAR, so 0.2 NEAR
+  was sent (owner-approved). Full on-chain accounting, every figure
+  recovered from chain records and reconciled to the yocto:
+  - **In:** 0.2 NEAR to the owner implicit account — tx
+    `Bq48FFAYDdiKsLMvvJdYuDshJAsAHejPu5CF7nFLQVYp`.
+  - **Claim:** tx `HLbPm1PSJ2N34qYMrXWvaQUsRTPMpMmT2uJptqPGPL7K` —
+    the implicit account called `create_account` on the `near`
+    registry with 0.1 NEAR attached; `bounden.near` now exists
+    holding exactly **0.1 NEAR** (verified by `view_account`).
+  - **Exact creation cost:** 7,444,150,112,772,500,000,000 yocto
+    (**0.0074441501127725 NEAR**) total `tokens_burnt` across the
+    claim tx's transaction + receipt outcomes (RPC
+    `EXPERIMENTAL_tx_status`). Reconciliation: 0.2 in − 0.1 to
+    `bounden.near` − 0.0074441501127725 cost = **0.0925558498872275
+    NEAR** remaining in the implicit account (92,555,849,887,227,
+    500,000,000 yocto) — matches `view_account` exactly.
+  - **Return (STOPPED — not sent):** the user named return address
+    `395665c1e9e898b79a67f41ea5fbe1d45d3eb4e2b3ca242b4b2e58a158f5140e`
+    (still UNKNOWN_ACCOUNT — a plain transfer would create it).
+    Agreed return = fresh balance − 0.002 NEAR gas reserve =
+    **0.0905558498872275 NEAR** (90,555,849,887,227,500,000,000
+    yocto). Two broadcast attempts were made with
+    `scripts/near_rpc.py`'s signing path; **both were rejected by
+    the mainnet node at request validation** (`send_tx` → HTTP 400,
+    `REQUEST_VALIDATION_ERROR` / `PARSE_ERROR`: "the value could not
+    decoded from borsh due to: unknown key type '25'") — the tx was
+    refused *before* broadcast, so **no return transaction exists**
+    (re-verified after each attempt: balances unchanged, recipient
+    still unknown, the implicit account's history still shows only
+    the two txs above). Working diagnosis: the raw-RPC tooling's
+    transaction serialisation for this transfer construction is
+    rejected by the current mainnet node, while its named-account
+    calls (the claim itself, and the testnet deploys) succeed — the
+    defect is in the local tooling path for this case, not in the
+    account, the key, or the recipient. Per the real-funds rule the
+    run stopped after two attempts rather than improvising a third
+    signing path. **Next step to close this out:** send the same
+    0.0905558498872275 NEAR from the implicit account using a
+    standard maintained NEAR client (e.g. near-api-js) or a wallet,
+    then record the return tx here. Until then the implicit account
+    continues to hold 0.0925558498872275 NEAR, of which
+    0.0905558498872275 NEAR is owed to the user.
+
 ## 7. Deployment run (Mon 9 Nov 2026) — testnet account creation BLOCKED at the faucet wall
 
 Executed under the owner's full-autonomy grant (07:41 WAT). Owner

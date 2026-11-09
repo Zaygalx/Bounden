@@ -493,3 +493,29 @@ spike did not touch it.
   deployment cost); published @neardefi/shade-agent-js registry
   version vs the monorepo's in-tree copy; shade-agent-js key
   derivation surface for the vault key.
+
+## Mainnet run — `bounden.near` claimed; return transfer STOPPED (Mon 9 Nov 2026)
+
+Full accounting in docs/PREFLIGHT.md §5; summary here:
+
+- **Claim DONE (do not re-claim):** `bounden.near` exists on mainnet
+  holding exactly 0.1 NEAR. Funding in: 0.2 NEAR, tx
+  `Bq48FFAYDdiKsLMvvJdYuDshJAsAHejPu5CF7nFLQVYp` (user sent 0.2 —
+  their exchange's minimum withdrawal, owner-approved). Claim tx
+  `HLbPm1PSJ2N34qYMrXWvaQUsRTPMpMmT2uJptqPGPL7K` (`create_account`
+  on the `near` registry, 0.1 NEAR attached). Exact creation cost
+  0.0074441501127725 NEAR (`tokens_burnt` summed over the tx
+  outcome). Implicit remainder 0.0925558498872275 NEAR — reconciles
+  to the yocto against `view_account`.
+- **Return NOT sent — stopped after two attempts.** Owed to the
+  user at `395665c1e9e898b79a67f41ea5fbe1d45d3eb4e2b3ca242b4b2e58a158f5140e`:
+  0.0905558498872275 NEAR (fresh balance − 0.002 NEAR reserve). Both
+  broadcast attempts via the raw-RPC tooling were rejected by the
+  mainnet node at request validation (`PARSE_ERROR`, "unknown key
+  type '25'") before broadcast; verified after each attempt that
+  nothing moved and no return tx exists. Local serialisation
+  inspection found no defect, so the cause is recorded as a
+  working diagnosis (tooling/node construction mismatch on this
+  transfer path), not a proven root cause. **Close-out path:** one
+  send of the same amount via a standard maintained client
+  (near-api-js) or a wallet, then record the tx in PREFLIGHT §5.
