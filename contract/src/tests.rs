@@ -290,14 +290,19 @@ fn second_fulfil_of_same_order_fails() {
 fn refund_within_cap_and_window_succeeds() {
     let mut shop = stocked_shop();
     let id = paid_order(&mut shop);
-    testing_env!(context(&agent(), T0 + 100, 1).build());
+    // ZERO attached deposit: the only authorised caller is the agent's
+    // function-call leash key, which protocol rules bar from attaching
+    // any deposit (v3 fix — the v2 assert made this path un-executable
+    // by the leash; see NOTES.md). The refund must succeed anyway.
+    testing_env!(context(&agent(), T0 + 100, 0).build());
     let result = shop.issue_refund(id, None);
     assert!(matches!(result, PromiseOrValue::Promise(_)));
     assert_eq!(shop.get_order(id).unwrap().state, OrderState::Refunded);
     assert_eq!(shop.fulfilment_log_len(), 1);
     assert_eq!(shop.get_fulfilment_log(None, None)[0].action, "refund");
-    // The refund transfer goes to the token contract carrying exactly
-    // 1 yocto — the regression guard for the defect in NOTES.md.
+    // The refund transfer STILL goes to the token contract carrying
+    // exactly 1 yocto — now attached by the contract itself, out of
+    // its own balance. Regression guard unchanged.
     // (Drop the promise first: its receipt registers on drop/return.)
     drop(result);
     assert_ft_transfer_receipt(&token());
@@ -309,7 +314,7 @@ fn refund_of_fulfilled_order_within_band_succeeds() {
     let id = paid_order(&mut shop);
     testing_env!(context(&agent(), T0 + 2, 0).build());
     shop.fulfil_order(id, "e".repeat(64), None);
-    testing_env!(context(&agent(), T0 + 100, 1).build());
+    testing_env!(context(&agent(), T0 + 100, 0).build());
     let result = shop.issue_refund(id, None);
     assert!(matches!(result, PromiseOrValue::Promise(_)));
     assert_eq!(shop.get_order(id).unwrap().state, OrderState::Refunded);
@@ -342,11 +347,21 @@ fn refund_above_cap_is_rejected_and_recorded() {
 fn refund_after_window_is_rejected_and_recorded() {
     let mut shop = stocked_shop();
     let id = paid_order(&mut shop);
-    // paid_at = T0 + 1; jump beyond the 1-hour window.
+    // paid_at = T0 + 1; jump beyond the 1-hour window. Zero deposit,
+    // as the leash key must send (v3).
     testing_env!(context(&agent(), T0 + 1 + WINDOW_NS + 1, 0).build());
     let result = shop.issue_refund(id, None);
     assert!(matches!(result, PromiseOrValue::Value(())));
     assert_eq!(shop.get_order(id).unwrap().state, OrderState::RefundRejected);
+    // No transfer may be scheduled on a band rejection: no receipt to
+    // the token contract exists. (An in-band call WOULD create one —
+    // see refund_within_cap_and_window_succeeds.)
+    let receipts = get_created_receipts();
+    assert!(
+        receipts.iter().all(|r| r.receiver_id != token()),
+        "out-of-band refund must not schedule any token transfer; receipts: {:?}",
+        receipts.iter().map(|r| &r.receiver_id).collect::<Vec<_>>()
+    );
 }
 
 #[test]

@@ -583,6 +583,12 @@ impl BoundenShop {
     /// now - paid_at <= `refund_window_ns`. Callable ONLY by the
     /// registered agent account.
     ///
+    /// Deposit design (v3): the caller attaches no deposit — the
+    /// agent's function-call leash key cannot attach one under
+    /// protocol rules — and the 1 yoctoNEAR the token requires on the
+    /// outbound `ft_transfer` is attached by the contract itself, out
+    /// of its own NEAR balance.
+    ///
     /// Refundable states follow docs/PLAN.md's state machine: `Paid`
     /// (paid, not yet fulfilled) and `Fulfilled` (delivered, refunded
     /// inside the window). A band failure on a valid agent call does NOT
@@ -648,14 +654,19 @@ impl BoundenShop {
                 amount
             ),
         );
-        assert!(
-            env::attached_deposit().as_yoctonear() == 1,
-            "exactly 1 yoctoNEAR must be attached for ft_transfer"
-        );
-        // NEP-141 requires exactly 1 yoctoNEAR attached to ft_transfer;
-        // without it the token contract rejects the call — while the order
-        // above is already recorded Refunded. ONE_YOCTO is load-bearing:
-        // omitting it strands the buyer's money while the books say paid.
+        // The caller attaches NOTHING — deliberately. The only key
+        // authorised to call this method is the agent's function-call
+        // leash key, and protocol rules bar function-call keys from
+        // attaching any deposit at all ( DepositWithFunctionCall), so
+        // an inbound-deposit assert here makes the refund path
+        // un-executable by the leash (proven live on the v2 deployment;
+        // see NOTES.md). NEP-141 still requires exactly 1 yoctoNEAR on
+        // the OUTBOUND ft_transfer below: the promise attaches
+        // ONE_YOCTO, drawn from THIS contract's own NEAR balance —
+        // promises spend the contract account's funds, not the
+        // caller's. ONE_YOCTO on the outbound call remains
+        // load-bearing: omitting it would strand the buyer's money
+        // while the books say Refunded.
         PromiseOrValue::Promise(
             ext_ft::ext(self.payment_token.clone())
                 .with_attached_deposit(ONE_YOCTO)
