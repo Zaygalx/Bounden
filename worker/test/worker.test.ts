@@ -91,7 +91,7 @@ describe("fulfilment", () => {
 });
 
 describe("refunds", () => {
-  it("issues an in-band refund with exactly 1 yocto attached", async () => {
+  it("issues an in-band refund with zero deposit attached (leash keys cannot attach deposits)", async () => {
     const { mock, vault, worker } = setup([order({ state: "Fulfilled" })]);
     await vault.addRefundRequest({
       requestId: "r1",
@@ -103,7 +103,7 @@ describe("refunds", () => {
     expect(report.refundsIssuedOrderIds).toEqual([0]);
     const refundCalls = mock.callLog.filter((c) => c.method === "issue_refund");
     expect(refundCalls).toHaveLength(1);
-    expect(refundCalls[0]?.depositYocto).toBe("1");
+    expect(refundCalls[0]?.depositYocto).toBe("0");
     expect(mock.orderState(0)).toBe("Refunded");
     expect(await vault.pendingRefundRequests()).toHaveLength(0);
   });

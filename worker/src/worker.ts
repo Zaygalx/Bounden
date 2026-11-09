@@ -21,9 +21,13 @@ import type { ChainOrder, Constitution } from "./types.js";
  *     and the constitution, PRE-CHECK the band locally (state, cap,
  *     window) and refuse locally with a logged reason when outside it —
  *     no gas burned on a call the contract would park as
- *     RefundRejected. In-band requests call issue_refund with exactly
- *     1 yocto attached (the contract asserts it, for the token's
- *     ft_transfer).
+ *     RefundRejected. In-band requests call issue_refund with NO
+ *     deposit attached: this process signs with a function-call key,
+ *     which protocol rules bar from attaching any deposit at all
+ *     (DepositWithFunctionCall — proven live on the v2 deployment).
+ *     The 1 yocto the token requires on the outbound ft_transfer is
+ *     attached by the contract itself, out of its own balance (v3
+ *     contract).
  *
  * The worker reads only the typed fields of an order. Free-text fields
  * (notes, memos) are never read and never influence behaviour — order
@@ -51,8 +55,6 @@ export interface WorkerDeps {
   /** Injectable clock (ns since epoch) for deterministic tests. */
   nowNs?: () => bigint;
 }
-
-const ONE_YOCTO = "1";
 
 export class BoundenWorker {
   private readonly nowNs: () => bigint;
@@ -189,7 +191,7 @@ export class BoundenWorker {
       });
       const args: Record<string, unknown> = { order_id: order.id };
       if (attestationHash !== null) args["attestation_hash"] = attestationHash;
-      const { txHash } = await chain.callAgentMethod("issue_refund", args, { depositYocto: ONE_YOCTO });
+      const { txHash } = await chain.callAgentMethod("issue_refund", args, { depositYocto: "0" });
       await vault.resolveRefundRequest(requestId, {
         status: "issued",
         ...(txHash ? { txHash } : {}),
