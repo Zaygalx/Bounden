@@ -238,6 +238,99 @@ end-to-end pass waits on the same faucet wall as deployment
   run attacks live. Also verify on testnet whether the agent FC key's
   allowance accounting behaves with the 1-yocto refund deposit.
 
+## Stage 3 pre-build — judgement layer + storefront (Mon 9 Nov 2026)
+
+Built against mocks/fixtures only; testnet deployment is still gated
+on the same faucet wall (PREFLIGHT §7), and no NEAR AI Cloud key
+exists in this environment. Commits: worker `504b525`, web `14eaeb8`.
+
+- **AI Cloud client (`worker/src/ai-cloud.ts`).** OpenAI-compatible
+  chat client for `https://cloud-api.near.ai/v1`; key from env only,
+  model id from env; fetch injectable (tests never touch the network);
+  30 s timeout via AbortController. Judgement = structured JSON
+  {decision: approve|refuse|escalate, reason}. Parsing decisions:
+  fenced or prose-wrapped JSON is tolerated on INPUT, but the decision
+  enum is strict and any malformation maps to escalate — never
+  approve. The attestation report parser is the defensive centre:
+  requires a JSON object, a `model`/`model_id` field equal to the
+  requested model, and ≥1 field from a generous TEE-evidence set
+  (quote/tdx/intel/nvidia/gpu/event_log/vm_config…); anything else is
+  a typed `AiCloudShapeError`. Rationale: the live report shape is
+  UNVERIFIED (fixtures are doc-derived — `worker/test/fixtures/`), so
+  the parser trades strictness for loud failure, and the hash input
+  keeps the ENTIRE raw report, so a future field we don't know about
+  still binds into the attestation hash. The live pass narrows the
+  evidence set to the observed fields and replaces the fixtures with
+  real captures.
+- **Provider semantics (`worker/src/ai-cloud-attestation.ts`).**
+  Selected via `BOUNDEN_ATTESTATION_PROVIDER=near-ai` (default `null`
+  — Stage 2 behaviour unchanged). Non-approval THROWS
+  (`JudgementNotApprovedError`) rather than returning null, because
+  through the `Promise<string|null>` seam a null means "no judgement —
+  proceed", and a refuse must never degrade into that. The worker's
+  existing catch path then leaves the order in place for owner
+  review. Outcomes cached per request hash (the worker polls;
+  re-asking costs credit and could flip decisions). Hash format
+  `near-ai:<hex>` mirrors the `local-sha256:` prefix discipline — the
+  source of a hash is visible in the hash. Key-absent refusal:
+  provider constructs no client, logs at error level at startup and
+  per request, returns null.
+- **Payload hygiene.** ONE builder (`buildJudgementRequestBody`),
+  whitelist-only. Deliberate exclusion: the buyer ACCOUNT id is not
+  sent to the model (the history summary is the designed input); the
+  account is bound locally via `computeRequestHash`, so a judgement
+  still cannot be transplanted between buyers. Test plants
+  code/key/prompt-injection strings in extra request fields and
+  asserts none reach the serialised payload.
+- **Worker verification:** typecheck PASS (strict), **51/51 vitest
+  tests PASS** (30 Stage 2 + 21 new), build PASS. Sandbox gotcha:
+  vitest dies with ENOSPC unless `TMPDIR=$HOME/.tmp` (the 512 MB /tmp
+  tmpfs again).
+- **Storefront (`web/`).** Next.js **16.4.5** + React **19.3.1**
+  (registry-current in this sandbox; exact pins, lockfile committed),
+  TypeScript 7.0.2, no CSS framework, system font stack (avoids the
+  Google-Fonts fetch at build time). Data layer (`src/lib/shop.ts`):
+  fixture mode iff `BOUNDEN_CONTRACT_ACCOUNT_ID` unset; live mode
+  reads via JSON-RPC `query`/`call_function` (same shape PREFLIGHT
+  verified live) + `view_access_key` for the leash; a failed live
+  read falls back to fixture data WITH a banner saying so. Catalogue
+  needs `BOUNDEN_PRODUCT_IDS` because the contract has no
+  list-products view (same constraint the worker hit with orders).
+  Pages all `force-dynamic` so live reads are never baked at build.
+  Next 16 notes: route `params` are Promises (awaited everywhere);
+  `next build` auto-rewrote tsconfig (jsx → react-jsx, added
+  `.next/dev/types` include) — committed as Next left it; `.next/`
+  and `*.tsbuildinfo` added to the repo .gitignore (caught 253 build
+  files trying to enter the storefront commit).
+- **Web verification:** typecheck PASS; `next build` PASS (7 app
+  routes, all dynamic); production server smoked in fixture mode —
+  `/`, `/products/licence-pro`, `/checkout/licence-pro`, `/orders/0`,
+  `/orders/99`, `/constitution`, `/about` all 200, demo notice +
+  fixture banner present, constitution shows the allowlist and the
+  0.25 NEAR allowance, `/orders?id=1` 307-redirects to `/orders/1`.
+  Live mode is NOT yet smoked (no deployed contract exists to read).
+- **Checkout is an explainer, deliberately.** Buying is a wallet
+  action (`create_order` + `ft_transfer_call` with msg = the order
+  id as a decimal string — verified against contract/src/lib.rs, the
+  msg is parsed with `msg.trim().parse::<u64>()` and nothing else).
+  The storefront holds no keys and signs nothing; a wallet-connect
+  buy flow is a live-pass decision, not a pre-build assumption.
+- **Downloads:** design only (`docs/DOWNLOADS.md`) — HMAC-signed
+  token, 15-min expiry, one-time `jti`, bound to (order_id,
+  evidence_hash) from the on-chain fulfilment record; dedicated
+  download sub-key so the download path can never decrypt inventory.
+- **Stage 3 live pass, in order:** (1) user creates the NEAR AI Cloud
+  key + claims the $10 Builders credit (PREFLIGHT §4); (2) capture
+  ONE real chat completion + attestation report, diff vs fixtures,
+  narrow the parser, mark fixtures VERIFIED-LIVE; (3) after testnet
+  deployment (PREFLIGHT §7 sequence): set
+  `BOUNDEN_ATTESTATION_PROVIDER=near-ai` + key/model env, run one
+  real order end-to-end, confirm a `near-ai:` hash lands on-chain via
+  `get_order`; (4) point `web/` env at the deployed contract +
+  `BOUNDEN_AGENT_PUBLIC_KEY`, smoke every page in live mode, deploy
+  to Vercel; (5) exercise a refund judgement (approve AND refuse
+  paths) on testnet before the film.
+
 ## Repo conventions
 
 - All commits authored as Hassan Dosunmu <Dosunmuh070@gmail.com>

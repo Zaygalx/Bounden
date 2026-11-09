@@ -123,8 +123,45 @@ npm start
 `src/attestation.ts` defines `AttestationProvider`. Stage 2 ships
 `NullAttestationProvider` (default: no hash stored — the absence is
 honest and visible on-chain) and a clearly-labelled local-hash dev
-provider (prefix `local-sha256:`, **not** a TEE attestation). Stage 3
-adds the NEAR AI Cloud provider behind the same interface.
+provider (prefix `local-sha256:`, **not** a TEE attestation).
+
+Stage 3 adds the real provider behind the same interface:
+`NearAiCloudAttestationProvider` (`src/ai-cloud-attestation.ts` +
+`src/ai-cloud.ts`), selected with `BOUNDEN_ATTESTATION_PROVIDER=near-ai`
+(default stays `null`, so Stage 2 behaviour is unchanged unless the
+operator opts in). Env: `NEAR_AI_CLOUD_API_KEY`,
+`NEAR_AI_CLOUD_MODEL`, `NEAR_AI_CLOUD_BASE_URL` (default
+`https://cloud-api.near.ai/v1`) — values from the environment only,
+never logged.
+
+- For each fulfil/refund decision the provider asks NEAR AI Cloud for
+  a structured judgement (approve / refuse / escalate) built from
+  facts only — the payload is constructed in ONE function from a
+  whitelist (kind, order id, product id, amount, buyer history
+  summary). Inventory codes, keys, and even the buyer account id never
+  reach the model; the account is bound into the local request hash
+  instead. A unit test plants code-shaped strings in extra fields and
+  asserts they cannot leak.
+- Approve → the model's attestation report is fetched and the
+  on-chain hash is computed as SHA-256 over the canonicalised
+  {model, requestHash, response, attestationReport}, stored as
+  `near-ai:<hex>`.
+- Refuse / escalate / malformed output → the provider throws
+  `JudgementNotApprovedError`; the worker makes NO on-chain call and
+  the order keeps its state for owner review. Malformed output
+  escalates — it never approves. Outcomes are cached per request hash
+  so polling never re-asks (or re-bills) the same question.
+- No API key (or no model id) → the provider is DISABLED: it logs
+  loudly and returns null (null-provider behaviour). It never
+  fabricates a hash.
+- **Unverified-live:** the attestation report's exact response shape
+  has not been seen from the real API (no key exists in the build
+  environment). Parsing is defensive — a report must bind to the
+  requested model and carry a recognisable TEE evidence field, else a
+  typed `AiCloudShapeError` fails the decision closed. Fixtures are
+  doc-derived and labelled as such (`test/fixtures/README.md`);
+  verifying the shape against the live API is the first hour of the
+  Stage 3 live pass.
 
 ## Status
 
