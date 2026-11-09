@@ -1,0 +1,72 @@
+# SCAFFOLD SKETCH — NOT A LIVE CONFIG. See docs/SHADE.md §3.
+# Annotated from NearDeFi/shade-agent-template's deployment.yaml with
+# Bounden's values. The Shade CLI has not read this file; Docker is
+# unavailable on the build VM, so no plan/deploy has been run.
+
+# Rehearsal first (docs/SHADE.md §4): local. Real build flips to TEE.
+environment: local # | TEE
+network: testnet
+
+docker_compose_path: ./docker-compose.yaml # ← Stage 4 creates this (delta D1);
+# the compose file must reference the worker image BY DIGEST, and the
+# Dockerfile must pin its base image BY DIGEST — both are load-bearing
+# for the app compose hash (docs/SHADE.md §1.3).
+
+agent_contract:
+  # The Shade REGISTRY contract (framework reference implementation),
+  # NOT the shop contract. The shop contract is never redeployed by
+  # the Shade CLI; the binding is set_agent on the shop, called by the
+  # owner after registry admission (docs/SHADE.md §2.2, Option A).
+  contract_id: # e.g. bounden-registry-1.testnet — must not already exist
+  deploy_custom:
+    enabled: true
+    funding_amount: 8 # template default; testnet NEAR from the sponsor
+    delete_key: false
+    deploy_from_wasm:
+      enabled: true
+      wasm_path: # shade-contract-template build output (cargo near build)
+    init:
+      enabled: true
+      method_name: new
+      args: |
+        {
+          "requires_tee": <REQUIRES_TEE>,
+          "attestation_expiration_time_ms": <7_DAYS>,
+          "owner_id": <MASTER_ACCOUNT_ID>,
+          "mpc_contract_id": <DEFAULT_MPC_CONTRACT_ID>
+        }
+      # NOTE: for the demo, consider a longer attestation window than
+      # the 7-day default so registration cannot expire mid-film
+      # (docs/SHADE.md §2.6) — a visible demo parameter, set here.
+
+approve_measurements:
+  enabled: true # CLI computes <MEASUREMENTS> from the compose file +
+  # dstack version + instance type. Keep exactly ONE set approved:
+  # verification iterates all sets and can hit the gas limit
+  # (docs/SHADE.md §2.3).
+
+approve_ppids:
+  enabled: true # Phala target: the fleet PPID list, computed by the CLI.
+
+build_docker_image:
+  enabled: true
+  tag: # a Docker Hub tag the owner controls, e.g. <user>/bounden-cashier
+  dockerfile_path: ./Dockerfile # ← Stage 4 creates this (delta D1)
+
+tee_config:
+  dstack_version: 0.5.8 # supported: 0.5.7, 0.5.8 (CLI reference)
+  instance_type: tdx.small
+  public_logs: false # template default is true; the cashier logs
+  # order metadata — keep logs private (framework security doc).
+  public_sysinfo: true
+  deploy:
+    enabled: true
+    app_name: bounden-cashier
+    env_file_path: ./.env # sponsor + contract ids only; NO vault key
+    # material, NO inventory material (docs/SHADE.md §2.4).
+  phala:
+    enabled: true # needs a Phala Cloud account + API key via `shade auth`
+
+whitelist_agent_for_local:
+  method_name: whitelist_agent_for_local # rehearsal mode only; the
+  # deployed registry is initialised requires_tee: true (§2.3.5).
