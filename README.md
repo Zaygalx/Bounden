@@ -46,8 +46,10 @@ Full plan: [docs/PLAN.md](docs/PLAN.md) · Pre-flight evidence:
 
 ## Status
 
-**Stage 1 in progress** (foundation + contract skeleton). Honest limits
-right now:
+**Stage 1 contract implemented and verified locally** (23 unit tests
+passing; release wasm builds at ~332 KB). Not yet deployed — deployment
+waits for the `bounden.testnet` account claim (see docs/PREFLIGHT.md).
+Honest limits right now:
 
 - Testnet only. Mainnet is out of scope for this build; a dust-value
   mainnet settlement may be added later strictly as stretch evidence.

@@ -64,6 +64,59 @@ Gotchas recorded:
   ≈0.1 NEAR real money — deferred to Stage 5 as a user step. Nothing
   was spent in pre-flight.
 
+## Stage 1 proper — constitution contract (Mon 9 Nov 2026)
+
+Implemented in `contract/src/lib.rs` (tests in `contract/src/tests.rs`):
+
+- Owner-only admin: `set_agent` (register/rotate agent + pinned code
+  hash), `add_product`, `update_product` with the price band enforced
+  in-contract (deviation > `price_band_bps` of the current price is
+  rejected, even for the owner), `add_inventory_commitments`
+  (SHA-256 hex only, duplicates rejected).
+- Orders: `create_order` (price copied at creation), `cancel_order`
+  (buyer-only, `Created` only). Payment ONLY via NEP-141
+  `ft_transfer_call` into `ft_on_transfer`: predecessor must be the
+  settlement token, sender must be the buyer, amount must equal the
+  order amount EXACTLY — over/underpayment returns the full amount as
+  unused (the token refunds the sender) and emits
+  `bounden_order_rejected_payment`.
+- `fulfil_order`: registered agent only, `Paid` only, consumes exactly
+  one commitment, appends a `FulfilmentRecord` (delivery evidence hash +
+  optional AI attestation hash, also stored on the order), state →
+  `Fulfilled`. Second fulfil panics.
+- `issue_refund`: agent only, `Paid` or `Fulfilled` orders (PLAN's
+  state machine). Band failure on a valid agent call does NOT move
+  money: state → `RefundRejected` + `bounden_refund_rejected` event for
+  owner review. In-band: `ft_transfer` of the order amount back to the
+  buyer, state → `Refunded`, log entry. (Key-level rejections never
+  reach the contract; the attack suite demonstrates those.)
+- Treasury: `withdraw_treasury` is owner-only and the destination is
+  HARD-CODED to the owner account — no address parameter, by design.
+- Views: `get_product`, `get_order`, `get_constitution`,
+  `get_fulfilment_log` (paged), `fulfilment_log_len`,
+  `inventory_available`. Events are NEP-297-style `EVENT_JSON:` log
+  lines (`bounden_order_created/paid/fulfilled/refunded/…`).
+- Verification: `cargo test` — **23 passed, 0 failed, 0 warnings**
+  (TMPDIR=$HOME/.tmp). Release wasm: `cargo build --target
+  wasm32-unknown-unknown --release` PASS, **339,892 bytes (~332 KB)** —
+  larger than the 179 KB skeleton because the contract now carries the
+  full method surface plus near-contract-standards.
+
+SDK friction worth remembering:
+
+- Added two direct dependencies in Stage 1 proper:
+  `near-contract-standards = "5"` (resolved 5.30.1; provides the
+  `FungibleTokenReceiver` trait — note it does NOT export an
+  `ext_fungible_token` cross-contract trait, so the outbound FT
+  interface is declared locally with `#[ext_contract]`) and
+  `serde_json` (near-sdk re-exports serde but not serde_json; the
+  event emitter needs real JSON escaping for free-form strings).
+- `Promise`/`PromiseOrValue` returned by contract methods are
+  `#[must_use]` in tests too — discarded promises in test code warn;
+  bind them (`let _ =` or assert on them) instead of dropping.
+- `env::attached_deposit()` returns `NearToken` in near-sdk 5.30;
+  compare via `.as_yoctonear()`.
+
 ## Repo conventions
 
 - All commits authored as Hassan Dosunmu <Dosunmuh070@gmail.com>
