@@ -35,6 +35,14 @@ import type { ChainOrder, Constitution } from "./types.js";
  * package that can move the treasury or pay anyone but the buyer of
  * record: the only signed calls are the two allowlisted methods, and
  * issue_refund's destination is chosen by the contract, not by us.
+ *
+ * Every judgement request carries a buyer history summary computed
+ * from the worker's own scan of the chain (summarizeBuyerHistory):
+ * counts of the buyer's OTHER orders by state. It is the only buyer
+ * context ever sent to the judgement layer — the buyer account id
+ * itself is never sent (see ai-cloud.ts). The summary is derived,
+ * never written by hand: a first-time buyer truthfully reads
+ * "No prior orders."
  */
 
 export interface CycleReport {
@@ -54,6 +62,43 @@ export interface WorkerDeps {
   scanLimit: number;
   /** Injectable clock (ns since epoch) for deterministic tests. */
   nowNs?: () => bigint;
+}
+
+/** State labels for the buyer history summary, in report order. */
+const HISTORY_STATE_LABELS: Array<[ChainOrder["state"], string]> = [
+  ["Created", "created"],
+  ["Paid", "paid"],
+  ["Fulfilled", "fulfilled"],
+  ["Cancelled", "cancelled"],
+  ["Refunded", "refunded"],
+  ["RefundRejected", "refund-rejected"],
+];
+
+/**
+ * Factual buyer history for a judgement request, derived ONLY from
+ * orders the worker itself read off the chain during its scan:
+ * the buyer's other orders (the order under judgement is excluded),
+ * counted by their current state. Examples:
+ *   "No prior orders."
+ *   "1 prior order: 1 fulfilled."
+ *   "3 prior orders: 2 fulfilled, 1 refunded."
+ * Nothing here is estimated, rounded, or softened — if the buyer's
+ * history is refund-heavy, the summary says so.
+ */
+export function summarizeBuyerHistory(
+  orders: ChainOrder[],
+  buyer: string,
+  excludeOrderId: number,
+): string {
+  const priors = orders.filter((o) => o.buyer === buyer && o.id !== excludeOrderId);
+  if (priors.length === 0) return "No prior orders.";
+  const parts: string[] = [];
+  for (const [state, label] of HISTORY_STATE_LABELS) {
+    const n = priors.filter((o) => o.state === state).length;
+    if (n > 0) parts.push(`${n} ${label}`);
+  }
+  const noun = priors.length === 1 ? "order" : "orders";
+  return `${priors.length} prior ${noun}: ${parts.join(", ")}.`;
 }
 
 export class BoundenWorker {
@@ -92,28 +137,36 @@ export class BoundenWorker {
       }
     }
 
-    // 2 + 3. Discover and fulfil Paid orders.
+    // 2 + 3. Discover and fulfil Paid orders. Every scanned order is
+    // kept: the set is the worker's own evidence base for the buyer
+    // history summaries attached to judgement requests below.
+    const scanned: ChainOrder[] = [];
     const paidOrders: ChainOrder[] = [];
     for (let id = 0; id < this.deps.scanLimit; id++) {
       const order = await chain.getOrder(id);
       if (order === null) break;
       report.scannedOrders++;
+      scanned.push(order);
       if (order.state === "Paid") paidOrders.push(order);
       else report.skippedOrderIds.push(order.id);
     }
     for (const order of paidOrders) {
-      await this.fulfil(order, report);
+      await this.fulfil(order, report, scanned);
     }
 
     // 4. Refund requests.
     for (const req of await vault.pendingRefundRequests()) {
-      await this.processRefund(req.requestId, req.orderId, constitution, report);
+      await this.processRefund(req.requestId, req.orderId, constitution, report, scanned);
     }
 
     return report;
   }
 
-  private async fulfil(order: ChainOrder, report: CycleReport): Promise<void> {
+  private async fulfil(
+    order: ChainOrder,
+    report: CycleReport,
+    scanned: ChainOrder[],
+  ): Promise<void> {
     const { chain, vault, attestation, logger } = this.deps;
     let prepared = false;
     try {
@@ -125,6 +178,7 @@ export class BoundenWorker {
         buyer: order.buyer,
         productId: order.product_id,
         amountUsd: order.amount_usd,
+        buyerHistorySummary: summarizeBuyerHistory(scanned, order.buyer, order.id),
       });
       const args: Record<string, unknown> = {
         order_id: order.id,
@@ -157,6 +211,7 @@ export class BoundenWorker {
     orderId: number,
     constitution: Constitution,
     report: CycleReport,
+    scanned: ChainOrder[],
   ): Promise<void> {
     const { chain, vault, attestation, logger } = this.deps;
     const refuse = async (reason: string): Promise<void> => {
@@ -188,6 +243,7 @@ export class BoundenWorker {
         buyer: order.buyer,
         productId: order.product_id,
         amountUsd: order.amount_usd,
+        buyerHistorySummary: summarizeBuyerHistory(scanned, order.buyer, order.id),
       });
       const args: Record<string, unknown> = { order_id: order.id };
       if (attestationHash !== null) args["attestation_hash"] = attestationHash;

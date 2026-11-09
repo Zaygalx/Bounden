@@ -4,9 +4,13 @@ import {
   LeashedChainClient,
 } from "../src/chain.js";
 import { InMemoryVault } from "../src/vault.js";
-import { NullAttestationProvider } from "../src/attestation.js";
+import {
+  NullAttestationProvider,
+  type AttestationProvider,
+  type AttestationRequest,
+} from "../src/attestation.js";
 import { MemoryLogger } from "../src/logger.js";
-import { BoundenWorker } from "../src/worker.js";
+import { BoundenWorker, summarizeBuyerHistory } from "../src/worker.js";
 import type { ChainOrder } from "../src/types.js";
 
 const PAID_AT = 1_000_000_000; // ns, arbitrary fixed point
@@ -142,6 +146,99 @@ describe("refunds", () => {
     expect(report.refundsIssuedOrderIds).toEqual([]);
     expect(report.refundsRefused[0]?.reason).toMatch(/window/);
     expect(mock.callLog.filter((c) => c.method === "issue_refund")).toHaveLength(0);
+  });
+});
+
+/** Captures every judgement request the worker builds, returns null
+ *  (proceed without a hash) so the cycle completes. */
+class RecordingProvider implements AttestationProvider {
+  readonly name = "recording (test)";
+  readonly requests: AttestationRequest[] = [];
+  async getAttestationHash(req: AttestationRequest): Promise<string | null> {
+    this.requests.push(req);
+    return null;
+  }
+}
+
+function setupRecording(orders: ChainOrder[]) {
+  const mock = new MockChainClient();
+  mock.nowNs = IN_WINDOW_NOW;
+  for (const o of orders) mock.addOrder(o);
+  const chain = new LeashedChainClient(mock);
+  const vault = new InMemoryVault();
+  const logger = new MemoryLogger();
+  const attestation = new RecordingProvider();
+  const worker = new BoundenWorker({
+    chain,
+    vault,
+    attestation,
+    logger,
+    scanLimit: 100,
+    nowNs: () => IN_WINDOW_NOW,
+  });
+  return { mock, vault, attestation, worker };
+}
+
+describe("buyer history summary on judgement requests", () => {
+  it("fulfil request carries the summary derived from the buyer's seeded orders", async () => {
+    const { vault, attestation, worker } = setupRecording([
+      order({ id: 0, state: "Fulfilled" }),
+      order({ id: 1, state: "Refunded" }),
+      order({ id: 2, state: "Paid" }), // the order being fulfilled
+      order({ id: 3, state: "Fulfilled", buyer: "someone-else.testnet" }), // not this buyer
+    ]);
+    await vault.addCodes("licence-pro", ["BOUNDEN-TEST-LICENCE-0001"]);
+
+    const report = await worker.pollOnce();
+    expect(report.fulfilledOrderIds).toEqual([2]);
+    const fulfilReqs = attestation.requests.filter((r) => r.kind === "fulfil");
+    expect(fulfilReqs).toHaveLength(1);
+    expect(fulfilReqs[0]?.orderId).toBe(2);
+    // The other buyer's order is not counted; the order under
+    // judgement is not counted either.
+    expect(fulfilReqs[0]?.buyerHistorySummary).toBe(
+      "2 prior orders: 1 fulfilled, 1 refunded.",
+    );
+  });
+
+  it("refund request carries the summary too", async () => {
+    const { vault, attestation, worker } = setupRecording([
+      order({ id: 0, state: "Fulfilled" }),
+      order({ id: 1, state: "Fulfilled" }), // the order being refunded
+    ]);
+    await vault.addRefundRequest({
+      requestId: "rh1",
+      orderId: 1,
+      reason: "buyer changed mind",
+      requestedAt: new Date().toISOString(),
+    });
+    const report = await worker.pollOnce();
+    expect(report.refundsIssuedOrderIds).toEqual([1]);
+    const refundReqs = attestation.requests.filter((r) => r.kind === "refund");
+    expect(refundReqs).toHaveLength(1);
+    expect(refundReqs[0]?.buyerHistorySummary).toBe("1 prior order: 1 fulfilled.");
+  });
+
+  it("a first-time buyer truthfully gets 'No prior orders.' — still non-empty", async () => {
+    const { vault, attestation, worker } = setupRecording([order({ id: 0, state: "Paid" })]);
+    await vault.addCodes("licence-pro", ["BOUNDEN-TEST-LICENCE-0001"]);
+    await worker.pollOnce();
+    expect(attestation.requests).toHaveLength(1);
+    expect(attestation.requests[0]?.buyerHistorySummary).toBe("No prior orders.");
+  });
+
+  it("summarizeBuyerHistory counts by state in a stable order", () => {
+    const orders = [
+      order({ id: 0, state: "RefundRejected" }),
+      order({ id: 1, state: "Refunded" }),
+      order({ id: 2, state: "Fulfilled" }),
+      order({ id: 3, state: "Fulfilled" }),
+      order({ id: 4, state: "Paid" }),
+    ];
+    expect(summarizeBuyerHistory(orders, "buyer.testnet", 4)).toBe(
+      "4 prior orders: 2 fulfilled, 1 refunded, 1 refund-rejected.",
+    );
+    expect(summarizeBuyerHistory(orders, "nobody.testnet", 99)).toBe("No prior orders.");
   });
 });
 
