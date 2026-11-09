@@ -1,0 +1,15 @@
+[workspace]
+resolver = "3"
+members = ["contract"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+overflow-checks = true

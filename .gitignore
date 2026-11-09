@@ -1,0 +1,12 @@
+/target
+**/*.rs.bk
+Cargo.lock.orig
+
+# Secrets — never commit keys, seed phrases, or vault material.
+*.key
+*.pem
+credentials/
+.near-credentials/
+.env
+.env.*
+vault/

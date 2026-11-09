@@ -1,0 +1,20 @@
+[package]
+name = "bounden-contract"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Bounden shop contract: the constitution for an agent-run digital-goods store on NEAR."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# unit-testing: lets host-side `cargo check` / `cargo test` compile the SDK
+# outside the contract environment. legacy: near-sdk 5.x keeps the classic
+# collections (UnorderedMap / LookupMap / Vector) behind this feature.
+# The wasm build (cargo near) targets the same crate; the on-chain code
+# paths do not depend on unit-testing behaviour.
+near-sdk = { version = "5.30", features = ["unit-testing", "legacy"] }
+# near-sdk 5.x expects borsh as a direct dependency of the contract crate
+# (its derives resolve the crate by name).
+borsh = "1"
