@@ -1,0 +1,1 @@
+{"devDependencies":{"@types/node":"24.10.1","typescript":"7.0.2"},"engines":{"node":">=22"},"name":"bounden-attacks","private":true,"scripts":{"build":"tsc -p tsconfig.json","start":"node dist/src/run-attacks.js","typecheck":"tsc -p tsconfig.json --noEmit"},"type":"module","version":"0.1.0"}
