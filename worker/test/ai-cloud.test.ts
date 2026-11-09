@@ -24,8 +24,10 @@ import type { AttestationRequest } from "../src/attestation.js";
 /**
  * Stage 3 judgement-layer tests. ALL network access is a fake fetch.
  * The attestation fixture is a redacted REAL capture, VERIFIED-LIVE
- * 9 Nov 2026; the chat-completion fixture is still DOC-DERIVED (live
- * completions are gated on account credits — see fixtures/README.md).
+ * 9 Nov 2026, and two chat completions are VERIFIED-LIVE captures of
+ * the same date (in-band refund → approve; out-of-band refund →
+ * refuse — see fixtures/README.md). The synthetic chat-completion
+ * fixture stays doc-derived and backs the completionWith() cases.
  * These tests prove claims about OUR code — parsing strictness, hash
  * determinism, fail-closed behaviour, payload hygiene.
  */
@@ -39,6 +41,15 @@ function loadFixture(name: string): Record<string, unknown> {
 
 const chatFixture = loadFixture("chat-completion.json");
 const reportFixture = loadFixture("attestation-report.json");
+// VERIFIED-LIVE captures, 9 Nov 2026 (see fixtures/README.md):
+// in-band refund judgement → approve (completion 7a7b1ed10e7f47deae06150387dd5b9b);
+// out-of-band refund judgement → refuse (completion 56474058c3bc40a884434645debe2811).
+const liveApproveFixture = loadFixture(
+  "chat-completion-refund-in-band.verified-live-2026-11-09.json",
+);
+const liveRefuseFixture = loadFixture(
+  "chat-completion-refund-out-of-band.verified-live-2026-11-09.json",
+);
 
 function completionWith(content: string): Record<string, unknown> {
   const clone = JSON.parse(JSON.stringify(chatFixture)) as Record<string, unknown>;
@@ -130,6 +141,24 @@ describe("parseChatCompletion", () => {
     for (const bad of [null, [], {}, { choices: [] }, { choices: [{ message: {} }] }, "text"]) {
       expect(() => parseChatCompletion(bad)).toThrow(AiCloudShapeError);
     }
+  });
+});
+
+describe("verified-live completions (captured 9 Nov 2026)", () => {
+  it("the live in-band refund completion parses strictly and approves", () => {
+    const c = parseChatCompletion(liveApproveFixture);
+    expect(c.model).toBe(MODEL);
+    const j = parseJudgement(c.content);
+    expect(j.decision).toBe("approve");
+    expect(j.malformed).toBe(false);
+  });
+
+  it("the live out-of-band refund completion parses strictly and refuses", () => {
+    const c = parseChatCompletion(liveRefuseFixture);
+    expect(c.model).toBe(MODEL);
+    const j = parseJudgement(c.content);
+    expect(j.decision).toBe("refuse");
+    expect(j.malformed).toBe(false);
   });
 });
 
@@ -289,6 +318,25 @@ describe("NearAiCloudAttestationProvider", () => {
       JudgementNotApprovedError,
     );
     expect(calls.length).toBe(callsAfterFirst);
+  });
+
+  it("VERIFIED-LIVE approve completion → near-ai: hash end to end", async () => {
+    const { provider, calls } = providerWith(liveApproveFixture);
+    const h = await provider.getAttestationHash(req({ kind: "refund" }));
+    expect(h).toMatch(/^near-ai:[0-9a-f]{64}$/);
+    // Approval was followed by the attestation-report fetch.
+    expect(calls.some((u) => u.includes("/attestation/report"))).toBe(true);
+  });
+
+  it("VERIFIED-LIVE refuse completion → JudgementNotApprovedError, no attestation fetch", async () => {
+    const { provider, calls } = providerWith(liveRefuseFixture);
+    const err = await provider
+      .getAttestationHash(req({ kind: "refund" }))
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(JudgementNotApprovedError);
+    expect((err as JudgementNotApprovedError).decision).toBe("refuse");
+    // A refusal stops the flow before any attestation work.
+    expect(calls.some((u) => u.includes("/attestation/report"))).toBe(false);
   });
 
   it("malformed model output escalates and never yields a hash", async () => {

@@ -1,0 +1,26 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "logprobs": null,
+      "message": {
+        "content": "{\"decision\":\"approve\",\"reason\":\"Refund within 24-hour window, amount matches purchase, buyer history clean.\"}",
+        "reasoning_content": null,
+        "role": "assistant",
+        "tool_calls": null
+      }
+    }
+  ],
+  "created": 1794236286,
+  "id": "7a7b1ed10e7f47deae06150387dd5b9b",
+  "model": "deepseek/deepseek-v3.2",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 26,
+    "prompt_tokens": 274,
+    "prompt_tokens_details": null,
+    "reasoning_tokens": 0,
+    "total_tokens": 300
+  }
+}
