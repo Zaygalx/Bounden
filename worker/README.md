@@ -160,10 +160,13 @@ never logged.
   whose `quote_b64` / `gpu_evidence` are the evidence, and anything
   unrecognised still fails closed with a typed `AiCloudShapeError`.
   The attestation fixture is a redacted real capture
-  (`test/fixtures/README.md`). Still doc-derived: the chat
-  completion fixture — live inference returned 402 (no spending
-  limit / credits configured) on 9 Nov 2026, so a real completion
-  capture is owed once credits are set up in the dashboard.
+  (`test/fixtures/README.md`). Chat completions are VERIFIED-LIVE
+  too (later on 9 Nov 2026, after the Builders credit landed on the
+  key): two real judgement completions are captured as fixtures —
+  in-band refund → approve, out-of-band refund → refuse — and the
+  provider tests run against them. The synthetic completion fixture
+  stays doc-derived for the variants the live model was not asked
+  to produce.
 
 ## Status
 

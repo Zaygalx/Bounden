@@ -115,6 +115,18 @@ From docs.near.ai (Quickstart + API reference, crawled 9 Nov 2026):
   a spending limit set up in the cloud.near.ai dashboard (the $10
   Builders credit above is the expected route) before the first live
   judgement can run. [USER STEP, dashboard only]
+  **UPDATE (9 Nov 2026, ~15:57 WAT): user step DONE.** The credit
+  was bound to the owner's NEAR identity: a fresh key created inside
+  the boundenn.near builder workspace (console name carries the
+  US$10.00 credit) replaced the pre-credit key in the connector, and
+  inference immediately returned 200. Two live judgement completions
+  from `deepseek/deepseek-v3.2` are captured as VERIFIED-LIVE
+  fixtures (in-band refund → approve, completion
+  `7a7b1ed10e7f47deae06150387dd5b9b`; out-of-band refund → refuse,
+  completion `56474058c3bc40a884434645debe2811`). The completion JSON
+  carries NO inline attestation and no separate inference-id field —
+  attestation stays a separate report fetch. Full record: NOTES.md,
+  Stage 3 live verification pack.
 
 ## 5. Mainnet payout account (`bounden.near`) — funding brief (updated 9 Nov, deployment run)
 

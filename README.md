@@ -125,9 +125,14 @@ on-chain):
 - NEAR AI Cloud attestation verified against the live API —
   DONE 9 Nov 2026 for the attestation report (redacted real capture
   in `worker/test/fixtures/`, parser narrowed to the observed live
-  shape). Still open: one live chat completion — inference on the
-  account is gated on credits (402 until a spending limit or the
-  $10 Builders credit is set up in the dashboard).
+  shape). Live chat completions — DONE later the same day: once the
+  $10 Builders credit landed on a key issued under the owner's
+  boundenn.near workspace, two live judgement completions from
+  `deepseek/deepseek-v3.2` were captured as VERIFIED-LIVE fixtures
+  (in-band refund → approve; out-of-band refund → refuse) and wired
+  into the worker suite. Still open: the on-chain run that stores a
+  `near-ai:` hash on a real order — it rides with the v3 deploy
+  above (NOTES.md, Stage 3 verification pack).
 - The demo film (<60s, `docs/FILM.md`), the X demo post, and the
   submission itself (`docs/SUBMISSION.md`).
 - Stage 4 (Shade Agent / TEE): spiked and designed, **not shipped** —
@@ -238,10 +243,13 @@ passing, all network access faked). **Attestation shape VERIFIED-LIVE
 `model_attestations` array (not the flat shape the docs suggested);
 the fixture is now a redacted real capture and the parser was
 narrowed to the observed shape, still failing closed on anything
-unrecognised (`worker/test/fixtures/README.md`). The chat-completion
-fixture remains doc-derived: live inference is gated on account
-credits (402 on 9 Nov 2026), so one real completion capture is still
-owed once credits are set up. The **storefront** (`web/`, Next.js)
+unrecognised (`worker/test/fixtures/README.md`). The synthetic
+chat-completion fixture remains doc-derived, but two VERIFIED-LIVE
+judgement completions now sit beside it — captured 9 Nov 2026 once
+the Builders credit unblocked inference (in-band refund → approve;
+out-of-band refund → refuse; provider tests prove the approve path
+yields a `near-ai:` hash and the refuse path throws). The
+**storefront** (`web/`, Next.js)
 builds and demos today in fixture mode: catalogue, product pages, a
 checkout explainer (payment is a wallet action — the cashier never
 touches it), order status, the public Constitution page rendering the

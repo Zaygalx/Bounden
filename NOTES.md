@@ -870,6 +870,78 @@ reporting (needs a separate `rpt-` reporting token).
   `near-ai:` hash lands on-chain via `get_order`; (3) exercise both
   refund judgement paths on testnet before the Stage 5 film.
 
+## Stage 3 live verification pack — completions VERIFIED-LIVE (Mon 9 Nov 2026, ~15:57 WAT)
+
+- CREDIT UNBLOCKED: the owner created a fresh key inside the
+  boundenn.near NEAR AI Cloud workspace (the workspace carries the
+  US$10.00 Builders credit) and re-entered it through the secure
+  flow; the connector `custom.near-ai-cloud` now holds that key,
+  replacing the pre-credit one. Parent-verified end to end:
+  `POST /v1/chat/completions` → 200 (Qwen/Qwen3.6-35B-A3B-FP8,
+  completion `e82ab45f89364b5eab44be844897d1ea`). The 402 era is
+  over.
+- TWO JUDGEMENT COMPLETIONS CAPTURED LIVE (this pass): request
+  bodies built by the worker's own `buildJudgementRequestBody` for
+  synthetic refund orders, model `deepseek/deepseek-v3.2`, plus
+  `max_tokens: 512` (the client sets no cap; at 16 tokens the Qwen
+  reasoning model spent the budget on reasoning and returned
+  `content: null`):
+  - in-band refund (2 hours after purchase, inside the stated
+    24-hour window; clean buyer history) → **approve**, completion
+    `7a7b1ed10e7f47deae06150387dd5b9b`, 300 tokens total.
+  - out-of-band refund (30 days after delivery; stated policy is
+    24 hours) → **refuse**, completion
+    `56474058c3bc40a884434645debe2811`, 300 tokens total.
+  Saved verbatim as fixtures
+  `chat-completion-refund-in-band.verified-live-2026-11-09.json`
+  and `chat-completion-refund-out-of-band.verified-live-2026-11-09.json`
+  and wired into `worker/test/ai-cloud.test.ts`: both parse
+  strictly; the provider turns the live approve into a `near-ai:`
+  hash and the live refuse into a thrown
+  `JudgementNotApprovedError` (no attestation fetch made). Worker
+  suite 53 → 57, typecheck clean. The doc-derived
+  `chat-completion.json` stays for the synthetic variants. Total
+  live spend this pass: two calls, 600 tokens — negligible against
+  the $10 credit.
+- NO INLINE ATTESTATION (now confirmed on the judgement model
+  too): the completion JSON's top level is exactly {choices,
+  created, id, model, object, usage}; there is no attestation
+  field and no separate inference-id field — `id` is a bare
+  32-hex string. The message adds `reasoning_content: null` and
+  `tool_calls: null`; the choice adds `logprobs: null`. Attestation
+  remains a separate `GET /v1/attestation/report` fetch — the
+  worker's two-call design matches the live shape.
+- REMAINING FOR STAGE 3:
+  (1) The on-chain run — worker started with
+  `BOUNDEN_ATTESTATION_PROVIDER=near-ai` +
+  `NEAR_AI_CLOUD_MODEL=deepseek/deepseek-v3.2` against the v3 shop,
+  so a fulfil/refund stores a real `near-ai:` hash, verified via
+  `get_order`. Rides with the v3 deploy on bounden11 (still gated
+  on ~0.42 NEAR of testnet funding).
+  (2) RUNTIME KEY SEAM (requirement for that run): the worker
+  reads the key from its OWN process environment —
+  `src/index.ts` calls `selectAttestationProvider(process.env)`,
+  which reads `NEAR_AI_CLOUD_API_KEY` / `NEAR_AI_CLOUD_MODEL` /
+  `NEAR_AI_CLOUD_BASE_URL` (src/ai-cloud-attestation.ts). Absent
+  key → the provider logs loudly and returns null; it never
+  fabricates. The connector's vault surrogate does NOT feed the
+  worker process — nothing in the repo reads the connector vault,
+  and there is no dotenv or env-file loader anywhere in the worker
+  (checked). The key VALUE must therefore be placed into the
+  worker's environment by whoever launches it. Repo hygiene
+  already supports that without the value passing through chat:
+  `.env` / `.env.*` are gitignored and `.env.example` documents the
+  variable with the rule that the template never holds a real key.
+  If the v3 run wants the key staged on disk, the established
+  convention is a 0600 file under `~/workspace/bounden-secrets/`
+  (where the chain key files already live), sourced into the
+  environment at launch. No such file was created in this pass and
+  no key value was written anywhere — creating it is a separate,
+  deliberate step for the parent to plan.
+  (3) Exercise both refund judgement paths on testnet before the
+  Stage 5 film — the model half is now proven by the fixtures
+  above; the on-chain half rides with (1).
+
 ## Stage 2 live pass v2 — corrected token, redeploy, full order sequence (Mon 9 Nov 2026)
 
 The owner's two Circle faucet claims landed — and exposed a
