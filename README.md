@@ -118,9 +118,34 @@ full money sequence and all five attack cases run against it:
   no money moved, no prompt tuned, no rosier history
   substituted. The gate now judges on true facts; it simply
   does not approve this buyer, and under the constitution an
-  escalation means the cashier does not act. Still no
-  `near-ai:` hash exists on any live order — full evidence
-  in `NOTES.md`, "Stage 3 judgement-gate fix".
+  escalation means the cashier does not act. At that point
+  still no `near-ai:` hash existed on any live order — full
+  evidence in `NOTES.md`, "Stage 3 judgement-gate fix".
+  **That changed the same evening — see the closing attempt
+  immediately below.**
+- **Stage 3 closing attempt — the gate approves a clean
+  history (9 Nov 2026, evening)**: a second product,
+  `api-credit-basic` at $10.00 (3 more sealed commitments),
+  and a fresh buyer (implicit account `92e3b686…f9e3`, key in
+  the project vault) whose history was built honestly first:
+  one real $10 order created, paid, fulfilled by the leash
+  and **kept** (no refund), so the fixed worker's own
+  summarizer derived a true "1 prior order: 1 fulfilled."
+  for the next order. That order (id 3) was judged live
+  under the NEAR AI provider and **fulfilled by the leash
+  with its decision's attestation hash on-chain:
+  `near-ai:687dd7560cc1f69157932fa8fc8faab3c732db25e7a06d29c9c1a570dca6726f`**
+  — read `get_order(3)` or fulfilment log record #4 on
+  bounden11 and see it. The companion live refund judgement
+  for order 3 refused on a wrong ground ("Refund amount
+  exceeds product price." — the amount equals the price)
+  and made no chain call; the order stays fulfilled, and
+  the refusal is recorded, not argued with. Orders 0–2
+  still carry `attestation_hash: null` from the null
+  provider — the earlier record stands unrewritten.
+  Closing-attempt balances: buyer-2 5 USDC, bounden11
+  treasury 20 USDC, bounden7 15 USDC (untouched), owner 0.
+  Full evidence: `NOTES.md`, "Stage 3 closing attempt".
 
 The v2 record follows — **`bounden10.testnet` is SUPERSEDED**
 (its order 1 remains `Paid` there against a withdrawn
@@ -202,12 +227,15 @@ on-chain):
   (in-band refund → approve; out-of-band refund → refuse) and wired
   into the worker suite. The on-chain run was ATTEMPTED with the
   v3 deploy and the judgement layer would not approve (see the
-  Stage 3 caveat in the live section above). The follow-up fix
+  Stage 3 caveat in the live section above); the follow-up fix
   (populate `buyerHistorySummary` from the worker's own scan)
-  has since LANDED and been re-pinned, and the re-probe
-  escalated 6 of 6 on the buyer's true refund-heavy history —
-  the on-chain `near-ai:` order remains unproduced, by the
-  gate's own decision, not by a missing fix.
+  landed and was re-pinned, and the re-probe escalated 6 of 6
+  on the first buyer's true refund-heavy history. **RESOLVED
+  the same evening**: a fresh buyer with a genuinely
+  fulfilled, refund-free history was judged live and
+  approved — order 3 on bounden11 carries
+  `near-ai:687dd7560cc1f69157932fa8fc8faab3c732db25e7a06d29c9c1a570dca6726f`
+  on-chain (closing attempt, live section above).
 - The demo film (<60s, `docs/FILM.md`), the X demo post, and the
   submission itself (`docs/SUBMISSION.md`).
 - Stage 4 (Shade Agent / TEE): spiked and designed, **not shipped** —
@@ -328,8 +356,9 @@ the Builders credit unblocked inference (in-band refund → approve;
 out-of-band refund → refuse; provider tests prove the approve path
 yields a `near-ai:` hash and the refuse path throws). The on-chain
 run was attempted live on bounden11: the judgement layer gated
-every live decision (see the Stage 3 caveat in the live section),
-so no live order carries a `near-ai:` hash yet. The
+every live decision (see the Stage 3 caveat in the live section)
+until the closing attempt put a clean-history buyer in front of
+it — order 3 now carries a `near-ai:` hash on-chain. The
 **storefront** (`web/`, Next.js)
 builds and demos today in fixture mode, and passed a live-mode
 smoke test locally against bounden11 (all routes rendering real

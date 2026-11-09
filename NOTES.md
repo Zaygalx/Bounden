@@ -1893,3 +1893,246 @@ method, path, status and byte counts only.
 
 Final suites for this pass, both re-run at pass end: contract
 **23/23**, worker **61/61**, typecheck clean.
+
+## Stage 3 closing attempt — a clean history, and the gate approves (Mon 9 Nov 2026)
+
+The one honest case the previous sections never presented to
+the gate: a buyer whose true history is fulfilled and
+refund-free. Built from real orders only, on the live v3 shop.
+Headline, stated before the detail: **the gate APPROVED, and
+the `near-ai:` attestation hash is on-chain** — order 3 of
+`bounden11.testnet` was fulfilled under
+`BOUNDEN_ATTESTATION_PROVIDER=near-ai` and its
+`judgement_attestation_hash` reads
+**`near-ai:687dd7560cc1f69157932fa8fc8faab3c732db25e7a06d29c9c1a570dca6726f`**
+(read back from the chain in this pass, not from a log). The
+companion refund judgement, run live afterwards, REFUSED on a
+factually wrong ground and made no chain call; order 3 stays
+Fulfilled. Checklist #9 closes on the on-chain bar (see
+`docs/SUBMISSION.md`).
+
+### Funding arithmetic — solved from measured balances BEFORE moving anything
+
+Movable USDC without new money: bounden11's treasury
+25,000,000 (withdrawable to the owner) + owner 0 =
+**25,000,000 total**. The full plan (three $10 orders: two
+history + one judged) needs 30 — it does not close. A fresh
+Circle faucet claim has never worked programmatically in this
+project (web-only, reCAPTCHA-gated; every earlier claim was
+the owner's manual one), so per the pass rules the REDUCED
+plan ran: **order D builds the history, order F is judged**
+(20,000,000 of the 25,000,000 float; buyer keeps 5,000,000
+spare). No order E. bounden7's 15,000,000 USDC was NOT touched
+at any point.
+
+NEAR-side findings, measured live in this pass (they cost
+real attempts, so they are recorded): this RPC prices the
+upfront prepaid-gas check at ≈1.03×10⁹ yocto per gas unit, so
+at these small balances the CHECK, not the burn, is the
+binding constraint (an owner-signed call at 30 TGas demanded
+0.0322 NEAR upfront against a 0.0250 balance and was rejected
+at validation, nothing included; actual burns throughout were
+~0.0002–0.003 per call). And Circle's USDC `ft_transfer_call`
+has a high prepaid floor: payments at 10 TGas and 30 TGas were
+included and FAILED with "More gas is required"; the working
+figure, read off v3's own payment tx
+(`Gtf6XCc1jcFpn25webSPViQj61fhzfaGTqt4ZohKGyvt`, whose
+FunctionCall carries gas 100000000000000 with only
+≈3.1 TGas burnt), is **100 TGas prepaid**. Buyer gas money was
+therefore topped up in NEAR only (below).
+
+### The new product (owner-signed)
+
+- Vault first: the v3 worker vault gained the product's codes
+  through the same `FileVault.addCodes` procedure the seed
+  script uses (a driver against the compiled dist; no worker
+  source touched, pin unchanged). Commitments printed by the
+  vault, matching independent SHA-256 computation:
+  `a9c62f5a0151314cbf32d43023490ec04896418db0376f6c4aec543f9fdf000f`
+  (BOUNDEN-TEST-CREDIT-0001),
+  `4b21cf45d6dc19106eca301b52fb88bc1d49200706381bf0992f1dbed5408030`
+  (…-0002),
+  `93fa45fdc41583d6b98a667d4aeb44e03464ed89d332f8a029b0dc8e5a84e264`
+  (…-0003). Licence queue untouched (1 unit left).
+- `add_product` **api-credit-basic** ("Bounden API Credit
+  (Demo)", kind ApiCreditCode, price 10_000_000 = $10.00): tx
+  `2y1GENwNbnG1cKkzbHB5ZR7UYfKgczgAuJpjCQ99Vfbp`.
+- `add_inventory_commitments` (the three hashes, FIFO order):
+  tx `CHcecmsLcMZB59HmfJm17mpfoTVZEsBLigdA95zzNDRH`;
+  `inventory_available` read back = 3.
+
+### The new buyer (buyer-2)
+
+- Fresh keypair generated into the vault:
+  `~/workspace/bounden-secrets/buyer2-ed25519.json` (0600,
+  NEAR credentials format). Public key
+  `ed25519:AtPv31wgfPTKXZoUhfHE8dxXPdUbRJrabwzZZFZJc1pv`;
+  implicit account id
+  **`92e3b68642d0bff571ae3f2845e299b6d6be1b8aa11cf4ab6f88ff3cc047f9e3`**.
+  (Operator note: the owner key file's `account_id` field is
+  a placeholder string from its creation; the funding driver
+  derives the owner account from the key itself and asserts
+  it equals fe9591cc…43f0 before signing.)
+- Creation + gas funding (plain transfers): owner → buyer
+  0.01 NEAR, tx `EHRT5RLeZLQTdVkU4sacZZLQ9Zy6FtDgrRrt2nsaAG6f`
+  (account created, exactly 0.01); owner → buyer 0.005 NEAR,
+  tx `HJGS2dB41dFxmUCzVt2AhHwzQ6mcrnwbNb22kEHqEQ7E`;
+  bounden7 → buyer 0.02 NEAR, tx
+  `HesLEECRboMEaFiDvZiVGNFphs3JjF6yzibYXw6eK5Wf`;
+  bounden7 → buyer 0.08 NEAR, tx
+  `CLQMZD9wjnDV435HoELVW52LD5a55QrnD3kX56us2dG1` (the last
+  two are bounden7's NEAR gas money only — its USDC never
+  moved). A further 0.015 owner top-up was refused
+  client-side by near-api-js (balance 0.0167868327 vs cost
+  0.0226074425) and never broadcast; the bounden7 top-ups
+  replaced it.
+- `storage_deposit` for the buyer on the Circle USDC
+  contract, owner-paid (0.00125 NEAR, 10 TGas): tx
+  `F4EogPqmjEay4VsMTUugakgoMXXNxSbQzsyc3F7oeqx2`;
+  `storage_balance_of` reads total 1250000000000000000000.
+- Treasury consolidation: a first `withdraw_treasury` call
+  with `{}` args was included and FAILED in execution —
+  `missing field amount` (`withdraw_treasury` takes
+  `amount: U128`; gas burned, no movement). The corrected
+  call (amount 25000000, 1 yocto) was broadcast; the sandbox
+  proxy dropped the send response, so its tx hash was not
+  captured — the landing is proven by state (owner USDC
+  0 → 25,000,000; bounden11 token balance 25,000,000 → 0),
+  the same evidence standard as v3's order-B payment.
+- Owner → buyer `ft_transfer` 25,000,000 USDC (1 yocto):
+  tx `6btptHGGd3HHr7x5mc55qPjB6bepEnwQh4KfJvMWJFs3`. Buyer
+  float: **25,000,000 USDC + 0.1144 NEAR** at sequence start.
+
+### Order D (id 2) — the history builder (null provider)
+
+- `create_order` (buyer-signed): tx
+  `6eThWdJXdDFXtnq5ckCjQUwphQv8suK1uQo6Spj1YtSK` → id 2.
+- Payment: the 10 TGas and 30 TGas attempts failed in
+  execution ("More gas is required", above); the 100 TGas
+  attempt landed — hash not captured (proxy truncated the
+  send response; state proof: order Paid,
+  `paid_at` 1794247854805346850 ns = 2026-11-09T18:10:54Z,
+  buyer 25 → 15 USDC, bounden11 0 → 10 USDC).
+- Fulfilment by the leashed worker under the null provider
+  (its documented Stage 2 mode): tx
+  `2rkNCKVSKRHNrFbuxoNUAWGF8sv8b14kb8LEH9wFLX96`, consuming
+  commitment `a9c62f5a…` (CREDIT-0001, the credit queue's
+  FIFO head), delivery evidence hash
+  `7fe75722da50965073c0f01e1acd1a885c062a06836c96654c899c6b581b2a59`.
+  **Kept purchase — no refund requested or issued.** The
+  buyer's true history is now exactly one fulfilled order.
+
+### Order F (id 3) — the judged order
+
+- `create_order` (buyer-signed): tx
+  `Dtz5mz4Dyo357tmd9mjTUEpkQZnZXYBK5rMhpLW3Kvvu` → id 3.
+  Payment at 100 TGas landed (hash not captured, proxy;
+  `paid_at` 1794248092247261408 ns = 2026-11-09T18:14:52Z;
+  buyer 15 → 5 USDC, bounden11 10 → 20 USDC).
+- The worker ran with `BOUNDEN_ATTESTATION_PROVIDER=near-ai`
+  through the bridge (bridge verified 200 first). **Mid-run,
+  the VM service restarted**: the worker and bridge processes
+  died and their logs (kept in /tmp) were wiped. Two things
+  are therefore NOT recoverable and are not reconstructed
+  here: the draw count for F's fulfilment (the pass allowed
+  up to 3 cycles) and the model's verbatim fulfil reason.
+  What survives is the chain, which is the evidence that
+  matters:
+  - `get_order(3)`: state **Fulfilled**,
+    `judgement_attestation_hash` =
+    **`near-ai:687dd7560cc1f69157932fa8fc8faab3c732db25e7a06d29c9c1a570dca6726f`**.
+  - Fulfilment log record #4: action fulfil, evidence hash
+    `41612014eddccbb01a5bc12ff18441b173444187bc269a9cfb3ad9fdc666e1bf`,
+    attestation hash identical to the order's, at
+    1794248188715083819 ns (2026-11-09T18:16:28Z).
+  - The vault's delivery record for order 3: commitment
+    `4b21cf45…` (CREDIT-0002 — FIFO held across both queues).
+  - The summary the gate saw is recomputable deterministically:
+    the worker's own compiled `summarizeBuyerHistory` over the
+    live orders for this buyer and order 3 returns, verbatim,
+    **"1 prior order: 1 fulfilled."** (Orders 0 and 1 belong to
+    bounden7 and are excluded by the summarizer; order 2 is the
+    buyer's one fulfilled prior.) No other history was
+    presented, and none was invented.
+  - The leash key signed it: leash nonce advanced exactly
+    …000004 → …000006 across this whole pass — fulfil order 2
+    and fulfil order 3, nothing else (below).
+
+### F's refund judgement — refused by the gate, F stays Fulfilled
+
+- Refund request queued in the vault
+  (`close-order3-refund-1`, 2026-11-09T18:18:41Z, with the
+  `outcome: null` marker the worker's pending filter
+  requires). The worker's refund path consults the model —
+  both judgement call sites attach the summary (fix run).
+- Fresh worker process (near-ai provider, bridge log shows
+  the run's traffic): cycle at 2026-11-09T18:19:31Z drew
+  **refuse — "Refund amount exceeds product price."** That
+  ground is factually wrong (the refund amount IS the
+  product price, 10,000,000 base units exactly) — the same
+  amount-confusion family as v3's refund refusals. The
+  worker made **no chain call**; the next cycle repeated the
+  refusal inside the same process without a second bridge
+  POST (one POST total in the bridge log — recorded as
+  observed). Per the pass rules the refusal stands: **order 3
+  remains Fulfilled, its 10 USDC remains the shop's kept
+  payment, and the refund request remains pending in the
+  vault** — the worker's designed state for a judgement
+  refusal, left exactly as the worker left it.
+
+### Balances at the end of this pass (measured, RPC read-back)
+
+NEAR (yocto):
+
+| Account | Start | End | Delta explained |
+|---|---|---|---|
+| owner implicit fe9591cc…43f0 | 42640841937637899999997 | 16786832696780699999995 | −0.0258540092: battery gas, storage_deposit (0.00125 locked into buyer-2's token storage, not burned), withdraw calls (incl. the failed-args burn), ft_transfer gas, and 0.015 NEAR sent to buyer-2 |
+| bounden7.testnet | 296811504177745699999998 | 194589383818692799999998 | −0.1022221204: 0.10 NEAR of gas top-ups to buyer-2 + their transfer gas (its USDC untouched) |
+| bounden10.testnet | 3547353029195012200000000 | same | superseded, untouched |
+| bounden11.testnet | 3583057888493241299799996 | same | untouched |
+| bounden.testnet | 201775363487500000200000 | same | the owner's wallet, untouched |
+| buyer-2 92e3b686…f9e3 | (did not exist) | 112736550176035999999998 | +0.115 in (0.01 + 0.005 owner; 0.02 + 0.08 bounden7); −0.0022634498 gas across its signed calls |
+
+USDC (base units, Circle's contract): owner **0** (+25
+withdrawn, −25 to buyer-2) · bounden7 **15,000,000**
+(untouched, as required) · bounden11 treasury **20,000,000**
+(25 withdrawn out; +10 order D, +10 order F — both kept) ·
+buyer-2 **5,000,000** (25 in; −10 D, −10 F) · bounden10
+**0**. The 40,000,000 float reconciles in full.
+
+Leash lifetime accounting: nonce …000004 → **…000006**
+(exactly the two fulfilments of this pass), allowance
+248749223166312900000000 → 248197081882260000000000 yocto
+(gas for those two calls and nothing else). Fulfilment log
+length **5**. Inventory: api-credit-basic **1** left,
+licence-pro **1** left. Plaintext sweep at pass end: every
+public view dumped and grepped — **0** occurrences of any
+BOUNDEN-TEST string, 0 code-shaped strings.
+
+### Submission consequence — #9 CLOSES
+
+The on-chain bar that stayed open through two honest failures
+is met: a real order's NEAR AI Cloud judgement, approved and
+fulfilled by the leashed cashier, carries its attestation
+hash on-chain (order 3, hash above). `docs/SUBMISSION.md` #9
+is closed with that evidence. One wording caveat survives for
+Stage 5, stated precisely: the form description says "each
+decision's attestation hash is written on-chain with the
+order" — as a universal claim over the shop's whole history
+that overreaches (orders 0–2 ran under the documented null
+provider and carry null; the one live refund judgement in
+this pass refused and wrote nothing). The mechanism the
+sentence describes is now genuinely live and demonstrated;
+Stage 5 should soften the universal quantifier when the form
+is pasted, or leave the sentence and accept the caveat on
+record here. No prompt was tuned, no history was manufactured
+or shopped, and no buyer beyond the one this pass created was
+tried: the sequence that worked is the sequence the fix made
+possible — a buyer the gate could judge on a clean, true,
+on-chain record.
+
+Final suites for this pass, both re-run at pass end: contract
+**23/23**, worker **61/61**, typecheck clean. No source code
+was changed in this pass (on-chain state and docs only); the
+on-chain worker pin still reads
+`7a5ceb1252d6952f9d36378691247e3f1630e54a0e2dbca17079e6d1f85338ac`.
