@@ -494,7 +494,7 @@ spike did not touch it.
   version vs the monorepo's in-tree copy; shade-agent-js key
   derivation surface for the vault key.
 
-## Mainnet run — `bounden.near` claimed; return transfer STOPPED (Mon 9 Nov 2026)
+## Mainnet run — `bounden.near` claimed; return SENT after a stopped saga (Mon 9 Nov 2026)
 
 Full accounting in docs/PREFLIGHT.md §5; summary here:
 
@@ -549,3 +549,25 @@ Full accounting in docs/PREFLIGHT.md §5; summary here:
   **The 0.0905558498872275 NEAR debt to the user stands** (full
   accounting: PREFLIGHT §5); closing it is now an owner decision
   (larger reserve / different route / top-up).
+- **Return — SENT (later Mon 9 Nov; owner-confirmed in chat,
+  "Ok send 0.0849 yes") — closed.** An owner-approved lean
+  attempt (plain transfer via `signAndSendTransaction`, then a
+  hand-built signed transaction broadcast straight to the
+  provider) was refused with the identical demanded cost,
+  proving the uplift is enforced by the node/protocol at
+  validation, not computed by any client. The uplift figure is
+  also corrected: **7,607,442,456,250,000,000,000 yocto
+  (0.00760744245625 NEAR)** — the ≈0.0056 figure above came
+  from a subtraction slip (98,163,292,343,477,500,000,000 −
+  90,555,849,887,227,500,000,000 =
+  7,607,442,456,250,000,000,000). Maximum sendable was
+  therefore 84,948,407,430,977,500,000,000 yocto; sent via
+  near-api-js 7.4.0 `Account.transfer` (single Transfer
+  action), tx `3rt2FniuvobUtrT67bBvo31NZhARvJxNbP3LujGKnFkt`,
+  final status SuccessValue. The transfer created the user's
+  account holding exactly the amount sent; return fees burnt
+  0.0071149895375 NEAR (`tokens_burnt` sum = balance delta);
+  sender dust remaining 0.00049245291875 NEAR; `bounden.near`
+  untouched at exactly 0.1 NEAR. Full 0.2 NEAR reconciliation
+  in PREFLIGHT §5 reconciles to the yocto. The return
+  obligation is closed.

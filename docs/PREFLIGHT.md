@@ -122,8 +122,9 @@ From docs.near.ai (Quickstart + API reference, crawled 9 Nov 2026):
   verifies on-chain. **Nothing was spent in pre-flight or in the
   deployment run.**
 
-- **EXECUTED (Mon 9 Nov 2026) — claim done, accounting closed,
-  return STOPPED after two attempts (see the return entry):**
+- **EXECUTED (Mon 9 Nov 2026) — claim done, return SENT at the
+  maximum that fits after a stopped saga, accounting closed
+  (see the final return entry):**
   the user's exchange minimum withdrawal was 0.2 NEAR, so 0.2 NEAR
   was sent (owner-approved). Full on-chain accounting, every figure
   recovered from chain records and reconciled to the yocto:
@@ -201,6 +202,42 @@ From docs.near.ai (Quickstart + API reference, crawled 9 Nov 2026):
     Closing it needs a decision from the owner: a slightly larger
     gas reserve (a smaller return), a different return route, or
     a top-up — not another automated attempt.
+  - **Return — SENT (later, Mon 9 Nov 2026; owner-confirmed in
+    chat: "Ok send 0.0849 yes") — saga closed.** Two things were
+    established first. (i) An owner-approved lean attempt (plain
+    transfer via `signAndSendTransaction`, then a hand-built
+    signed transaction broadcast straight to the provider) was
+    refused with the *identical* demanded cost as
+    `Account.transfer` — the uplift is enforced by the
+    node/protocol at validation on every signing path, not
+    computed by any client. (ii) The uplift figure in the
+    previous entry was an arithmetic slip: 98,163,292,343,477,
+    500,000,000 − 90,555,849,887,227,500,000,000 =
+    **7,607,442,456,250,000,000,000 yocto (0.00760744245625
+    NEAR)** — the new-implicit-account creation charge. The
+    maximum that fits from the implicit balance is therefore
+    92,555,849,887,227,500,000,000 − 7,607,442,456,250,000,000,000
+    = **84,948,407,430,977,500,000,000 yocto
+    (0.0849484074309775 NEAR)**, and the owner approved sending
+    exactly that. Sent via near-api-js 7.4.0 `Account.transfer`
+    (single Transfer action) — tx
+    **`3rt2FniuvobUtrT67bBvo31NZhARvJxNbP3LujGKnFkt`**, final
+    status **SuccessValue** (verified via RPC `tx`). The
+    transfer created the user's account, which now holds exactly
+    the amount sent — no deduction at the recipient. Return fees
+    burnt: **7,114,989,537,500,000,000,000 yocto
+    (0.0071149895375 NEAR)**, confirmed identically by the tx
+    `tokens_burnt` sum and by the balance delta. Sender dust
+    remaining on the implicit account: **492,452,918,750,000,000
+    yocto (0.00049245291875 NEAR)**. `bounden.near` untouched at
+    exactly 0.1 NEAR.
+  - **Final reconciliation of the user's 0.2 NEAR (verified,
+    yocto-exact):** 0.1 seeded in `bounden.near` +
+    0.0074441501127725 claim cost + 0.0849484074309775 returned +
+    0.0071149895375 return fees + 0.00049245291875 dust remaining
+    = **0.2 NEAR exactly** (200,000,000,000,000,000,000,000
+    yocto). Nothing else was spent. The return obligation is
+    closed.
 
 ## 7. Deployment run (Mon 9 Nov 2026) — testnet account creation BLOCKED at the faucet wall
 
