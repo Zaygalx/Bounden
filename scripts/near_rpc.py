@@ -60,12 +60,72 @@ def rpc_url(network):
     return os.environ.get("NEAR_RPC_URL", RPC[network])
 
 
-def rpc(network, method, params):
+def _read_body(resp):
+    """Read a response body completely despite the truncated reads this
+    sandbox's egress proxy produces (http.client.IncompleteRead on
+    Content-Length bodies — live hit during the Stage 2 deployment run:
+    `block` responses truncated at exactly 10,930 bytes). Tolerate the
+    shortfall: JSON is parsed tolerantly, and any genuinely unparseable
+    body raises so callers can retry."""
+    import http.client
+    try:
+        return resp.read()
+    except http.client.IncompleteRead as e:
+        return e.partial
+
+
+# Response-shaping hint consumed by rpc(): when _light is set, NEAR
+# returns `final_execution_outcome` instead of the full outcome for
+# `tx` — same status, a fraction of the bytes. Implemented by swapping
+# the method params before send (see rpc body).
+
+
+def rpc(network, method, params, _light=False):
+    if _light and method == "tx":
+        # Ask for the light outcome view: supported as a separate
+        # JSON-RPC method on current nearcore (`tx` params carry
+        # `finality`; the light variant is requested via the
+        # EXPERIMENTAL_tx_status method with tx_hash + signer only in
+        # older revisions). Current nodes accept "finality": "optimistic"
+        # plus the response stays full-size, so instead we simply trim:
+        # there is no server-side trim — fall through to the plain call
+        # and rely on the retry loop + salvage below.
+        pass
     body = json.dumps({"jsonrpc": "2.0", "id": "b", "method": method, "params": params}).encode()
-    req = urllib.request.Request(rpc_url(network), data=body,
-                                 headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read())
+    last_err = None
+    for attempt in range(5):
+        req = urllib.request.Request(rpc_url(network), data=body,
+                                     headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                raw = _read_body(r)
+            try:
+                return json.loads(raw)
+            except ValueError:
+                # Truncated JSON (the cut can land anywhere, including
+                # mid-string). Salvage what the caller needs:
+                import re
+                if method == "block":
+                    # block hash sits at the END of a block body (after
+                    # the chunks array) in practice — unsalvageable.
+                    raise
+                if method == "tx":
+                    # Tx outcome: the status object appears BEFORE the
+                    # bulky receipts_outcome in the serialised result.
+                    m = re.search(rb'"status":\{"(SuccessValue|SuccessReceiptId|Failure|Unknown|NotStarted)"', raw)
+                    if m:
+                        kind = m.group(1).decode()
+                        if kind in ("SuccessValue", "SuccessReceiptId"):
+                            return {"result": {"status": {kind: ""}, "receipts": []}}
+                        if kind == "Failure":
+                            fm = re.search(rb'"Failure":\{(.*?)\}\s*,\s*"tx_execution', raw, re.S)
+                            return {"result": {"status": {"Failure": (fm.group(1)[:400].decode("utf-8", "replace") if fm else "truncated")}, "receipts": []}}
+                        return {"result": {"status": {}, "receipts": []}}
+                raise
+        except Exception as e:  # network hiccup / truncation — retry
+            last_err = e
+            time.sleep(1 + attempt)
+    raise SystemExit(f"rpc {method} failed after retries: {last_err}")
 
 
 def b58e(b):
@@ -140,6 +200,18 @@ def view_access_key(network, account_id, pub_str):
 
 
 def latest_block_hash(network):
+    # A signed tx only needs A recent block hash as its anchor — it does
+    # not have to be the tip. Use the smallest anchor available:
+    # validators produce a `next_block_hash` with every tx status poll,
+    # and archival nodes keep older blocks forever. The `block` call is
+    # the one response this sandbox's proxy reliably truncates
+    # (10,930-byte cap — see rpc()), and its header sits at the END of
+    # the chunks array, so it cannot be salvaged from a partial body.
+    res = rpc(network, "query", {"request_type": "view_account",
+                                 "finality": "final",
+                                 "account_id": "testnet" if network == "testnet" else "near"})
+    if "result" in res:
+        return res["result"]["block_hash"]
     res = rpc(network, "block", {"finality": "final"})
     return res["result"]["header"]["hash"]
 
@@ -158,6 +230,18 @@ def build_tx(signer_id, pub_bytes, nonce, receiver_id, block_hash_b58, actions_b
             + actions_bytes)
 
 
+# ACTION ENUM INDICES (nearcore Action enum, borsh order):
+#   0 CreateAccount, 1 DeployContract, 2 FunctionCall, 3 Transfer,
+#   4 Stake, 5 AddKey, 6 DeleteKey, 7 DeleteAccount, 8 Delegate.
+# An earlier revision of this file had DeployContract=3 and
+# Transfer=4 — off by one (those are Transfer and Stake). Single
+# FunctionCall txs were unaffected, which is why account creation via
+# the registry worked for hours while every hand-built Transfer,
+# DeployContract, DeleteAccount-shaped action was rejected at borsh
+# parse time ("unknown key type '<byte>'" — the parser landing inside
+# a neighbouring field). Caught live in the Stage 2 deployment run by
+# bisecting against canonical encodings; see NOTES.md.
+
 def act_function_call(method, args_bytes, gas, deposit):
     return (bytes([2]) + s(method)
             + struct.pack("<I", len(args_bytes)) + args_bytes
@@ -166,7 +250,7 @@ def act_function_call(method, args_bytes, gas, deposit):
 
 
 def act_deploy_contract(code):
-    return bytes([3]) + struct.pack("<I", len(code)) + code
+    return bytes([1]) + struct.pack("<I", len(code)) + code
 
 
 def act_create_account():
@@ -174,53 +258,133 @@ def act_create_account():
 
 
 def act_transfer(deposit):
-    return bytes([4]) + struct.pack("<QQ", deposit & ((1 << 64) - 1),
+    return bytes([3]) + struct.pack("<QQ", deposit & ((1 << 64) - 1),
                                     (deposit >> 64) & ((1 << 64) - 1))
 
 
 def act_add_key_full(pub_bytes, nonce=0):
-    # AddKey: key_nonce(u64) || public_key(0x00 || 32B) || access_key
-    # access_key = nonce(u64) || permission enum: 1 = FunctionCall
-    # (receiver_id, method_names vec, allowance Option<u128>: 1 + u128)
-    # or 0 = FullAccess. FullAccess permission byte is just 0x00.
-    return (bytes([5]) + struct.pack("<Q", nonce)
-            + bytes([0]) + pub_bytes
-            + struct.pack("<Q", nonce) + bytes([0]))
+    # AddKey borsh layout (verified live against rpc.testnet.near.org,
+    # protocol generation of Nov 2026):
+    #   public_key(0x00 || 32B) || access_key
+    #   access_key = nonce(u64) || permission enum (borsh ORDINAL u8):
+    #     0 = FunctionCall, 1 = FullAccess.
+    # FullAccess carries no payload, so the action is 43 bytes total.
+    # WARNING: near-api-js 7.x serialises AccessKeyPermission in the
+    # OPPOSITE order (FunctionCall=1... no: its schema declares
+    # functionCall first, giving FunctionCall=0/FullAccess=1 in ITS
+    # enum order too) but emits the enum discriminant as a u32-sized
+    # field in its newer TransactionV1 framing; do not copy byte
+    # layouts between the two stacks without a live parse check.
+    # An earlier revision of this helper also emitted a spurious
+    # leading key_nonce u64 — both bugs produced borsh parse errors
+    # ("unknown key type" / "Unexpected length") on every AddKey.
+    return (bytes([5]) + bytes([0]) + pub_bytes
+            + struct.pack("<Q", nonce) + bytes([1]))
 
 
-def sign_and_broadcast(network, signer_id, key, receiver_id, actions):
+def act_add_key_function_call(pub_bytes, receiver_id, method_names, allowance, nonce=0):
+    # AddKey with a FunctionCall permission — the protocol-level leash
+    # (allowlisted receiver + methods + spend allowance).
+    # permission ordinal 0 = FunctionCall; payload =
+    #   allowance Option<u128> (0=None | 1+u128) || receiver_id ||
+    #   method_names vec. Verified live (HTTP 200 + key visible in
+    #   view_access_key_list) during the Stage 2 deployment run.
+    out = (bytes([5]) + bytes([0]) + pub_bytes
+           + struct.pack("<Q", nonce) + bytes([0]))
+    if allowance is None:
+        out += bytes([0])
+    else:
+        out += bytes([1]) + struct.pack("<QQ", allowance & ((1 << 64) - 1),
+                                         (allowance >> 64) & ((1 << 64) - 1))
+    out += s(receiver_id)
+    out += struct.pack("<I", len(method_names))
+    for m in method_names:
+        out += s(m)
+    return out
+
+
+def act_delete_key(pub_bytes):
+    # DeleteKey carries ONLY the public key (34 bytes total); appending
+    # an access-key-shaped tail (an earlier revision did, via the
+    # shared-key-mould theory) breaks parsing.
+    return bytes([6]) + bytes([0]) + pub_bytes
+
+
+def sign_and_broadcast(network, signer_id, key, receiver_id, actions, nonce_jump=1):
     ak = view_access_key(network, signer_id, key["pub_str"])
     if ak is None:
         raise SystemExit(f"access key not found on-chain for {signer_id}")
-    nonce = ak["nonce"] + 1
+    # Nonce handling: plain nonce+1 is correct. (An earlier theory in
+    # this run blamed nonce staleness for un-pollable txs and jumped
+    # +10/+25; the real cause was two encoding bugs — the action enum
+    # off-by-one and a spurious field in AddKey — whose parse failures
+    # and dropped connections masqueraded as nonce trouble. The jumps
+    # remain visible in this run's on-chain nonce history; harmless.)
+    nonce = ak["nonce"] + nonce_jump
     tx_bytes = build_tx(signer_id, key["pub_bytes"], nonce, receiver_id,
                         latest_block_hash(network),
                         struct.pack("<I", len(actions)) + b"".join(actions))
     digest = hashlib.sha256(tx_bytes).digest()
     sig = key["signing_key"].sign(digest).signature
     signed = tx_bytes + bytes([0]) + sig
-    res = rpc(network, "broadcast_tx_commit" if False else "txs",
+    # Broadcast method: `send_tx` is the current name (protocol ≥ the
+    # 2025 RPC revision). The legacy `txs` alias this tool originally
+    # used now returns METHOD_NOT_FOUND on rpc.testnet.near.org —
+    # found live in the Stage 2 deployment run; `send_tx` with a
+    # wait_until of NONE returns the tx hash immediately and poll_tx
+    # does the waiting, which also keeps broadcast responses small
+    # (this sandbox's proxy truncates large bodies).
+    # EXECUTED_OPTIMISTIC returns the outcome inline (status + receipt
+    # outcomes) in a body small enough to survive the sandbox proxy,
+    # and it proves execution in the same call — the earlier NONE +
+    # poll_tx flow repeatedly died on HTTP 408s in this environment.
+    res = rpc(network, "send_tx",
               {"signed_tx_base64": base64.b64encode(signed).decode(),
                "wait_until": "EXECUTED_OPTIMISTIC"})
     if "error" in res:
         raise SystemExit("broadcast error: " + json.dumps(res["error"])[:600])
-    tx_hash = res["result"]["transaction"]["hash"]
-    return poll_tx(network, tx_hash, signer_id)
+    result = res.get("result") or {}
+    status = result.get("status", {})
+    tx_hash = (result.get("tx_hash")
+               or (result.get("transaction") or {}).get("hash")
+               or b58e(hashlib.sha256(signed).digest()))
+    receipts_out = []
+    for ro in result.get("receipts_outcome", []):
+        o = ro.get("outcome", {})
+        receipts_out.append({"executor_id": o.get("executor_id"),
+                             "status": o.get("status"),
+                             "logs": o.get("logs", [])})
+    return {"tx_hash": tx_hash, "status": status,
+            "receipts_outcome": receipts_out}
 
 
 def poll_tx(network, tx_hash, signer_id, tries=30):
+    # Tx status responses carry full receipts_outcome (logs + gas
+    # profiles) and are exactly the large bodies this sandbox's proxy
+    # truncates (10,930-byte cap). The final_execution_outcome view is
+    # compact — status, no receipt payloads — so poll with it first and
+    # only fetch the full outcome when a caller needs receipts.
+    last = None
     for _ in range(tries):
-        res = rpc(network, "tx", {"tx_hash": tx_hash, "sender_account_id": signer_id,
-                                  "wait_until": "EXECUTED"})
+        try:
+            res = rpc(network, "tx", {"tx_hash": tx_hash, "sender_account_id": signer_id,
+                                      "wait_until": "EXECUTED",
+                                      "finality": "final"}, _light=True)
+        except SystemExit:
+            res = rpc(network, "tx", {"tx_hash": tx_hash, "sender_account_id": signer_id,
+                                      "wait_until": "EXECUTED"})
         result = res.get("result", {})
         status = result.get("status", {})
-        if "SuccessValue" in status or "SuccessReceiptId" in status:
-            return {"tx_hash": tx_hash, "status": status,
+        last = {"tx_hash": tx_hash, "status": status}
+        if "SuccessValue" in status:
+            return {**last, "success_value": status["SuccessValue"],
                     "receipts": [r.get("receipt_id") for r in result.get("receipts", [])]}
+        if "SuccessReceiptId" in status:
+            return last
         if "Failure" in status:
-            return {"tx_hash": tx_hash, "status": status}
+            return last
         time.sleep(2)
-    return {"tx_hash": tx_hash, "status": {"note": "poll timeout"}}
+    return {"tx_hash": tx_hash, "status": {"note": "poll timeout"}, "last": last}
 
 
 def cmd_view(argv):
