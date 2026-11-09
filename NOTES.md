@@ -1115,3 +1115,151 @@ USDC (Circle contract `3e2210e1…`): buyer bounden7 15,000,000
 (15 USDC) · bounden10 treasury 25,000,000 (order 1's payment,
 held against the Paid order) · owner implicit 0. Total 40 USDC
 accounted — the two Circle claims, fully traced.
+
+## Stage 2 live pass v3 — refund fix built; deploy funding-gated (Mon 9 Nov 2026)
+
+The two v2 defects (the leash could not trigger a refund; the
+deployed window was 1000 hours, not 1) are FIXED IN CODE and fully
+tested. The v3 redeploy itself is STOPPED at the funding gate —
+accounting and the exact continuation are below, so the pass can be
+finished the moment ~0.42 NEAR of testnet funding lands on
+bounden11.
+
+### The contract fix (commit `a8f56a8`)
+
+- `issue_refund` no longer asserts an inbound attached deposit.
+  That assert was the whole defect: the only authorised caller
+  holds a function-call key, which protocol validation bars from
+  attaching any deposit (`DepositWithFunctionCall`), so the refund
+  path was un-executable by the leash. The OUTBOUND `ft_transfer`
+  is unchanged: it still attaches exactly 1 yocto, now drawn from
+  the contract's own NEAR balance (promises spend the contract
+  account's funds), and its mock-receipt regression test
+  (`assert_ft_transfer_receipt`) is untouched. `withdraw_treasury`
+  keeps its own inbound assert — its caller is the owner, whose
+  full-access key CAN attach a deposit.
+- Tests adjusted to the leash's reality: the in-band refund tests
+  (Paid and Fulfilled) now call with ZERO attached deposit and
+  succeed; the after-window rejection additionally asserts that NO
+  token transfer is scheduled (no receipt to the token contract).
+  Above-cap rejection already ran at zero deposit. **Suite: 23/23
+  pass.** The mock environment models neither protocol rule, which
+  is why the defect needed a live pass to surface; the tests now at
+  least pin the zero-deposit contract.
+- Wasm rebuilt: **339,818 bytes** (v2: 339,892), code hash
+  **`DCgiAv1ET5gtVBUqkLsHR5MuTvsqWXBZMHuFhAgDWdcK`**.
+
+### The worker fix (commit `88a454d`)
+
+- The worker called `issue_refund` with `depositYocto: "1"` —
+  a guaranteed `DepositWithFunctionCall` rejection for its own
+  leash key. It now attaches "0"; the test expectation matches.
+  Typecheck clean, **53/53 worker tests pass**.
+- New pinned worker code hash (SHA-256 over `src/*.ts`,
+  names+contents sorted; Python and Node `computeWorkerCodeHash`
+  agree): **`4d6f7186039c366c86b71c412b5c5c658221688d9dded98c5fdad35997a828f3`**.
+  (It differs from the v2 pin for two reasons: this fix, and the
+  Stage 3 attestation-parser narrowing that landed after the v2
+  deployment.)
+
+### Funding bounden11 — full accounting (all measured on-chain)
+
+Start of pass: bounden11 1.1 NEAR (reserved in v2) · owner
+implicit 1.246797 · bounden7 0.496165 · bounden10 3.547353
+(untouched throughout — it carries the v2 evidence).
+
+- Faucet attempt 1 — `request_near` 1.0 NEAR to bounden11 via the
+  v2d contract route: NO payment resulted (balance unchanged).
+- Faucet attempt 2 — `request_near` 0.5 NEAR: PAID. bounden11
+  1.1 → 1.6. (The claim's tx hash was not captured: the sandbox
+  proxy truncated the send_tx response — the same artefact seen
+  in earlier passes. The drip is proven by the balance delta.)
+- The v2 leash key (`ed25519:EJQJ2wNB…yeG9Z7`, → bounden10) was
+  DELETED from bounden7 (tx
+  `EfAwsedsVV9zt1MbdQnK2xPgkNRsquwmsFATwzi6PMez`), so the v3 leash
+  will be the ONLY function-call key on the account. Note, because
+  it corrected a planning assumption in this pass: a function-call
+  allowance is a spending CAP drawn on the account balance, not
+  an escrow — deleting the key returned no NEAR (bounden7
+  0.496165 → 0.496125, gas only). bounden7 now holds only its
+  full-access setup key.
+- Owner implicit → bounden11: **1.20 NEAR** (tx
+  `6e4Mzh2puG1aXyBxNBTzhPCfb1JALtTm5uhxBkZjX5DB`); owner left at
+  0.045117.
+- bounden7 → bounden11: **0.196125 NEAR** (tx
+  `Gr1jte1Kuizv4ucgrFKmsrXxeHDXLrZqwH4sGJzYhB3d`); bounden7 keeps
+  0.299955 as its buyer-gas reserve.
+
+**bounden11 now holds 2.996125 NEAR.** The deploy floor, from the
+v2 datum: bounden10 holds 3.547353 NEAR against storage_usage
+340,298 bytes — the storage stake for the deployed code + state
+alone is ≈3.403 NEAR, and the v2 deploy was executed at 3.55. A
+deploy at 2.996125 fails balance-for-state. **Shortfall ≈ 0.41
+NEAR to the storage floor (≈0.55 to the level v2 deployed at).**
+Deploy stopped here, per the funding discipline; the parent is
+sourcing the remainder. bounden10 was NOT deleted and its
+evidence is intact.
+
+### Prep completed without the deploy
+
+- Plaintext-code grep re-run over a fresh dump of bounden10's
+  public views (constitution, product, orders 0+1, fulfilment
+  log, inventory count): **zero matches** for the test-code
+  patterns — the inventory-dump read-only layer, re-confirmed on
+  the current live shop. To be re-run verbatim on bounden11 after
+  the v3 deploy.
+
+### Continuation — exact steps once bounden11 ≥ ~3.45 NEAR
+
+1. Deploy + init on bounden11 (`deploy-init`, signer bounden11
+   via the owner key — bounden11's full-access key IS the owner
+   key, read back in this pass): init args owner = owner
+   implicit, payment_token =
+   `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`,
+   price_band_bps 1000, refund_cap_usd 50000000,
+   **refund_window_ns 3600000000000**. Then `get_constitution`
+   and ASSERT PROGRAMMATICALLY that `refund_window_ns ==
+   3600000000000` (integer equality in code, not eyeballs — the
+   v2 slip was exactly an eyeball failure).
+2. Battery: `add_product` licence-pro $25.00;
+   `add_inventory_commitments` (same three hashes, vault FIFO
+   order); `storage_deposit` 0.00125 NEAR registering bounden11
+   on the token contract.
+3. Leash v3: `create-leashed-key` derives a FRESH keypair into
+   the vault; `set_agent(bounden7.testnet,
+   4d6f7186039c366c86b71c412b5c5c658221688d9dded98c5fdad35997a828f3)`;
+   add-key on bounden7 → bounden11.testnet, methods
+   [fulfil_order, issue_refund], allowance 0.25 NEAR. Read the
+   permission object back; bounden7 must then hold exactly ONE
+   function-call key (v3) + its full-access key. Point the worker
+   config at bounden11; the startup leash self-check must pass.
+4. Money sequence. Note the buyer's USDC position: bounden7
+   holds 15 USDC (v2 order 1's $25 stays in bounden10's treasury
+   as evidence), so a fresh Circle claim to bounden7 comes first
+   (buyer → $35). Then: order A $25 (worker fulfils via the
+   leash, injection memo on the payment) → queue the refund →
+   the worker issues it VIA THE LEASH at 0 deposit → buyer
+   restored, contract at 0 — the corrected headline proof →
+   order B $25 (reusing the refunded funds) → worker fulfils →
+   after paid_at + 3_600_000_000_000 ns (poll the chain clock;
+   do not fake timestamps), queue the refund: the worker's local
+   pre-check refuses (logged, no chain call), then a direct
+   leash-key `issue_refund` parks the order in RefundRejected
+   with a `bounden_refund_rejected` event and no balance
+   movement.
+5. Attacks on v3: price-band +20% (expect the verbatim panic) +
+   in-band controls + restore; payout-redirect and inventory-dump
+   signed attempts with the v3 leash (expect verbatim
+   ReceiverMismatch / MethodNameMismatch); the view grep from
+   this pass, re-run on bounden11.
+6. Docs: README live section → bounden11 (bounden10 marked
+   superseded v2), attacks/README v3 results table, SUBMISSION
+   checklist #6/#7/#8/#10 closed on v3 evidence.
+
+### Balances at the end of this pass (measured)
+
+NEAR: owner implicit 0.045117 · bounden7 0.299955 · bounden10
+3.547353 (untouched) · bounden11 2.996125 · bounden.testnet
+0.792885 (user's, untouched).
+USDC (Circle contract): buyer bounden7 15,000,000 · bounden10
+treasury 25,000,000 · owner implicit 0 — unchanged from v2.

@@ -111,3 +111,34 @@ were byte-identical before and after (nonce 276909666000002;
 496165105848323999999997 yocto) — stronger evidence than the v1
 run: the node returned the refusal reasons verbatim AND nothing
 was included on-chain.
+
+## v3 status (Mon 9 Nov 2026) — fix built; live re-run funding-gated
+
+The two v2 findings are fixed in code: the contract's
+`issue_refund` no longer asserts an inbound deposit (the outbound
+`ft_transfer` still attaches exactly 1 yocto, drawn from the
+contract's own balance; mock-receipt regression test unchanged),
+and the worker now calls `issue_refund` with zero deposit.
+Contract suite 23/23 with the in-band refund tests running at
+zero deposit and the after-window rejection asserting no transfer
+is scheduled; worker 53/53. New wasm 339,818 bytes, code hash
+`DCgiAv1ET5gtVBUqkLsHR5MuTvsqWXBZMHuFhAgDWdcK`; new worker code
+hash `4d6f7186039c366c86b71c412b5c5c658221688d9dded98c5fdad35997a828f3`.
+
+The v3 redeploy on `bounden11.testnet` (which will also carry
+the corrected 1-hour window, 3600000000000 ns, verified
+numerically at init) is prepared and funded to 2.996125 NEAR of
+the ~3.41 NEAR its storage requires — **the live attack re-run
+and the leash-signed in-band refund proof wait on ~0.42 NEAR of
+testnet funding**, nothing else. Full accounting and the exact
+continuation: `NOTES.md`, "Stage 2 live pass v3". The v2 leash
+key (→ bounden10) has been deleted from bounden7, so the v3 leash
+will be the account's only function-call key.
+
+Interim prep result (read-only layer of `inventory-dump`,
+re-run in this pass against the CURRENT live shop): a fresh
+dump of every public view on bounden10 (constitution, product,
+both orders, fulfilment log, inventory count) greps to **zero**
+plaintext test-code matches. The signed v3 attempts and the
+out-of-band case (now a same-day exercise under the 1-hour
+window) run immediately after the deploy.

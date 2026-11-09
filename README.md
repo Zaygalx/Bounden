@@ -116,10 +116,12 @@ on-chain):
 - A v3 redeploy carrying the two live-found fixes — the
   `issue_refund` inbound-deposit fix (so the leash itself can
   trigger refunds) and the 1-hour refund window, verified
-  numerically at init. `bounden11.testnet` already exists and
-  holds 1.1 NEAR toward it; the remaining funding (~2 NEAR of
-  testnet faucet money) is the only blocker (`NOTES.md` has the
-  accounting and the deploy threshold evidence).
+  numerically at init. The fix is BUILT and tested (contract
+  23/23, worker 53/53 — `NOTES.md`, "Stage 2 live pass v3") and
+  `bounden11.testnet` holds 2.996125 NEAR of the ~3.41 NEAR the
+  deployment's storage requires after a full consolidation of
+  the project's testnet accounts: the remaining ~0.42 NEAR of
+  testnet funding is the only blocker.
 - NEAR AI Cloud attestation verified against the live API —
   DONE 9 Nov 2026 for the attestation report (redacted real capture
   in `worker/test/fixtures/`, parser narrowed to the observed live
