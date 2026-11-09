@@ -12,6 +12,8 @@ credentials/
 !.env.example
 vault/
 
-# Node (worker/, attacks/)
+# Node (worker/, attacks/, web/)
 node_modules/
 dist/
+.next/
+*.tsbuildinfo
