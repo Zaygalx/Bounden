@@ -271,6 +271,30 @@ From docs.near.ai (Quickstart + API reference, crawled 9 Nov 2026):
     = **0.2 NEAR exactly** (200,000,000,000,000,000,000,000
     yocto). Nothing else was spent. The return obligation is
     closed.
+  - **Custody handover — owner's own wallet key added (Mon
+    9 Nov 2026).** The owner created his own mainnet Meteor
+    wallet, `boundenn.near` (double n — a distinct, freshly
+    created account), so that he holds his own key to his
+    payout account. His wallet's public key
+    `ed25519:vcViMMT6UNEqgcSHYJghsNkK1CtSoLFXXT4UX9vfBmw` was
+    added as a second FullAccess key on `bounden.near`, in a
+    transaction containing exactly one AddKey action, signed
+    by the existing project vault key via near-api-js 7.4.0
+    `signAndSendTransaction` — tx
+    **`a7BMJuthVY5fx9D4pkHHJRc55f294Zxuzkc6wnU3BoX`**, final
+    status **SuccessValue**. Fee burnt:
+    **41,964,925,000,000,000,000 yocto (0.000041964925 NEAR)**,
+    confirmed identically by the tx `tokens_burnt` sum and by
+    the balance delta. Balance after:
+    **99,958,035,075,000,000,000,000 yocto (0.099958035075
+    NEAR)**. Resulting key list, verified via RPC
+    `view_access_key_list` — two keys, both FullAccess:
+    the project vault key
+    `ed25519:J8nqSrjYNRDeHFdwXwFS2eT2f4xhgR1H64WFLJZhFwuZ`
+    (unchanged, not removed) and the owner's wallet key
+    `ed25519:vcViMMT6UNEqgcSHYJghsNkK1CtSoLFXXT4UX9vfBmw`.
+    No private key material was printed, copied, or committed
+    in the process.
 
 ## 7. Deployment run (Mon 9 Nov 2026) — testnet account creation BLOCKED at the faucet wall
 
