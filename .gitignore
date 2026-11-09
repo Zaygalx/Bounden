@@ -10,3 +10,7 @@ credentials/
 .env
 .env.*
 vault/
+
+# Node (worker/, attacks/)
+node_modules/
+dist/
