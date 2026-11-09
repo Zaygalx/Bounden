@@ -21,6 +21,80 @@ agent's judgements (via NEAR AI Cloud TEE inference) are recorded
 on-chain with their attestation hashes. Its inventory is sealed:
 on-chain you will find only hashes, never a usable code.
 
+## Status at a glance
+
+**DONE and verified locally** (commands below — run them and see):
+
+- Stage 1 shop contract: full constitution implemented, **23 unit
+  tests passing**, release wasm builds (~332 KB), including the
+  1-yocto outbound-transfer fix with a negative-control regression
+  test (`NOTES.md`).
+- Stage 2 cashier worker: **51 unit tests passing** (30 worker/leash/
+  vault + 21 NEAR AI Cloud judgement layer), strict typecheck, the
+  three-layer leash, AES-256-GCM sealed-inventory vault.
+- Attack suite v1: five named cases, mock mode runs today and prints
+  the expected refusal for each.
+- Storefront: builds and runs in fixture mode (labelled as such in
+  the UI) — catalogue, checkout explainer, order status, the public
+  Constitution page.
+
+**PENDING the live pass** (nothing below is claimed until it is
+verifiable on-chain):
+
+- Testnet deployment of the contract — gated on one human funding
+  step (`docs/PREFLIGHT.md` §7; the finish is fully scripted in
+  `scripts/claim-named-account.md`).
+- The leash created on-chain, a real order fulfilled end-to-end, the
+  refund approve/refuse paths, and the attack suite run live.
+- NEAR AI Cloud attestation verified against the live API (fixtures
+  are doc-derived and labelled UNVERIFIED-LIVE until then).
+- The demo film (<60s, `docs/FILM.md`), the X demo post, and the
+  submission itself (`docs/SUBMISSION.md`).
+- Stage 4 (Shade Agent / TEE): spiked and designed, **not shipped** —
+  see the Stage 4 status section below.
+
+## Verify it yourself (do X, see Y)
+
+Prerequisites: Rust (stable, with the `wasm32-unknown-unknown`
+target) and Node ≥ 22. On machines with a small `/tmp`, first run
+`export TMPDIR=$HOME/.tmp` (near-sdk's native build scripts fill a
+512 MB tmpfs — see `NOTES.md`).
+
+1. **Contract tests.** From the repo root:
+   `cargo test`
+   → *See:* 23 passed, 0 failed — including the price band binding
+   the owner, exact-amount payment enforcement, refund band
+   behaviour, and the 1-yocto transfer-deposit guard.
+   Release build: `cargo build --target wasm32-unknown-unknown --release`.
+2. **Worker tests.** `cd worker && npm install && npm test`
+   → *See:* 51 passed — the runtime allowlist guard refusing
+   non-allowlisted methods before any network traffic, a source-grep
+   test proving no treasury-moving call exists in the worker,
+   fulfil-exactly-once, refund band pre-checks, vault sealing, and
+   the judgement layer's fail-closed parsing.
+   Typecheck: `npm run typecheck`.
+3. **Storefront in fixture mode.** `cd web && npm install && npm run build && npm start`,
+   then open http://localhost:3000
+   → *See:* the catalogue, a product page, the checkout explainer
+   (payment is a buyer wallet action — the cashier never touches
+   it), `/orders/0`, and `/constitution` rendering the constitution
+   and the agent key's permission object — all under a visible
+   FIXTURE MODE banner, because no contract is configured.
+4. **Attack suite in mock mode.** `cd attacks && npm install && npm run build && npm start`
+   → *See:* five named cases (treasury drain via prompt injection,
+   out-of-band refund, payout redirect, inventory dump, price-band
+   violation), each printing the layer that must refuse it and the
+   expected rejection. Mock output is rehearsal, labelled as such;
+   it is not evidence.
+5. **What needs the live testnet deployment** (and where the steps
+   live): deploying + initialising the contract, creating the
+   leashed key on-chain, seeding the demo vault, registering the
+   inventory commitments, one real paid order fulfilled by the
+   leashed key, the live attack run, and the film. The exact
+   sequence is `scripts/claim-named-account.md` (Paths A–C) plus the
+   Stage 2/3 live-pass checklists in `NOTES.md`; the funding blocker
+   and its evidence are in `docs/PREFLIGHT.md` §7.
+
 ## What it sells
 
 Global digital goods, priced in USD, settled in a stablecoin:
@@ -108,9 +182,15 @@ Honest limits right now:
   tooling stopped being maintained in April 2026, and its deploy path
   needs a Docker-capable host this build does not have. Nothing in
   Stage 4 has been deployed or registered; the adapter sketch in
-  `shade/` is marked scaffold and is not wired to anything. If the
-  swap does not land inside its time-box, the fallback wording in
-  `docs/SHADE.md` §2.7 ships instead — pre-written, not improvised.
+  `shade/` is marked scaffold and is not wired to anything. The
+  Stage 4 status section below carries the pre-written fallback
+  wording from `docs/SHADE.md` §2.7 — verbatim, not improvised.
+
+## Stage 4 status
+
+<!-- STAGE4-STATUS:BEGIN — source: docs/SHADE.md §2.7, verbatim. Swap procedure: docs/SUBMISSION.md, "Stage 4 status". -->
+> 
+<!-- STAGE4-STATUS:END -->
 
 ## Licence
 
