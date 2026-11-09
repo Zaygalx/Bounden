@@ -58,6 +58,23 @@ Queried live via `ft_metadata` on testnet RPC, 9 Nov 2026:
 Prices are stored in its base units: $1.00 = `1_000_000`.
 No custom token needed; the tUSD fallback is not triggered.
 
+> **SUPERSEDED (Mon 9 Nov 2026, Stage 2 live pass v2) — the
+> decision above is WRONG, and the table's "Canonical" verdict
+> with it.** `usdc.testnet` is a token with USDC's name, symbol
+> and decimals but a null icon, and Circle's faucet does not
+> dispense it. Circle's actual NEAR testnet USDC is the
+> implicit-style contract
+> **`3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`**:
+> Circle's own developer documentation ("USDC contract
+> addresses", updated 2026-11-06) lists exactly that address
+> for NEAR Testnet; its `ft_metadata` carries Circle's official
+> USDC icon; and the owner's two faucet claims landed there
+> (20,000,000 base units each, re-verified on-chain). The
+> error: the token was picked by NAME from metadata that two
+> different contracts share. The live shop (bounden10.testnet)
+> pins the corrected contract; full evidence in `NOTES.md`,
+> "Stage 2 live pass v2".
+
 ## 4. NEAR AI Cloud — documented (Stage 3 dependency)
 
 From docs.near.ai (Quickstart + API reference, crawled 9 Nov 2026):

@@ -77,6 +77,21 @@ price band 1000 bps (10%), refund cap 50_000_000 (USDC $50.00),
 refund window 3_600_000_000_000 ns (1 hour), payment token
 `usdc.testnet`.
 
+> **Corrections from the live passes (Mon 9 Nov 2026 — read
+> before reusing the command below):** (1) The payment token
+> in the init command must be Circle's actual NEAR testnet
+> USDC, `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`,
+> NOT `usdc.testnet` (a different same-name token; PREFLIGHT §3
+> supersession note). (2) Verify `refund_window_ns`
+> NUMERICALLY after init: both live deployments were
+> initialised with 3600000000000000 (1000 hours) instead of
+> 3600000000000 (1 hour) — the grouped form 3_600_000_000_000
+> is the spec; count the digits in the JSON you send.
+> (3) The deployments that actually happened used fresh named
+> accounts (`bounden8.testnet`, superseded and deleted, then
+> `bounden10.testnet`) because `bounden.testnet` is keyed by
+> the user's own Meteor seed. Full record: `NOTES.md`.
+
 ```bash
 export BOUNDEN_OWNER_KEY=~/workspace/bounden-secrets/owner-ed25519.json
 export BOUNDEN_CONTRACT_KEY=~/workspace/bounden-secrets/owner-ed25519.json

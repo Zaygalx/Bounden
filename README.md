@@ -38,42 +38,88 @@ on-chain you will find only hashes, never a usable code.
   the UI) — catalogue, checkout explainer, order status, the public
   Constitution page.
 
-**DONE LIVE on testnet** (Stage 2 live pass, Mon 9 Nov 2026 — full
-log in `NOTES.md`, attack results in `attacks/README.md`):
+**DONE LIVE on testnet** (Stage 2 live passes, Mon 9 Nov 2026 —
+full log in `NOTES.md`, attack results in `attacks/README.md`):
 
-- Contract deployed + initialised on **`bounden8.testnet`** (deploy
-  tx `DR3DFNHDi6Gt3hKfFowmv2hde4zfhrEe5d65dwvtZnTd`; wasm code hash
-  `3fgkfyQED4KbVkU13d1HdXxNmngXk2GGvA9ApvVq85Ur`). Constitution
-  read back on-chain: owner = the owner implicit account,
-  `payment_token` = `usdc.testnet`, price band 1000 bps, refund cap
-  50_000_000 ($50), refund window 3_600_000_000_000 ns (1 hour).
+- Contract deployed + initialised on **`bounden10.testnet`**
+  (deploy tx `4rSmanAZugekHBkvcRiZtRPPxeJHqs1U8EwnJwWNwwis`; wasm
+  code hash `3fgkfyQED4KbVkU13d1HdXxNmngXk2GGvA9ApvVq85Ur`).
+  Constitution read back on-chain: owner = the owner implicit
+  account, `payment_token` = Circle's actual NEAR testnet USDC,
+  **`3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`**
+  (the address Circle's own developer docs list for NEAR Testnet;
+  pre-flight had picked the same-name `usdc.testnet`, a different
+  token the faucet does not dispense — the first deployment,
+  `bounden8.testnet`, is superseded and deleted, its evidence in
+  tx history and `NOTES.md`), price band 1000 bps, refund cap
+  50_000_000 ($50). **One constitution field deviates from the
+  documented design, stated plainly: the refund window on-chain
+  is 3600000000000000 ns (1000 hours), not the intended
+  3_600_000_000_000 ns (1 hour)** — an extra group of zeros in
+  the init arguments. It changes no other behaviour; its one
+  practical consequence is that the out-of-band refund case
+  cannot be exercised until the paid order ages past the window
+  (see PENDING).
 - Product `licence-pro` live at $25.00 with 3 sealed inventory
   commitments (SHA-256 hashes only) registered on-chain.
 - The cashier's leash is on-chain: agent `bounden7.testnet`
   registered with pinned worker code hash
   `5ed7fe92550867937ce8aef6e838594b8ea2ed2ec205a9d4fe28387786c23c2a`;
-  its function-call key permits exactly `fulfil_order` +
-  `issue_refund` on the contract with a 0.25 NEAR allowance
-  (register tx `7cfJ1Dm4ZtowcRc2mXejJDqmqA4jLjxCmoef3Gmqdjeq`,
-  add-key tx `Az6B7yuyuEuzDre71ojcbbVukgGJbVCsB3CDVmDD93Cw`).
+  its function-call key
+  `ed25519:EJQJ2wNB1RonSiLGRSqc1fvE4HyC8UFXqwifPNyeG9Z7` permits
+  exactly `fulfil_order` + `issue_refund` on bounden10 with a
+  0.25 NEAR allowance (set-agent tx
+  `7USiGPFuehjzKxYHNNeCsy9zA7VVx85TWo1ujnAn38Vr`, add-key tx
+  `7w8rcLEQXsoC8gUnsKNdL4MFkaAE7AUx4esE5G8g39wB`; the v1 key
+  bound to the superseded contract was deleted from the
+  account). The worker's startup self-check verifies this
+  permission object before it will run.
   (Substitution, documented in `NOTES.md`: the agent is a fresh
   named account Muse controls, not `cashier.bounden.testnet` —
   creating a subaccount of the user's `bounden.testnet` needs the
   user's own key, which Muse does not hold. The constitution cares
   about the permission object, not the account's name.)
-- Attack suite run live: the price band refused an owner-signed
-  +20% reprice on-chain and accepted in-band moves; leash-key
-  attempts at a token transfer, a treasury withdrawal, and an
-  inventory write never landed (protocol key validation).
+- **A real order ran end-to-end in Circle USDC**: created, paid
+  25.00 via `ft_transfer_call`, fulfilled by the leashed cashier
+  (tx `6WxQLouybTAjXoBBUfsYuREoHtB3GCqantekegn4Fzmw`), then
+  refunded in-band — buyer balance restored to exactly
+  40,000,000 base units, contract to 0, both records in the
+  on-chain fulfilment log. That refund is also the live
+  acceptance proof of the Stage 1 1-yocto fix: the contract's
+  outbound `ft_transfer` was accepted by the real Circle USDC
+  contract. **Caveat, proven live and recorded in `NOTES.md`:
+  the refund was triggered by the agent account's full-access
+  key, because a function-call key cannot attach the 1 yocto
+  `issue_refund` demands** (protocol rejects it:
+  `DepositWithFunctionCall`) — the leash-triggered refund needs
+  the small contract fix specified in `NOTES.md` (drop the
+  inbound assert; the outbound yocto is the contract's own).
+- Attack suite run live on the corrected deployment: the price
+  band refused an owner-signed +20% reprice on-chain (verbatim
+  panic) and accepted in-band moves; leash-key attempts at a
+  token transfer, a treasury withdrawal, and an inventory write
+  were rejected at protocol validation with the reasons returned
+  verbatim (`ReceiverMismatch`, `MethodNameMismatch`); the
+  prompt-injection order was fulfilled with exactly one signed
+  call and no drain; a dump of every public view contains zero
+  usable codes.
 
 **PENDING** (nothing below is claimed until it is verifiable
 on-chain):
 
-- A real order fulfilled end-to-end and the refund approve/refuse
-  paths — blocked on testnet USDC: Circle's faucet covers NEAR
-  Testnet but is a human, reCAPTCHA-gated web flow, and no
-  programmatic route was found (full probe log in `NOTES.md`).
-  One human faucet claim to the buyer account unblocks the rest.
+- The out-of-band refund case (an order parked in
+  `RefundRejected` by the contract band): the scheduled attempt
+  is documented in `NOTES.md`, but the live window is 1000
+  hours (see the constitution note above), so the paid order
+  leaves the band only on 2026-12-21 — the case completes on a
+  corrected redeploy, not on this one.
+- A v3 redeploy carrying the two live-found fixes — the
+  `issue_refund` inbound-deposit fix (so the leash itself can
+  trigger refunds) and the 1-hour refund window, verified
+  numerically at init. `bounden11.testnet` already exists and
+  holds 1.1 NEAR toward it; the remaining funding (~2 NEAR of
+  testnet faucet money) is the only blocker (`NOTES.md` has the
+  accounting and the deploy threshold evidence).
 - NEAR AI Cloud attestation verified against the live API —
   DONE 9 Nov 2026 for the attestation report (redacted real capture
   in `worker/test/fixtures/`, parser narrowed to the observed live
@@ -209,9 +255,12 @@ Honest limits right now:
 
 - Testnet only. Mainnet is out of scope for this build; a dust-value
   mainnet settlement may be added later strictly as stretch evidence.
-- Checkout settles on NEAR in the testnet stablecoin (`usdc.testnet`).
-  NEAR Intents is mainnet-only, so it appears as a `dry: true` price
-  proof, never as the settlement rail.
+- Checkout settles on NEAR in Circle's testnet USDC
+  (`3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`
+  — the contract Circle's developer docs list for NEAR Testnet,
+  and the one its faucet pays). NEAR Intents is mainnet-only, so
+  it appears as a `dry: true` price proof, never as the
+  settlement rail.
 - Demo inventory is **clearly fake** (test-marked codes) — see the plan.
 - The Shade Agent (TEE) worker is a later, time-boxed stage; the
   security thesis rests on the key allowlist + contract, not on the TEE.
