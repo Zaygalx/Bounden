@@ -18,3 +18,5 @@ near-sdk = { version = "5.30", features = ["unit-testing", "legacy"] }
 # near-sdk 5.x expects borsh as a direct dependency of the contract crate
 # (its derives resolve the crate by name).
 borsh = "1"
+near-contract-standards = "5"
+serde_json = "1.0.154"
