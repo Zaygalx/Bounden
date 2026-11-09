@@ -384,3 +384,21 @@ attempted: still compiling after ~33 minutes — its dependency tree
 includes binaryen and the near-cli-rs crate — and was stopped so
 pre-flight could close; it can be resumed in Stage 1 proper, and
 the plain cargo wasm build already works without it.)
+
+## 8. v3 deployment — funded and executed (Mon 9 Nov 2026)
+
+The §7 faucet wall was ultimately routed around by human wallet
+claims (record in NOTES.md). The v3 redeploy's funding closed
+with the owner's own top-up: tx
+`3DTG5o78M7SpPJZbaFfiHsa7oJRqXkKRoQcCG3onvwNM`
+(bounden.testnet -> bounden11.testnet, transfer deposit exactly
+591065010462499999800000 yocto), taking bounden11 to
+3587189515085823999799997 yocto — reconciled to the yocto
+against the prep-pass balance in NOTES.md. The v3 contract is
+deployed + initialised on bounden11.testnet (deploy tx
+`525VXugqsLgJQ9Y4UdRnNNqxabvejLQ7uKEixvTU1aaH`; refund window
+asserted numerically at read-back: 3600000000000 ns). The full
+money sequence, the leash-signed refund, the out-of-band
+RefundRejected and all five attack cases ran on this
+deployment. Full pass record: NOTES.md, "Stage 2 live pass v3
++ Stage 3 on-chain run".

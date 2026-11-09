@@ -1,6 +1,7 @@
 # Bounden — NEAR Hackathon Submission Pack
 
-**Status: PREP (Mon 9 Nov 2026).** This pack is filled in as far as
+**Status: PREP (Mon 9 Nov 2026; checklist re-closed on v3
+evidence the same day).** This pack is filled in as far as
 truthfully possible today. The submission form is one-shot and
 uneditable — nothing is submitted until every item in the checklist
 at the bottom is verified against its source of truth. Internal
@@ -16,10 +17,10 @@ submission-ready target: Sat 14 Nov 18:00 WAT. Hard deadline:
 | Email | Dosunmuh070@gmail.com | FINAL |
 | Team size | 1 | FINAL |
 | Preferred track(s) | business (primary), agents, security | FINAL — justifications below |
-| Description | See "Form description" below (1,628 characters) | FINAL text; paste verbatim |
+| Description | See "Form description" below (1,642 characters) | FINAL text; paste verbatim — but see checklist #9: the judgement sentence must be corrected before submitting |
 | Repository link | `https://github.com/Zaygalx/bounden` | ⚠️ **NOT YET LIVE** — the repo is local-first until the owner's Stage 5 go-ahead; the URL is the exact expected address once pushed |
 | Demo post link | The X post below | ⏳ PENDING — the post needs the film, and the film is shot after the live pass (`docs/FILM.md`) |
-| NEAR mainnet payout account | `bounden.near` | ⚠️ **NOT YET CLAIMED** — funding brief already delivered to the owner: 0.1 NEAR to the owner implicit account `fe9591cc09aa84478e6c8c622c402f2007eae6e65182976948ab23b1538b43f0`, after which `bounden.near` is created by script and verified on-chain (`docs/PREFLIGHT.md` §5) |
+| NEAR mainnet payout account | `bounden.near` | ✅ **CLAIMED** — live on mainnet holding exactly 0.1 NEAR, owned by the project key (claim tx `HLbPm1PS…GPL7K`); funding fully reconciled in `docs/PREFLIGHT.md` §5; custody handover complete (owner's own key added — see NOTES.md) |
 
 ## One-sentence pitch
 
@@ -111,21 +112,21 @@ is opened.
 | # | Item | Source of truth | Verification method | State / unblock |
 |---|---|---|---|---|
 | 1 | Project name "Bounden" | This pack; repo name | Read back on the form before submitting | ✅ ready |
-| 2 | Description pasted verbatim, 1,628 chars | This pack, "Form description" | Character-count the form field after pasting; diff against this pack | ✅ text ready; count at paste time |
+| 2 | Description pasted verbatim, 1,642 chars | This pack, "Form description" | Character-count the form field after pasting; diff against this pack | ✅ text ready; count at paste time — subject to the #9 judgement-sentence correction |
 | 3 | Tracks: business, agents, security | This pack, "Tracks" | Confirm all three selectable in one submission (HACKATHON.md) | ✅ ready |
 | 4 | Team lead / email / team size 1 | Owner identity (Dosunmuh070@gmail.com) | Owner confirms the email inbox is monitored for judging comms | ✅ ready |
 | 5 | Repo link live and public | `https://github.com/Zaygalx/bounden` | Open the URL signed-out; confirm the README renders and the walkthrough commands are present | ⏳ Owner's Stage 5 go-ahead to push (local-first rule) |
-| 6 | Contract live on testnet | `bounden10.testnet` (Path C fallback — `bounden.testnet` is keyed by the user's own Meteor seed, which Muse does not hold; documented in NOTES.md) | `get_constitution` view call returns the film's parameters (band 1000 bps, cap 50_000_000, window 3_600_000_000_000 ns, token = Circle's NEAR testnet USDC `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`) | 🟡 Live with ONE disclosed deviation: deploy + init tx `4rSmanAZugekHBkvcRiZtRPPxeJHqs1U8EwnJwWNwwis`; constitution, product ($25.00) and 3 inventory commitments read back on-chain; token corrected per Circle's official listing (the v1 deployment on bounden8 pinned the wrong same-name token and was deleted). **Deviation: the on-chain refund window reads 3600000000000000 ns (1000 hours), not the specified 3_600_000_000_000 (1 hour)** — an init-args digit slip; the v3 redeploy that fixes it is built and tested (contract 23/23, worker 53/53) and funded to 2.996125 NEAR on `bounden11.testnet` — ~0.42 NEAR short of the deployment's storage floor; accounting + continuation in NOTES.md ("Stage 2 live pass v3") |
-| 7 | Leash on-chain | Cashier key's permission object | `view_access_key`: receiver = contract, methods exactly [`fulfil_order`, `issue_refund`], allowance 0.25 NEAR | ✅ Agent `bounden7.testnet` (substitution documented in NOTES.md), leash key `ed25519:EJQJ2wNB1RonSiLGRSqc1fvE4HyC8UFXqwifPNyeG9Z7` bound to bounden10.testnet, set-agent tx `7USiGPFuehjzKxYHNNeCsy9zA7VVx85TWo1ujnAn38Vr`, add-key tx `7w8rcLEQXsoC8gUnsKNdL4MFkaAE7AUx4esE5G8g39wB`; permission object read back via two RPC paths; the v1 key bound to the superseded contract was deleted from the account (tx `ErThPQnXa4XFzHBVoGAfN48HYUbnUTuPhwFhR4i9oZy7`); worker startup self-check passes against the new deployment |
-| 8 | Live order + refund proof | Explorer txs from the live pass | One fulfilled order via `get_order`; one in-band refund AND one RefundRejected on-chain (the `near-ai:` attestation hash belongs to #9's Stage 3 bar) | 🟡 Order + fulfil + in-band refund DONE on bounden10 in Circle USDC: order 0 created/paid $25, fulfilled by the leashed cashier (tx `6WxQLouybTAjXoBBUfsYuREoHtB3GCqantekegn4Fzmw`), refunded in-band (buyer restored to exactly 40 USDC, contract to 0, both records in `get_fulfilment_log`) — also the live acceptance proof of the Stage 1 1-yocto fix. **Two caveats, both proven live (NOTES.md): the refund was triggered by the agent account's full-access key because a function-call key cannot attach the 1 yocto `issue_refund` demands (`DepositWithFunctionCall`) — the contract fix is specified for v3; and the RefundRejected half is pending the v3 redeploy (order 1 leaves bounden10's 1000-hour band only on 2026-12-21). V3 UPDATE: the deposit fix is built and tested (contract + worker), so on v3 the in-band refund is leash-signed and the RefundRejected half is a same-day exercise under the corrected 1-hour window; the v3 run is gated only on ~0.42 NEAR of testnet funding for bounden11 (2.996125 NEAR in place)** |
-| 9 | AI Cloud attestation shape verified live | Real API capture vs `worker/test/fixtures/` | One real chat completion + attestation report captured, parser narrowed, fixtures marked VERIFIED-LIVE | ✅ API side COMPLETE 9 Nov 2026: attestation report captured verbatim + parser narrowed to both verified provider shapes; after the credited key was issued under the owner's boundenn.near workspace (US$10 Builders credit), two live judgement completions from `deepseek/deepseek-v3.2` captured (in-band refund → approve, completion `7a7b1ed10e7f47deae06150387dd5b9b`; out-of-band refund → refuse, completion `56474058c3bc40a884434645debe2811`), wired as VERIFIED-LIVE fixtures with provider tests (approve → `near-ai:` hash; refuse → `JudgementNotApprovedError`); worker suite 57/57. Remaining Stage 3 step is the on-chain run that stores a `near-ai:` hash on a real order — rides with the v3 deploy on bounden11 (funding-gated) and needs the runtime key placed in the worker's own env (`NEAR_AI_CLOUD_API_KEY`; NOTES.md, Stage 3 verification pack) |
-| 10 | Attack suite run live | `attacks/` live mode output | All five cases produce their documented on-chain rejections; output saved for the film | 🟡 4 of 5 fully live on bounden10 (v2 pass): prompt-injection order fulfilled with exactly one signed call and no drain; payout-redirect and inventory-dump refused at protocol validation with verbatim errors (`ReceiverMismatch`, `MethodNameMismatch`); price-band refused verbatim with in-band controls passing. Out-of-band-refund pending: order ages out of the (defective 1000-hour) band on 2026-12-21, or the v3 redeploy — scheduled attempt documented in NOTES.md. Full results in `attacks/README.md` |
+| 6 | Contract live on testnet | `bounden11.testnet` (Path C fallback — `bounden.testnet` is keyed by the user's own Meteor seed, which Muse does not hold; documented in NOTES.md) | `get_constitution` view call returns the film's parameters (band 1000 bps, cap 50_000_000, window 3_600_000_000_000 ns, token = Circle's NEAR testnet USDC `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`) | ✅ **Live on bounden11.testnet (v3)**: deploy + init tx `525VXugqsLgJQ9Y4UdRnNNqxabvejLQ7uKEixvTU1aaH`; constitution read back and **asserted in code** — band 1000 bps, cap 50_000_000, **refund_window_ns == 3600000000000 exactly** (the v2 digit slip is fixed and numerically verified), token = Circle's USDC; product licence-pro $25.00 and 3 inventory commitments on-chain; wasm code hash `DCgiAv1ET5gtVBUqkLsHR5MuTvsqWXBZMHuFhAgDWdcK`. bounden10.testnet is superseded (treasury withdrawn to the owner at supersession, tx `H3gXr3ZaXP8kAdrDu2GRNgNkiiJ1scmNpFPomK6VZyeD`; its order 1 remains Paid there). Full record: NOTES.md, "Stage 2 live pass v3 + Stage 3 on-chain run" |
+| 7 | Leash on-chain | Cashier key's permission object | `view_access_key`: receiver = contract, methods exactly [`fulfil_order`, `issue_refund`], allowance 0.25 NEAR | ✅ Agent `bounden7.testnet` (substitution documented in NOTES.md); **leash v3** key `ed25519:8ixy4dmqQkoyx493d1Fa6yVLAr6HjQMCideisgcCTws4` bound to **bounden11.testnet**, methods exactly [`fulfil_order`, `issue_refund`], allowance 0.25 NEAR; set-agent tx `FLg578XYFbK9k3pBSHoBwymX3c1hKabEVVWr5mtsuiFW`, add-key tx `LTLbH35pEDsqztY6QsR4aFniCa1NpGaswoRGMsm85Qr`; permission object read back via two RPC paths; worker code hash pinned `4d6f7186039c366c86b71c412b5c5c658221688d9dded98c5fdad35997a828f3` (recomputed from source at setup); worker startup self-check passes; bounden7 holds exactly this one function-call key plus its full-access setup key (v1/v2 leash keys deleted in earlier passes) |
+| 8 | Live order + refund proof | Explorer txs from the live pass | One fulfilled order via `get_order`; one in-band refund AND one RefundRejected on-chain (the `near-ai:` attestation hash belongs to #9's Stage 3 bar) | ✅ **COMPLETE on bounden11**: order 0 created/paid $25 (injection memo on the payment), fulfilled by the leashed cashier (tx `7Cgeqi3vCuVPhboyWqstsEiWTw45hRmKKcqFEenYwQmv`), **refunded in-band BY THE LEASH KEY ITSELF at zero deposit** (tx `6iN5SFJjsxCEzfNqcnicj41KVnCYfYax3v5ktm5nc1NR` — signer public key is the leash key; buyer restored to exactly 40 USDC, contract to 0) — the proof v2 could not produce. Order 1 fulfilled (tx `ATGRLknsapjZd1X52dcLbCQHVjmxTxgar84DqVPuAiJH`) and its out-of-band refund attempt after the corrected 1-hour window parked it in **RefundRejected** with the `bounden_refund_rejected` event and no token movement (worker refused locally with no chain call; direct leash-signed attempt tx `EeFLYzZ3JLFj1widHVARnLT4HmZ1EPCTHogvgAFmxJZM`). The `near-ai:` attestation hash is NOT part of this evidence — see #9 |
+| 9 | AI Cloud attestation shape verified live | Real API capture vs `worker/test/fixtures/` | One real chat completion + attestation report captured, parser narrowed, fixtures marked VERIFIED-LIVE | ✅ API side COMPLETE 9 Nov 2026: attestation report captured verbatim + parser narrowed to both verified provider shapes; after the credited key was issued under the owner's boundenn.near workspace (US$10 Builders credit), two live judgement completions from `deepseek/deepseek-v3.2` captured (in-band refund → approve, completion `7a7b1ed10e7f47deae06150387dd5b9b`; out-of-band refund → refuse, completion `56474058c3bc40a884434645debe2811`), wired as VERIFIED-LIVE fixtures with provider tests (approve → `near-ai:` hash; refuse → `JudgementNotApprovedError`); worker suite 57/57. **ON-CHAIN RUN ATTEMPTED 9 Nov 2026 on bounden11 — the hash did NOT land, and the reason is measured, not guessed**: the worker ran live with `BOUNDEN_ATTESTATION_PROVIDER=near-ai` through a loopback credential bridge (`scripts/near_ai_bridge.py`; the key never touched disk). DeepSeek-V3.2 escalated or refused every live decision (fulfil order 0: escalate, then refuse in a second process; refund order 0: refuse), on factually wrong grounds ("amount does not match product price" — it does, exactly). Probe matrix: 0 approvals in 8 draws with the facts the shipped worker supplies. Root cause, isolated by a control probe: `worker.ts` never populates `buyerHistorySummary`; with that field set, the identical fulfil request approves. The money sequence completed under the null provider after the gate evidence was captured; live orders carry `attestation_hash: null`. **CONSEQUENCE FOR THE FORM: the description sentence "Its order and refund judgements come from NEAR AI Cloud TEE inference, and each decision's attestation hash is written on-chain with the order" is NOT true of the live build and MUST be corrected (or the worker fix landed and re-proven) before submitting.** Full evidence: NOTES.md, "The judgement gate" |
+| 10 | Attack suite run live | `attacks/` live mode output | All five cases produce their documented on-chain rejections; output saved for the film | ✅ **5 of 5 live on bounden11 (v3 pass)**: prompt-injection order fulfilled with exactly one signed call and no drain (worker signed zero calls under the judgement configuration); payout-redirect + inventory-dump refused at protocol validation verbatim (`ReceiverMismatch`, `MethodNameMismatch`); price-band refused verbatim with in-band controls passing; out-of-band refund parked in RefundRejected with the event, under the corrected 1-hour window. Full results in `attacks/README.md` |
 | 11 | Film recorded (≤59s) and watched in full | `docs/FILM.md` | Runtime checked; every hash in the film created in the take; no fixture footage | ⏳ After #10 |
 | 12 | X post published with film attached | The post text in this pack | Open the post signed-out; film plays; @NEARProtocol tagged, #NEARHackathon present, "built at NEAR HACKATHON" in the text | ⏳ After #11 |
 | 13 | Demo post link for the form | The published X post URL | Paste the post's own URL, open it signed-out | ⏳ After #12 |
 | 14 | Payout account `bounden.near` claimed | Mainnet account state | `view_account bounden.near` on mainnet RPC returns the account, owned by the owner key | ✅ Claimed live on mainnet, holding exactly 0.1 NEAR, owned by the project key (claim tx `HLbPm1PS…GPL7K`); the 0.2 NEAR funding fully reconciled and the surplus returned (PREFLIGHT §5) |
-| 15 | Storefront live (demo URL) | Deployed `web/` (Vercel) in live mode | Every page loads with live data and no fallback banner; `/constitution` renders the real permission object | ⏳ After #6; deploy is an owner-flow step (Vercel) |
-| 16 | README honest-status block matches reality | README.md "Status at a glance" | Re-read after the live pass; DONE/PENDING lists updated; Stage 4 block swapped if Stage 4 landed | ⏳ Final pass at submission time |
+| 15 | Storefront live (demo URL) | Deployed `web/` (Vercel) in live mode | Every page loads with live data and no fallback banner; `/constitution` renders the real permission object | ⏳ Deploy is an owner-flow step (Vercel). **Live-mode smoke DONE locally 9 Nov 2026** against bounden11: all seven routes HTTP 200 rendering real chain data (live inventory count, order 0 Refunded / order 1 Fulfilled, real constitution + permission object). One copy defect to fix first: the live product page labels the token "(usdc.testnet)" — `web/src/app/products/[id]/page.tsx` (fixture fallbacks in `fixtures.ts` / checkout page carry the same stale name for fixture mode) |
+| 16 | README honest-status block matches reality | README.md "Status at a glance" | Re-read after the live pass; DONE/PENDING lists updated; Stage 4 block swapped if Stage 4 landed | 🟡 Updated for the v3 pass 9 Nov 2026 (bounden11 live, bounden10 superseded, counts refreshed); final re-read at submission time |
 | 17 | Second-project rule | Owner | If the owner enters a second independent project in this hackathon, each project's README must name the other (HACKATHON.md) — currently N/A, single entry | ✅ N/A today; re-check at submission |
 | 18 | Deadline | Sun 15 Nov 2026, 00:59 WAT | Submit against the internal target (Sat 14 Nov 18:00 WAT), never the deadline | ⏳ Schedule |
 
@@ -138,10 +139,10 @@ Found while preparing this pack — stated plainly, per house rules:
    form cannot be truthfully completed until checklist #5 and #13
    close. Both are owner-gated (repo push) and chain-gated (film),
    not writing-gated.
-2. **The payout account must be a NEAR mainnet account.** Today it
-   is an unclaimed name plus a delivered funding brief. The form
-   field must not be filled with `bounden.near` until checklist #14
-   verifies the account exists on mainnet.
+2. **The payout account must be a NEAR mainnet account.**
+   SATISFIED: checklist #14 verifies `bounden.near` exists on
+   mainnet (claimed, holding exactly 0.1 NEAR, custody handover
+   complete), so the form field may be filled with it.
 3. **A local-only demo is acceptable under HACKATHON.md (Q-012) only
    with a real video in the X post.** Bounden's plan exceeds that
    (public testnet deployment), but if the live pass slips, the
@@ -153,16 +154,13 @@ Found while preparing this pack — stated plainly, per house rules:
    non-use of Intents as a settlement rail is disclosed in the README
    (mainnet-only; shown as a `dry: true` price proof), which matches
    the rules' honesty expectations.
-5. **The form description's token phrase is corrected; its
-   window phrase is true of v3, not of the current deployment.**
-   The description now names the payment token accurately
-   ("Circle's NEAR testnet USDC" — the token the live shop
-   settles in, on both bounden10 and v3). It still describes
-   "a $50 cap inside a one-hour window": that is exactly the v3
-   constitution (3600000000000 ns, verified numerically at init),
-   while the CURRENT live shop (bounden10) carries the disclosed
-   1000-hour window (checklist #6). The v3 redeploy is built,
-   tested and funded to 2.996125 of ~3.41 NEAR (NOTES.md).
-   Pre-submission gate, unchanged in substance: submit only
-   once v3 is live, or re-correct the window phrase if submitting
-   against bounden10.
+5. **The form description's token and window phrases are now
+   TRUE of the live deployment.** RESOLVED by the v3 deploy:
+   the live shop is bounden11, whose constitution matches the
+   description on BOTH points — "Circle's NEAR testnet USDC"
+   (the token the shop settles in) and "a $50 cap inside a
+   one-hour window" (refund_window_ns == 3600000000000,
+   asserted by integer equality in code at read-back;
+   checklist #6). The remaining description-truth flag is the
+   judgement sentence — see checklist #9: it must be corrected,
+   or the worker fix landed and re-proven, before submitting.

@@ -26,12 +26,14 @@ on-chain you will find only hashes, never a usable code.
 **DONE and verified locally** (commands below — run them and see):
 
 - Stage 1 shop contract: full constitution implemented, **23 unit
-  tests passing**, release wasm builds (~332 KB), including the
+  tests passing**, release wasm builds (~340 KB), including the
   1-yocto outbound-transfer fix with a negative-control regression
   test (`NOTES.md`).
-- Stage 2 cashier worker: **51 unit tests passing** (30 worker/leash/
-  vault + 21 NEAR AI Cloud judgement layer), strict typecheck, the
-  three-layer leash, AES-256-GCM sealed-inventory vault.
+- Stage 2 cashier worker: **57 unit tests passing** (worker/leash/
+  vault plus the NEAR AI Cloud judgement layer, including
+  VERIFIED-LIVE fixtures captured from the real API), strict
+  typecheck, the three-layer leash, AES-256-GCM sealed-inventory
+  vault.
 - Attack suite v1: five named cases, mock mode runs today and prints
   the expected refusal for each.
 - Storefront: builds and runs in fixture mode (labelled as such in
@@ -40,6 +42,71 @@ on-chain you will find only hashes, never a usable code.
 
 **DONE LIVE on testnet** (Stage 2 live passes, Mon 9 Nov 2026 —
 full log in `NOTES.md`, attack results in `attacks/README.md`):
+
+**The live shop is `bounden11.testnet`** (v3, deployed 9 Nov
+2026) — the redeploy carrying both live-found fixes, with the
+full money sequence and all five attack cases run against it:
+
+- Deploy + init tx `525VXugqsLgJQ9Y4UdRnNNqxabvejLQ7uKEixvTU1aaH`;
+  wasm code hash `DCgiAv1ET5gtVBUqkLsHR5MuTvsqWXBZMHuFhAgDWdcK`.
+  Constitution read back and **asserted in code**: payment token
+  = Circle's NEAR testnet USDC
+  (`3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`),
+  price band 1000 bps, refund cap 50_000_000 ($50), and
+  **refund_window_ns == 3600000000000 (1 hour) by integer
+  equality** — the v2 window slip is fixed and numerically
+  verified this time.
+- Product `licence-pro` live at $25.00 with 3 sealed inventory
+  commitments; the cashier's leash v3 key
+  `ed25519:8ixy4dmqQkoyx493d1Fa6yVLAr6HjQMCideisgcCTws4` permits
+  exactly `fulfil_order` + `issue_refund` on bounden11 with a
+  0.25 NEAR allowance (worker code hash pinned on-chain:
+  `4d6f7186039c366c86b71c412b5c5c658221688d9dded98c5fdad35997a828f3`);
+  the worker's startup self-check verifies the permission
+  object before it will run.
+- **The leash refund proof v2 could not produce**: order 0 was
+  created, paid $25.00 (its payment memo carrying a
+  treasury-drain prompt injection, which produced zero extra
+  signed calls), fulfilled by the leashed cashier (tx
+  `7Cgeqi3vCuVPhboyWqstsEiWTw45hRmKKcqFEenYwQmv`), then
+  **refunded in-band by the leash key itself at zero deposit**
+  (tx `6iN5SFJjsxCEzfNqcnicj41KVnCYfYax3v5ktm5nc1NR` — the
+  tx's signer public key IS the leash key; buyer restored to
+  exactly 40 USDC, contract to 0).
+- Order 1 was fulfilled by the leash (tx
+  `ATGRLknsapjZd1X52dcLbCQHVjmxTxgar84DqVPuAiJH`), and its
+  refund was attempted after the 1-hour band closed: the
+  worker refused locally with no chain call, and a direct
+  leash-signed `issue_refund` (tx
+  `EeFLYzZ3JLFj1widHVARnLT4HmZ1EPCTHogvgAFmxJZM`) parked the
+  order in **RefundRejected** with the
+  `bounden_refund_rejected` event and no token movement. All
+  five attack cases are closed on this deployment
+  (`attacks/README.md`); a dump of every public view contains
+  zero usable codes.
+- USDC accounting at supersession: bounden10's 25 USDC
+  treasury was withdrawn to the owner (tx
+  `H3gXr3ZaXP8kAdrDu2GRNgNkiiJ1scmNpFPomK6VZyeD`) and
+  redeployed as the buyer's v3 float. Final v3 balances:
+  buyer 15 USDC, bounden11 treasury 25 USDC (order 1's kept
+  payment), owner 0, bounden10 0.
+- **Stage 3 caveat, measured and recorded in `NOTES.md`**: the
+  on-chain run with the NEAR AI judgement layer active was
+  attempted through a loopback credential bridge
+  (`scripts/near_ai_bridge.py`; the key never touched disk).
+  DeepSeek-V3.2 escalated or refused every live decision on
+  factually wrong grounds (the amount DOES match the product
+  price); a control probe isolates the cause — the shipped
+  worker never populates the buyer-history summary the seam
+  was designed around, and with that field set the identical
+  request approves. The v3 orders were therefore fulfilled
+  under the worker's null attestation provider (its documented
+  Stage 2 mode) and carry `attestation_hash: null` on-chain.
+  No `near-ai:` hash is claimed for any live order.
+
+The v2 record follows — **`bounden10.testnet` is SUPERSEDED**
+(its order 1 remains `Paid` there against a withdrawn
+treasury; see `NOTES.md`):
 
 - Contract deployed + initialised on **`bounden10.testnet`**
   (deploy tx `4rSmanAZugekHBkvcRiZtRPPxeJHqs1U8EwnJwWNwwis`; wasm
@@ -107,21 +174,6 @@ full log in `NOTES.md`, attack results in `attacks/README.md`):
 **PENDING** (nothing below is claimed until it is verifiable
 on-chain):
 
-- The out-of-band refund case (an order parked in
-  `RefundRejected` by the contract band): the scheduled attempt
-  is documented in `NOTES.md`, but the live window is 1000
-  hours (see the constitution note above), so the paid order
-  leaves the band only on 2026-12-21 — the case completes on a
-  corrected redeploy, not on this one.
-- A v3 redeploy carrying the two live-found fixes — the
-  `issue_refund` inbound-deposit fix (so the leash itself can
-  trigger refunds) and the 1-hour refund window, verified
-  numerically at init. The fix is BUILT and tested (contract
-  23/23, worker 53/53 — `NOTES.md`, "Stage 2 live pass v3") and
-  `bounden11.testnet` holds 2.996125 NEAR of the ~3.41 NEAR the
-  deployment's storage requires after a full consolidation of
-  the project's testnet accounts: the remaining ~0.42 NEAR of
-  testnet funding is the only blocker.
 - NEAR AI Cloud attestation verified against the live API —
   DONE 9 Nov 2026 for the attestation report (redacted real capture
   in `worker/test/fixtures/`, parser narrowed to the observed live
@@ -130,9 +182,12 @@ on-chain):
   boundenn.near workspace, two live judgement completions from
   `deepseek/deepseek-v3.2` were captured as VERIFIED-LIVE fixtures
   (in-band refund → approve; out-of-band refund → refuse) and wired
-  into the worker suite. Still open: the on-chain run that stores a
-  `near-ai:` hash on a real order — it rides with the v3 deploy
-  above (NOTES.md, Stage 3 verification pack).
+  into the worker suite. The on-chain run was ATTEMPTED with the
+  v3 deploy and the judgement layer would not approve (see the
+  Stage 3 caveat in the live section above): the remaining fix
+  is to populate `buyerHistorySummary` in the worker, which
+  changes the worker code hash and needs a fresh `set_agent`
+  pin, then re-run one live order.
 - The demo film (<60s, `docs/FILM.md`), the X demo post, and the
   submission itself (`docs/SUBMISSION.md`).
 - Stage 4 (Shade Agent / TEE): spiked and designed, **not shipped** —
@@ -210,20 +265,22 @@ Full plan: [docs/PLAN.md](docs/PLAN.md) · Pre-flight evidence:
 
 ## Status
 
-**Stage 1 contract implemented and verified locally** (23 unit tests
-passing; release wasm builds at ~332 KB). Not yet deployed — deployment
-waits for the `bounden.testnet` account claim (see docs/PREFLIGHT.md).
+**Stage 1 contract implemented, verified locally, and DEPLOYED**
+(23 unit tests passing; release wasm 339,818 bytes). The live
+deployment is the v3 build on `bounden11.testnet` (see the live
+section above and docs/PREFLIGHT.md); two earlier deployments
+(bounden8, bounden10) are superseded.
 
-**Stage 2 worker pre-built and verified locally** (`worker/`, 30 unit
-tests passing, all chain access mocked): the leashed cashier with its
+**Stage 2 worker built, verified locally, and RUN LIVE**
+(`worker/`, 57 unit tests passing): the leashed cashier with its
 runtime allowlist guard, the `create-leashed-key` setup procedure,
 the AES-256-GCM sealed-inventory vault, local refund-band pre-checks,
-and the Stage 3 attestation seam. **Attack suite v1** (`attacks/`)
-ships the five named cases with mock mode runnable now. The live
-end-to-end pass — real testnet deployment, leash setup on-chain, a
-paid order fulfilled by the leashed key — is pending the same account
-funding as Stage 1 deployment. Nothing in Stage 2 has touched a live
-chain yet beyond read-only probes; the worker daemon refuses to start
+and the Stage 3 attestation seam. **Attack suite** (`attacks/`)
+ships the five named cases; all five were run live against
+bounden11 and refused as designed (results in `attacks/README.md`).
+The live end-to-end pass — real testnet deployment, leash setup
+on-chain, paid orders fulfilled and refunded by the leashed key
+alone — is COMPLETE on bounden11; the worker daemon refuses to start
 against a contract where its leash is not verifiably in place.
 
 **Stage 3 pre-built locally** (judgement layer + storefront, against
@@ -237,8 +294,9 @@ deterministic attestation hash — SHA-256 over the canonicalised
 on-chain as `near-ai:<hex>`. It fails closed: malformed model output
 escalates and never approves, a non-approval blocks the on-chain call,
 and with no API key the provider refuses loudly rather than
-fabricating a hash. 22 new unit tests (52 worker tests total, all
-passing, all network access faked). **Attestation shape VERIFIED-LIVE
+fabricating a hash. The worker suite stands at 57 tests, all
+passing (unit tests fake network access; the judgement fixtures
+below are real captures). **Attestation shape VERIFIED-LIVE
 9 Nov 2026:** the live report binds the model inside a
 `model_attestations` array (not the flat shape the docs suggested);
 the fixture is now a redacted real capture and the parser was
@@ -248,9 +306,14 @@ chat-completion fixture remains doc-derived, but two VERIFIED-LIVE
 judgement completions now sit beside it — captured 9 Nov 2026 once
 the Builders credit unblocked inference (in-band refund → approve;
 out-of-band refund → refuse; provider tests prove the approve path
-yields a `near-ai:` hash and the refuse path throws). The
+yields a `near-ai:` hash and the refuse path throws). The on-chain
+run was attempted live on bounden11: the judgement layer gated
+every live decision (see the Stage 3 caveat in the live section),
+so no live order carries a `near-ai:` hash yet. The
 **storefront** (`web/`, Next.js)
-builds and demos today in fixture mode: catalogue, product pages, a
+builds and demos today in fixture mode, and passed a live-mode
+smoke test locally against bounden11 (all routes rendering real
+chain data; not yet deployed): catalogue, product pages, a
 checkout explainer (payment is a wallet action — the cashier never
 touches it), order status, the public Constitution page rendering the
 constitution and the agent key's permission object, and "How
