@@ -336,3 +336,87 @@ exists in this environment. Commits: worker `504b525`, web `14eaeb8`.
 - All commits authored as Hassan Dosunmu <Dosunmuh070@gmail.com>
   (repo-local git config).
 - Local first: nothing is pushed or published without the user's word.
+
+## Stage 4 spike — Shade Agent feasibility (Mon 9 Nov 2026)
+
+Research + design only (`docs/SHADE.md`, scaffold sketch in `shade/`).
+Nothing deployed, registered, or funded; the main-line testnet
+deployment remains blocked at the faucet wall (PREFLIGHT §7) and the
+spike did not touch it.
+
+- **Primary source moved.** NEAR docs now mark Shade Agents
+  "(deprecated)": "After April 19th, 2026, the Shade Agent Framework
+  will no longer maintained as standalone developer tooling" — docs
+  live in the NearDeFi/shade-agent-framework monorepo, which this
+  spike cloned and read directly (README, getting-started, agent
+  contract reference, CLI reference, concepts incl. security +
+  reproducibility, shade-attestation README, template deployment.yaml).
+- **Audit warning, quoted in SHADE.md:** "This technology has not yet
+  undergone a formal audit…" (monorepo README banner). The April 2026
+  maintenance end is the bigger practical fact: if registration fights
+  back at Stage 4 build time, there is no maintainer to escalate to.
+- **Registration shape:** no central registry, no developer whitelist.
+  You deploy your OWN agent contract (framework reference impl); the
+  agent self-registers via `register_agent` (payable, 0.00486 NEAR
+  storage) after owner-side `approve_measurements` + `approve_ppids`.
+  Template deploys fund the contract account with 8 NEAR; the
+  framework's in-TEE tests want ≥20 testnet NEAR on hand. External
+  accounts: funded testnet sponsor (CLI-generated), Docker Hub,
+  Phala Cloud + API key. Registration validity defaults to 7 days →
+  re-register every 6 (template pattern).
+- **Code identity ≠ our source hash.** The pinned on-chain value in
+  Shade is a 6-part TEE measurement set; the only part identifying our
+  code is the App Compose Hash (Docker Compose + app layers), with
+  image/base-image references pinned BY DIGEST. Mapping: shop
+  contract's `agent_code_hash` field keeps its shape and carries the
+  compose hash; verification moves to a separate registry contract
+  using the shade-attestation crate. leash.ts's comment claiming "the
+  contract field and the registration flow are identical" is wrong in
+  that one detail — SHADE.md §1.3 has the correction. Reference
+  verify_attestation also requires the agent account to be an
+  IMPLICIT account (64-hex) — `cashier.bounden.testnet` cannot be the
+  Shade agent's on-chain identity.
+- **Design decision (SHADE.md §2.2):** Option A — direct calls. The
+  Shade cashier calls the shop contract directly with the same
+  two-method FC key; a separate registry contract handles attestation
+  admission; `set_agent` stays the binding. Option B (routing calls
+  through a Shade agent contract) REJECTED: it would replace the FC
+  leash with trust in a contract account — a weaker constitution.
+- **Vault is the hardest delta (D4).** Framework security doc: CVM
+  disk may not follow the agent, and disk is NOT wiped on upgrades.
+  Stage 2's local vault directory cannot move as-is; design moves
+  ciphertext out of the enclave and derives the vault key in-enclave
+  at cold start. Derivation API in shade-agent-js UNVERIFIED — first
+  hour of the real build.
+- **Docker gate:** `docker: command not found` on this VM (verified
+  in the spike), and every documented Shade path (CLI deploy, image
+  build, `shade reproduce`, local mode) needs Docker. Per the spike
+  brief, the scaffold stopped at a non-Docker adapter sketch:
+  `shade/` (README + src/index.ts sketch + deployment.yaml.sketch),
+  marked SCAFFOLD — NOT DEPLOYED, NOT REGISTERED, not wired into the
+  worker package, deps intentionally unpinned.
+- **Verdict: RISKY** (SHADE.md §5). One-day build is feasible only if
+  four preconditions hold BEFORE the day starts (Docker-capable host,
+  testnet funding unblocked, Phala + Docker Hub accounts ready,
+  Stage 2/3 live pass already done — none currently true). Riskiest
+  step: the TEE flip — first real `register_agent` against a
+  `requires_tee: true` registry; decision rule: not green within 2 h
+  → fallback. Fallback README wording is pre-written in SHADE.md
+  §2.7 so nobody improvises it under deadline pressure. Stage 5
+  should plan around the plain worker; Shade is upside (Act 2 closer
+  + Constitution panel + a sixth attack case: modified worker →
+  registration refused).
+- **First three steps of the real build:** (1) stand up a
+  Docker-capable host, install shade-agent-cli + Docker, create
+  Phala/Docker Hub accounts, confirm the published shade-agent-js
+  version and the vault-key derivation API; (2) local-mode
+  integration — registry deployed locally (requires_tee: false,
+  whitelist), Shade bootstrap + D5 leash-check rewrite + shop binding
+  proven against the local registry; (3) vault relocation with
+  cold-start recovery rehearsed locally, then — and only then — the
+  TEE flip.
+- **UNVERIFIED items carried forward:** Phala Cloud pricing/free-tier
+  sufficiency (docs say the account is free to create, nothing about
+  deployment cost); published @neardefi/shade-agent-js registry
+  version vs the monorepo's in-tree copy; shade-agent-js key
+  derivation surface for the vault key.

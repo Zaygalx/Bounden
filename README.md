@@ -43,7 +43,8 @@ agent-run digital-goods business can adopt.
 
 Full plan: [docs/PLAN.md](docs/PLAN.md) · Pre-flight evidence:
 [docs/PREFLIGHT.md](docs/PREFLIGHT.md) · Downloads design:
-[docs/DOWNLOADS.md](docs/DOWNLOADS.md) · Build notes: [NOTES.md](NOTES.md)
+[docs/DOWNLOADS.md](docs/DOWNLOADS.md) · Stage 4 (Shade) spike:
+[docs/SHADE.md](docs/SHADE.md) · Build notes: [NOTES.md](NOTES.md)
 
 ## Status
 
@@ -102,6 +103,14 @@ Honest limits right now:
 - Demo inventory is **clearly fake** (test-marked codes) — see the plan.
 - The Shade Agent (TEE) worker is a later, time-boxed stage; the
   security thesis rests on the key allowlist + contract, not on the TEE.
+- **Stage 4 has been spiked, not built** (`docs/SHADE.md`): the design
+  is ready and the verdict is RISKY — the framework's standalone
+  tooling stopped being maintained in April 2026, and its deploy path
+  needs a Docker-capable host this build does not have. Nothing in
+  Stage 4 has been deployed or registered; the adapter sketch in
+  `shade/` is marked scaffold and is not wired to anything. If the
+  swap does not land inside its time-box, the fallback wording in
+  `docs/SHADE.md` §2.7 ships instead — pre-written, not improvised.
 
 ## Licence
 
