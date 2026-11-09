@@ -2136,3 +2136,51 @@ Final suites for this pass, both re-run at pass end: contract
 was changed in this pass (on-chain state and docs only); the
 on-chain worker pin still reads
 `7a5ceb1252d6952f9d36378691247e3f1630e54a0e2dbca17079e6d1f85338ac`.
+
+## Stage 5 — GitHub push (9 Nov 2026, ~20:43 WAT)
+
+The owner lifted the local-first rule for this step in chat ("Proceed
+with GitHub push first") and, when the pre-push secret scan stopped the
+first attempt at its own gate, chose option 1 ("Ok push"): publish with
+a narrow gitleaks allowlist rather than scrubbing or rewriting history.
+
+- **Target:** `https://github.com/Zaygalx/Bounden` — created by the
+  owner, verified PUBLIC and completely empty before the push.
+- **Pre-push scan (gitleaks 8.30.1, full history, 40 commits):** 11
+  findings, all rule `generic-api-key`, all classified by hand as
+  public artefacts: (1) the Circle NEAR testnet USDC contract address
+  `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`
+  in this file's constitution read-back lines — a public on-chain
+  identifier; (2) nine `key_config` / `signing_key` matches in
+  `worker/test/fixtures/attestation-report.json` and
+  `attestation-report.verified-live-2026-11-09.json` — the OHTTP
+  public key configuration and TEE public verification keys inside
+  NEAR AI Cloud attestation reports, which are public verification
+  artefacts by design. No private key material anywhere.
+- **Allowlist (`.gitleaks.toml`, commit `a9f463a`):** extends the
+  default ruleset unchanged; `generic-api-key` gains exactly two
+  entries — (a) the exact contract-address string above; (b) a
+  field-shape regex (target `match`) for attestation
+  `key_config`/`signing_key` field assignments. A paths+regex entry
+  was tried first and rejected: gitleaks 8.30.1 ORs the conditions
+  inside one allowlist, so it exempted every match in the fixture
+  files — caught by negative control B below and replaced with the
+  narrower field-shape construct.
+- **Negative controls (all planted fakes removed afterwards):** a fake
+  API key in a temp file outside any allowlist → flagged; the same
+  fake appended to a fixture file under an `api_secret` field →
+  flagged (exactly 1 finding; the genuine attestation fields stayed
+  suppressed); the same fake appended to this file → flagged.
+- **Scan after the fix:** full-history `gitleaks git` with the config
+  reports **zero findings** over all commits.
+- **Push:** initial push carried 41 commits (the 40-commit history
+  plus the `.gitleaks.toml` commit), head
+  `a9f463ace7f3970d1808b28ae6f801bc4ff183d0`, all commits authored
+  Hassan Dosunmu <Dosunmuh070@gmail.com>. Signed-out verification
+  (unauthenticated): API reports visibility **public**, default branch
+  `main`; remote head == local head exactly; repo page HTTP 200; the
+  raw README from `main` names `bounden11.testnet` as the live shop.
+  This documentation commit follows the initial push and is pushed in
+  the same step; its head is verified by the same read-back.
+- **Checklist:** SUBMISSION.md #5 closed (this entry is its full
+  record); the fields table's repository-link row updated to LIVE.
