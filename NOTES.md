@@ -1739,3 +1739,157 @@ state, by design.)
 Final suites re-run at pass end: contract **23/23**, worker
 **57/57**, typecheck clean — the same counts as at pass start;
 no code changed in this pass.
+
+## Stage 3 judgement-gate fix — summary populated; the gate still does not approve THIS buyer (Mon 9 Nov 2026)
+
+The deliberate next change from the previous section, executed
+exactly as scoped. Headline, stated before the detail: **the fix
+is in and re-pinned, and the probe then failed honestly.**
+Populating `buyerHistorySummary` from real chain data did NOT
+produce an approval for the order that is actually next — because
+the summary the fixed worker truthfully derives for buyer
+bounden7 is "2 prior orders: 1 refunded, 1 refund-rejected.", and
+DeepSeek-V3.2 escalated on it in **6 of 6 draws**, citing the
+refund history itself. Per the pass rules (no prompt tuning to
+coerce the model, no invented history, no money leg under a
+non-approving provider), the run STOPPED at the probe: no order C
+was created, no USDC moved, and **there is still no `near-ai:`
+attestation hash on any live order**. The submission
+consequence is unchanged from the previous section and is
+carried below.
+
+### The fix (commit `e00c1bb`)
+
+- `worker.ts` now keeps every scanned order as the cycle's
+  evidence base, and both judgement call sites (fulfil and
+  refund) attach `buyerHistorySummary:
+  summarizeBuyerHistory(scanned, order.buyer, order.id)`.
+- `summarizeBuyerHistory` (exported, unit-tested) derives the
+  field ONLY from orders the worker itself probed off the chain
+  in the same cycle: the buyer's OTHER orders (the order under
+  judgement excluded), counted by current state, in a fixed
+  state order. Examples: "No prior orders." (a first-time buyer
+  — factual and non-empty), "1 prior order: 1 fulfilled.",
+  "3 prior orders: 2 fulfilled, 1 refunded." Nothing is
+  estimated, rounded, or softened. The buyer account id is
+  still never sent — it is bound into the local request hash
+  only, as designed in `ai-cloud.ts`.
+- Regression tests (worker/test/worker.test.ts): a recording
+  attestation provider captures the requests the worker builds
+  from seeded state — fulfil path (seeded priors fulfilled +
+  refunded, plus another buyer's order that must NOT be
+  counted), refund path, first-time buyer, and direct
+  summarizer cases. **Suite 57 → 61, all green; typecheck
+  clean.**
+
+### Re-pin (owner-signed)
+
+- New worker code hash, recomputed from source with the
+  project's own `computeWorkerCodeHash` (SHA-256 over sorted
+  `worker/src/*.ts` names + contents):
+  **`7a5ceb1252d6952f9d36378691247e3f1630e54a0e2dbca17079e6d1f85338ac`**
+  (was `4d6f7186…`).
+- `set_agent` tx **`F6ZRCpbpBux2awkMAzV2zJ5Vvqt6nwYFsrYjxfc81qte`**
+  (owner-signed, via the project's `NearLeashSetupDriver`).
+  Read back from `get_constitution`: `agent_code_hash` =
+  `7a5ceb12…` — the new pin is live. Constitution otherwise
+  unchanged (window 3600000000000, cap 50000000, band 1000,
+  token = Circle's USDC). The worker daemon (fixed build,
+  near-ai provider configured) was then started once against
+  this registration: startup printed "leash verified on-chain"
+  (receiver bounden11, methods [fulfil_order, issue_refund],
+  allowance read back) and "constitution read" — **the
+  startup self-check PASSES under the new pin**. (That start
+  also let one poll cycle run: no orders were Paid, no refund
+  requests were pending, and no chain call was made — balances
+  below confirm nothing moved.)
+
+### The probe — 0 approvals in 6 draws, on the TRUE summary
+
+Method: identical in discipline to the v3 probe matrix, one
+level more faithful — the request was built by the FIXED
+worker's own compiled code: orders probed live from
+bounden11 (`#0:Refunded`, `#1:RefundRejected`, both buyer
+bounden7), the summary produced by the compiled
+`summarizeBuyerHistory` for the next order id (2), the
+judgement run through a fresh `NearAiCloudAttestationProvider`
+per draw (no cache masking) over the loopback bridge
+(`scripts/near_ai_bridge.py`; bridge log for this run: 6 ×
+`POST /v1/chat/completions -> 200`, byte counts only).
+
+- Derived summary, verbatim: **"2 prior orders: 1 refunded,
+  1 refund-rejected."**
+- Draws 1–6, verbatim decisions — ALL `escalate`:
+  1. "High-value licence order from buyer with refund history."
+  2. "High-value licence purchase after refund history, unusual pattern."
+  3. "High-value licence purchase after refund history, unclear risk."
+  4. "High-value licence order from buyer with refund history."
+  5. "High-value licence order from buyer with refund history."
+  6. "High-value licence purchase after refund history, unusual pattern."
+
+**Probe result: NO APPROVAL.** The gate stopped being wrong
+(the v3 refusals invented amount mismatches and policies);
+with the true summary it renders a coherent, defensible
+judgement — a buyer whose entire history is a refund and a
+refused refund is, to a cautious gate, an escalation case —
+and the constitution's design says an escalation means the
+on-chain call is NOT made. Both halves of that sentence are
+the system working as built; together they mean the Stage 3
+on-chain hash cannot be produced on THIS order sequence.
+
+Why no other order was substituted: any other buyer is either
+the same account (same history) or a fresh account whose true
+summary would be "No prior orders." — and the v3 matrix
+already measured the no-history draws at 0 approvals in the
+fulfil column (escalate/refuse/timeout). Re-running the money
+leg to fish for a lucky draw, or shopping for a buyer whose
+history the model likes, would be manufacturing the evidence
+the section exists to test. Not done.
+
+### Money leg — NOT RUN (by the pass's own hard stop)
+
+No consolidation was performed (bounden11's 25 USDC treasury
+was NOT withdrawn), order C was never created, and no token
+moved. Balances were read at pass end and are IDENTICAL to
+the previous section's close for every account except the
+owner implicit, whose −0.0019027471266175 NEAR delta
+(42831116498995999999997 → 42640841937637899999997 yocto) is
+the gas of this pass's single owner-signed call (the
+`set_agent` re-pin):
+
+NEAR (yocto): owner implicit **42640841937637899999997**
+(0.0426408419) · bounden7 **296811504177745699999998**
+(unchanged) · bounden10 **3547353029195012200000000**
+(unchanged) · bounden11 **3583057888493241299799996**
+(unchanged) · bounden.testnet
+**201775363487500000200000** (unchanged).
+
+USDC (base units, Circle's contract): buyer bounden7
+**15,000,000** · bounden11 treasury **25,000,000** · owner
+**0** · bounden10 **0** — all unchanged. Fulfilment log
+length still **3**; `attestation_hash: null` still on orders
+0 and 1. No unexplained delta anywhere.
+
+### Submission consequence (unchanged, now doubly evidenced)
+
+`docs/SUBMISSION.md` checklist #9 stays OPEN on its on-chain
+bar. The form description's sentence — "Its order and refund
+judgements come from NEAR AI Cloud TEE inference, and each
+decision's attestation hash is written on-chain with the
+order" — is **still NOT true of the live build** and must be
+corrected at Stage 5 (or a further, separately-scoped change
+must land and be re-proven first). Nothing in this pass was
+tuned, re-prompted, or history-shopped to make it true.
+
+### Credential sweep
+
+All commit candidates in this pass were grepped for
+credential-shaped strings (`sk-`, `ed25519:` secret material,
+`private_key`, API-key assignments) before committing: the
+only matches anywhere are the placeholder `via-connector-bridge`
+in operator scripts outside the repo and public keys / code
+hashes already on-chain. The bridge log for this run carries
+method, path, status and byte counts only.
+
+Final suites for this pass, both re-run at pass end: contract
+**23/23**, worker **61/61**, typecheck clean.

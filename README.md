@@ -60,8 +60,10 @@ full money sequence and all five attack cases run against it:
   commitments; the cashier's leash v3 key
   `ed25519:8ixy4dmqQkoyx493d1Fa6yVLAr6HjQMCideisgcCTws4` permits
   exactly `fulfil_order` + `issue_refund` on bounden11 with a
-  0.25 NEAR allowance (worker code hash pinned on-chain:
-  `4d6f7186039c366c86b71c412b5c5c658221688d9dded98c5fdad35997a828f3`);
+  0.25 NEAR allowance (worker code hash pinned on-chain at
+  deploy: `4d6f7186039c366c86b71c412b5c5c658221688d9dded98c5fdad35997a828f3`
+  — superseded by the Stage 3 fix re-pin below:
+  `7a5ceb1252d6952f9d36378691247e3f1630e54a0e2dbca17079e6d1f85338ac`);
   the worker's startup self-check verifies the permission
   object before it will run.
 - **The leash refund proof v2 could not produce**: order 0 was
@@ -103,6 +105,22 @@ full money sequence and all five attack cases run against it:
   under the worker's null attestation provider (its documented
   Stage 2 mode) and carry `attestation_hash: null` on-chain.
   No `near-ai:` hash is claimed for any live order.
+  **Fix run, later the same day**: the worker now populates
+  the summary from its own chain scan (commit `e00c1bb`,
+  regression-tested, suite 61/61) and was re-pinned on-chain
+  (`set_agent` tx `F6ZRCpbpBux2awkMAzV2zJ5Vvqt6nwYFsrYjxfc81qte`,
+  pinned hash `7a5ceb12…`; startup self-check passes). The
+  pre-money probe then used the fixed worker's OWN derived
+  summary for the next real order — "2 prior orders:
+  1 refunded, 1 refund-rejected." — and the model escalated
+  in 6 of 6 draws, citing the refund history. The pass
+  stopped at the probe by its own rules: no order created,
+  no money moved, no prompt tuned, no rosier history
+  substituted. The gate now judges on true facts; it simply
+  does not approve this buyer, and under the constitution an
+  escalation means the cashier does not act. Still no
+  `near-ai:` hash exists on any live order — full evidence
+  in `NOTES.md`, "Stage 3 judgement-gate fix".
 
 The v2 record follows — **`bounden10.testnet` is SUPERSEDED**
 (its order 1 remains `Paid` there against a withdrawn
@@ -184,10 +202,12 @@ on-chain):
   (in-band refund → approve; out-of-band refund → refuse) and wired
   into the worker suite. The on-chain run was ATTEMPTED with the
   v3 deploy and the judgement layer would not approve (see the
-  Stage 3 caveat in the live section above): the remaining fix
-  is to populate `buyerHistorySummary` in the worker, which
-  changes the worker code hash and needs a fresh `set_agent`
-  pin, then re-run one live order.
+  Stage 3 caveat in the live section above). The follow-up fix
+  (populate `buyerHistorySummary` from the worker's own scan)
+  has since LANDED and been re-pinned, and the re-probe
+  escalated 6 of 6 on the buyer's true refund-heavy history —
+  the on-chain `near-ai:` order remains unproduced, by the
+  gate's own decision, not by a missing fix.
 - The demo film (<60s, `docs/FILM.md`), the X demo post, and the
   submission itself (`docs/SUBMISSION.md`).
 - Stage 4 (Shade Agent / TEE): spiked and designed, **not shipped** —
