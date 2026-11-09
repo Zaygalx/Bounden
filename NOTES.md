@@ -331,6 +331,79 @@ exists in this environment. Commits: worker `504b525`, web `14eaeb8`.
   to Vercel; (5) exercise a refund judgement (approve AND refuse
   paths) on testnet before the film.
 
+## Stage 5 prep — film script + submission pack (Mon 9 Nov 2026)
+
+Prep only: everything that does not need a live chain. The film
+itself is recorded after the Stage 2/3 live pass. Commits: FILM
+`9ef0945`, SUBMISSION `e827e93`, README pass + this note.
+
+- **Film script (`docs/FILM.md`).** 59 seconds, three acts per PLAN:
+  Act 1 (0:00–0:20) a real purchase — buyer pays the contract via
+  `ft_transfer_call`, worker fulfils, `near-ai:` attestation hash on
+  the order page, test-marked code delivered; Act 2 (0:20–0:54)
+  three live theft attempts dying at three different layers
+  (out-of-band refund → contract; prompt-injection treasury drain →
+  worker, which contains no treasury call; payout redirect →
+  protocol, via the FC key's permission object), closing on the
+  cashier's line next to its allowlist; Act 3 (0:54–0:59) the
+  Constitution page. Every shot names its screen, exact action,
+  caption, and fallback — and the fallback rule is strict: stalls
+  are re-shot with a fresh order/case, never spliced with
+  pre-recorded tx links, never substituted with mock-mode output or
+  fixture footage. Shade bonus insert (+8s, funded by trimming Act 2
+  holds) is scripted but marked optional and unshootable until
+  Stage 4 actually ships (registry record + one-byte-modified worker
+  refused at `register_agent`).
+- **Submission pack (`docs/SUBMISSION.md`).** All form fields filled
+  as far as truthfully possible: name/lead/email/team-size FINAL;
+  tracks business (primary) / agents / security with justifications;
+  form description written and counted — **1,628 characters**
+  (limit 20–2,000), verified against the file text programmatically;
+  X post full text counted — **265 characters** (limit 280), carries
+  "built at NEAR HACKATHON", @NEARProtocol, #NEARHackathon, film
+  attachment required. Placeholders, clearly labelled: repo URL
+  `https://github.com/Zaygalx/bounden` NOT YET LIVE (local-first
+  until the owner's Stage 5 go-ahead) and payout account
+  `bounden.near` NOT YET CLAIMED (funding brief delivered:
+  0.1 NEAR, PREFLIGHT §5). Code-window disclosure paragraph lists
+  the real libraries (near-sdk / near-contract-standards,
+  near-api-js, Next.js/React, Vitest), states all code postdates
+  19 Oct 2026 (first commit 9 Nov 2026), and discloses AI-assisted
+  authorship per HACKATHON.md. An 18-item pre-submission checklist
+  ties every field to its source of truth + verification method,
+  each open item to its unblock (funding → deployment → leash →
+  live order/refund → live attacks → film → X post → form; plus the
+  AI Cloud key step and the Vercel storefront deploy).
+- **Stage 4 fallback, single-swap structure.** Stage 4 is still
+  unshipped at prep time, so the SHADE.md §2.7 wording now sits
+  VERBATIM (extracted programmatically from SHADE.md, not retyped)
+  between `STAGE4-STATUS:BEGIN/END` markers in BOTH README.md and
+  docs/SUBMISSION.md — verified byte-identical across the two files.
+  If Stage 4 lands, one logical edit replaces both marked blocks
+  with the §2.5 shipped paragraph and updates the disclosure list
+  (the submission pack states this, including the shade-agent-js /
+  template lineage that must then be added).
+- **README judge pass.** New top sections: "Status at a glance"
+  (DONE-locally vs PENDING-live, nothing overstated) and "Verify it
+  yourself (do X, see Y)" — prerequisites plus the exact commands
+  for contract tests, worker tests, storefront fixture mode, and
+  attack-suite mock mode, each with what the screener should see,
+  and a pointer to precisely which steps need the live deployment
+  (claim-named-account Paths A–C + NOTES live-pass checklists).
+  The root `cargo test` command was re-run during this prep:
+  23 passed. All prior honest content kept (sealing explanation,
+  limitations, Stage 4 spike caveats).
+- **Rules gaps found during prep** (also in SUBMISSION.md's
+  cross-check): (1) repo + demo-post links are placeholders until
+  owner push and film respectively — the form cannot be truthfully
+  completed before checklist items 5 and 13 close; (2) the payout
+  field must not be filled with `bounden.near` until the mainnet
+  account verifiably exists; (3) the HACKATHON.md Q-012 local-demo
+  allowance still demands a real video — fixture footage would not
+  satisfy it and will not be submitted; (4) if the owner enters a
+  second independent project, both READMEs must name the other
+  project — currently N/A, flagged as a submission-time re-check.
+
 ## Repo conventions
 
 - All commits authored as Hassan Dosunmu <Dosunmuh070@gmail.com>

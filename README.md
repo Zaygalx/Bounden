@@ -118,7 +118,10 @@ agent-run digital-goods business can adopt.
 Full plan: [docs/PLAN.md](docs/PLAN.md) · Pre-flight evidence:
 [docs/PREFLIGHT.md](docs/PREFLIGHT.md) · Downloads design:
 [docs/DOWNLOADS.md](docs/DOWNLOADS.md) · Stage 4 (Shade) spike:
-[docs/SHADE.md](docs/SHADE.md) · Build notes: [NOTES.md](NOTES.md)
+[docs/SHADE.md](docs/SHADE.md) · Demo film script:
+[docs/FILM.md](docs/FILM.md) · Submission pack:
+[docs/SUBMISSION.md](docs/SUBMISSION.md) · Build notes:
+[NOTES.md](NOTES.md)
 
 ## Status
 
