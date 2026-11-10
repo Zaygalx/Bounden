@@ -1,0 +1,221 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  html, body { margin:0; padding:0; background:transparent; overflow:hidden; }
+  #stage { position:relative; width:640px; height:720px; }
+</style></head>
+<body>
+<div id="stage"><div id="bear"></div></div>
+<script>
+// ---- Bounden mascot: a small full-colour cartoon bear ----------------
+// Original to this film: honey-brown fur, cream belly and muzzle, a
+// deep-green shopkeeper's apron (one nod to the Day-Book green; the
+// rest of him is his own colours). Deterministic: window.__setTime__(t)
+// renders time t from window.__CUES__. Cue types:
+//   startx {x}            initial horizontal offset (he walks in)
+//   walk   {at,dur,dx}    travel; legs swing, body bobs
+//   wave   {at,dur}       right paw up, waving
+//   speak  {at,dur}       mouth flaps
+//   point  {at,dur}       right paw points up at the action
+//   card   {at,dur}       both paws hold up a small code card
+//   stamp  {at,text}      AT is the slam moment; wind-up before it,
+//                         the ink mark lands with the slam
+//   shrug  {at,dur}       puzzled: both paws out, head tilt, brows up
+//   shake  {at,dur}       arms folded, slow head-shake, flat mouth
+//   thumbs {at,dur}       happy thumbs-up + little bounce
+//   glance {at,dur,x,y}   eyes look somewhere
+const CUES = window.__CUES__ || [];
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const ramp = (t, a, b) => clamp01((t - a) / (b - a));
+const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+const easeInOut = (x) => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+// weight of a held pose cue: in fast, out at the end
+const hold = (t, c, fi = 0.22, fo = 0.25) =>
+  ramp(t, c.at, c.at + fi) * (1 - ramp(t, c.at + c.dur - fo, c.at + c.dur));
+const W = (t, type) => CUES.filter(c => c.type === type).reduce((m, c) => Math.max(m, hold(t, c)), 0);
+
+const FUR = "#C08336", FUR_D = "#A66A28", FUR_L = "#D69F52";
+const CREAM = "#F8E7C6", NOSE = "#503118", DARK = "#2A1A0E";
+const APRON = "#14684C", APRON_D = "#0E4C37", INKRED = "#A33327", PAPER = "#FAF5EA";
+
+function stateAt(t) {
+  const S = {
+    dx: (CUES.find(c => c.type === "startx") || {}).x || 0,
+    legSwing: 0, bobY: 0, lean: 0,
+    armL: 21, armR: -21,                 // rest: hanging slightly out
+    headTilt: 0, headNod: 0, squash: 1,
+    brow: 0, mouth: "smile", glanceX: 0, glanceY: 0,
+    card: 0, stampMark: 0, stampText: "", thumbPaw: 0,
+  };
+  // ---- travel ------------------------------------------------------
+  let phase = 0;
+  for (const c of CUES) {
+    if (c.type !== "walk") continue;
+    const p = clamp01((t - c.at) / c.dur);
+    const travelled = c.dx * easeInOut(p);
+    if (t >= c.at) {
+      S.dx += c.dx * easeInOut(p);
+      if (t <= c.at + c.dur) {
+        const cyc = Math.abs(c.dx) / 64;              // ~64px per stride
+        phase = Math.sin(p * Math.PI * 2 * cyc);
+        S.legSwing = phase * 17;
+        S.bobY = Math.abs(Math.sin(p * Math.PI * 2 * cyc)) * 6 * Math.sin(p * Math.PI);
+        S.lean = Math.sign(c.dx) * -2.2 * Math.sin(p * Math.PI);
+      }
+    }
+  }
+  // ---- held poses (weighted) ---------------------------------------
+  const wWave = W(t, "wave"), wPoint = W(t, "point"), wCard = W(t, "card"),
+        wShrug = W(t, "shrug"), wShake = W(t, "shake"), wThumb = W(t, "thumbs");
+  const mix = (base, target, w) => base + (target - base) * w;
+  if (wWave > 0) {
+    const wob = Math.sin(t * 9.5) * 13;
+    S.armR = mix(S.armR, -168 + wob, wWave);
+  }
+  if (wPoint > 0) { S.armR = mix(S.armR, -136, wPoint); S.glanceY = mix(S.glanceY, -4, wPoint); S.glanceX = mix(S.glanceX, -3, wPoint); }
+  if (wCard > 0) { S.armL = mix(S.armL, -33, wCard); S.armR = mix(S.armR, 33, wCard); S.card = wCard; }
+  if (wShrug > 0) {
+    S.armL = mix(S.armL, 92, wShrug); S.armR = mix(S.armR, -92, wShrug);
+    S.headTilt = mix(S.headTilt, 8, wShrug); S.brow = Math.max(S.brow, wShrug); S.mouth = wShrug > 0.5 ? "o" : S.mouth;
+  }
+  if (wShake > 0) {
+    S.armL = mix(S.armL, -56, wShake); S.armR = mix(S.armR, 56, wShake);
+    for (const c of CUES) if (c.type === "shake" && t >= c.at && t <= c.at + c.dur) {
+      const lt = t - c.at;
+      S.headTilt = Math.sin(lt * Math.PI * 2 * 1.05) * 6.5 * (1 - lt / c.dur) * wShake + S.headTilt * (1 - wShake);
+    }
+    if (wShake > 0.5) S.mouth = "flat";
+  }
+  if (wThumb > 0) {
+    S.armR = mix(S.armR, -104, wThumb); S.thumbPaw = wThumb;
+    for (const c of CUES) if (c.type === "thumbs" && t >= c.at && t <= c.at + c.dur) {
+      const lt = t - c.at;
+      S.bobY += Math.abs(Math.sin(lt * Math.PI * 3)) * 7 * wThumb;
+    }
+    if (wThumb > 0.5) S.mouth = "bigsmile";
+  }
+  // ---- stamp slam ----------------------------------------------------
+  for (const c of CUES) {
+    if (c.type !== "stamp") continue;
+    const lt = t - c.at;                       // at = slam moment
+    if (lt >= -0.34 && lt < 0) {               // wind-up: both paws rise
+      const k = ramp(lt, -0.34, 0);
+      S.armL = mix(S.armL, 148, k); S.armR = mix(S.armR, -148, k);
+      S.squash = 1 + 0.03 * k;
+    } else if (lt >= 0 && lt < 0.14) {         // the slam
+      const k = 1 - lt / 0.14;
+      S.armL = mix(S.armL, 26, 1); S.armR = mix(S.armR, -26, 1);
+      S.squash = 1 - 0.085 * k;
+      S.stampMark = 1; S.stampText = c.text || "SEALED";
+    } else if (lt >= 0.14 && lt < 1.5) {       // hold the mark, recover
+      S.stampMark = 1 - ramp(lt, 1.15, 1.5); S.stampText = c.text || "SEALED";
+      S.squash = 1 - 0.02 * (1 - clamp01((lt - 0.14) / 0.4));
+    }
+  }
+  // ---- glance + speaking --------------------------------------------
+  for (const c of CUES) if (c.type === "glance") {
+    const w = hold(t, c);
+    S.glanceX += (c.x || 0) * w; S.glanceY += (c.y || 0) * w;
+  }
+  if (CUES.some(c => c.type === "speak" && t >= c.at && t <= c.at + c.dur)) S.mouth = "speak";
+  return S;
+}
+
+function blinkAt(t) {
+  const cyc = t % 3.7;
+  return cyc > 3.52 ? Math.sin(((cyc - 3.52) / 0.18) * Math.PI) : 0;
+}
+
+function mouthSVG(kind, t) {
+  if (kind === "speak") {
+    const ry = 5 + 6.5 * Math.abs(Math.sin(t * 11.3)) * (0.6 + 0.4 * Math.sin(t * 5.1));
+    return `<ellipse cx="320" cy="272" rx="11" ry="${ry.toFixed(1)}" fill="${DARK}"/>`;
+  }
+  if (kind === "o") return `<circle cx="320" cy="270" r="8" fill="none" stroke="${DARK}" stroke-width="5"/>`;
+  if (kind === "flat") return `<path d="M302,270 h36" stroke="${DARK}" stroke-width="5.5" stroke-linecap="round" fill="none"/>`;
+  if (kind === "bigsmile") return `<path d="M298,262 Q320,288 342,262 Q320,272 298,262 Z" fill="${DARK}"/>`;
+  return `<path d="M303,264 Q320,278 337,264" stroke="${DARK}" stroke-width="5.5" stroke-linecap="round" fill="none"/>`;
+}
+
+function render(t) {
+  const S = stateAt(t);
+  const blink = blinkAt(t);
+  const breathe = 1 + 0.011 * Math.sin(t * (Math.PI * 2 / 3.2));
+  const sy = S.squash * breathe;
+  const eyeRY = 14 * (1 - blink * 0.92);
+  const browDy = -S.brow * 7;
+  const legL = S.legSwing, legR = -S.legSwing;
+
+  const pawR = S.thumbPaw > 0.5
+    ? `<g transform="translate(0 118)"><circle r="22" fill="${FUR}" stroke="${FUR_D}" stroke-width="2.5"/><path d="M-6,-2 q-6,-30 6,-38 q11,-6 14,6 q2,10 -4,18 l14,-3 q10,1 8,12 q-2,12 -16,15 l-18,4 q-11,1 -13,-8 z" fill="${FUR}" stroke="${FUR_D}" stroke-width="2.4"/></g>`
+    : `<circle cx="0" cy="122" r="23" fill="${FUR}" stroke="${FUR_D}" stroke-width="2.5"/><ellipse cx="0" cy="128" rx="11" ry="8" fill="${FUR_L}" opacity="0.65"/>`;
+
+  document.getElementById("bear").innerHTML = `
+  <svg width="640" height="720" viewBox="0 0 640 720" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="${320 + S.dx}" cy="676" rx="118" ry="13" fill="#3A2410" opacity="0.18"/>
+    <g transform="translate(${S.dx} ${-S.bobY})">
+    <g transform="translate(320 676) scale(1 ${sy.toFixed(3)}) translate(-320 -676) rotate(${S.lean} 320 640)">
+      <!-- legs -->
+      <g transform="rotate(${legL} 282 566)">
+        <rect x="260" y="560" width="44" height="86" rx="21" fill="${FUR_D}"/>
+        <ellipse cx="276" cy="652" rx="31" ry="15" fill="${FUR_D}"/>
+      </g>
+      <g transform="rotate(${legR} 358 566)">
+        <rect x="336" y="560" width="44" height="86" rx="21" fill="${FUR_D}"/>
+        <ellipse cx="364" cy="652" rx="31" ry="15" fill="${FUR_D}"/>
+      </g>
+      <!-- torso -->
+      <ellipse cx="320" cy="452" rx="130" ry="140" fill="${FUR}"/>
+      <ellipse cx="320" cy="492" rx="85" ry="97" fill="${CREAM}"/>
+      <!-- apron -->
+      <path d="M266,338 h108 l16,44 10,150 q2,26 -24,26 h-112 q-26,0 -24,-26 l10,-150 z" fill="${APRON}"/>
+      <path d="M266,338 l-14,-34 q-3,-10 6,-12 l16,-2 q8,0 10,8 l6,40 z" fill="${APRON_D}"/>
+      <path d="M374,338 l14,-34 q3,-10 -6,-12 l-16,-2 q-8,0 -10,8 l-6,40 z" fill="${APRON_D}"/>
+      <rect x="290" y="492" width="60" height="42" rx="8" fill="none" stroke="${CREAM}" stroke-width="2.4" stroke-dasharray="5 5" opacity="0.8"/>
+      <!-- code card (held) -->
+      ${S.card > 0.03 ? `<g transform="translate(320 452)" opacity="${S.card.toFixed(2)}">
+        <rect x="-66" y="-42" width="132" height="84" rx="9" fill="${PAPER}" stroke="${APRON}" stroke-width="3.5"/>
+        <rect x="-48" y="-22" width="96" height="11" rx="5" fill="${APRON}"/>
+        <rect x="-48" y="0" width="70" height="9" rx="4.5" fill="${FUR_D}" opacity="0.75"/>
+        <rect x="-48" y="18" width="82" height="9" rx="4.5" fill="${FUR_D}" opacity="0.5"/>
+      </g>` : ""}
+      <!-- left arm -->
+      <g transform="translate(198 360) rotate(${S.armL.toFixed(1)})">
+        <rect x="-20" y="-8" width="40" height="126" rx="20" fill="${FUR}" stroke="${FUR_D}" stroke-width="2.5"/>
+        <circle cx="0" cy="122" r="23" fill="${FUR}" stroke="${FUR_D}" stroke-width="2.5"/><ellipse cx="0" cy="128" rx="11" ry="8" fill="${FUR_L}" opacity="0.65"/>
+      </g>
+      <!-- right arm -->
+      <g transform="translate(442 360) rotate(${S.armR.toFixed(1)})">
+        <rect x="-20" y="-8" width="40" height="126" rx="20" fill="${FUR}" stroke="${FUR_D}" stroke-width="2.5"/>
+        ${pawR}
+      </g>
+      <!-- head -->
+      <g transform="rotate(${S.headTilt.toFixed(2)} 320 306)">
+        <circle cx="228" cy="140" r="41" fill="${FUR}"/><circle cx="228" cy="140" r="21" fill="${CREAM}"/>
+        <circle cx="412" cy="140" r="41" fill="${FUR}"/><circle cx="412" cy="140" r="21" fill="${CREAM}"/>
+        <ellipse cx="320" cy="222" rx="110" ry="100" fill="${FUR}"/>
+        <ellipse cx="320" cy="258" rx="54" ry="40" fill="${CREAM}"/>
+        <ellipse cx="320" cy="240" rx="18" ry="12.5" fill="${NOSE}"/>
+        <path d="M320,252 v8" stroke="${DARK}" stroke-width="4" stroke-linecap="round"/>
+        ${mouthSVG(S.mouth, t)}
+        <g transform="translate(${S.glanceX} ${S.glanceY})">
+          <ellipse cx="276" cy="206" rx="11.5" ry="${eyeRY.toFixed(1)}" fill="${DARK}"/>
+          <ellipse cx="364" cy="206" rx="11.5" ry="${eyeRY.toFixed(1)}" fill="${DARK}"/>
+          ${blink < 0.5 ? `<circle cx="280" cy="200" r="3.4" fill="#FFF"/><circle cx="368" cy="200" r="3.4" fill="#FFF"/>` : ""}
+        </g>
+        <path d="M256,${176 + browDy} q20,-10 40,-3" stroke="${DARK}" stroke-width="6" stroke-linecap="round" fill="none"/>
+        <path d="M344,${173 + browDy} q20,-7 40,3" stroke="${DARK}" stroke-width="6" stroke-linecap="round" fill="none"/>
+      </g>
+      <!-- stamp mark -->
+      ${S.stampMark > 0.02 ? `<g transform="translate(452 606) rotate(-12) scale(${(0.6 + 0.4 * S.stampMark).toFixed(2)})" opacity="${S.stampMark.toFixed(2)}">
+        <rect x="-86" y="-30" width="172" height="60" rx="9" fill="none" stroke="${INKRED}" stroke-width="6"/>
+        <text x="0" y="12" text-anchor="middle" font-family="Verdana, Geneva, sans-serif" font-weight="bold" font-size="30" letter-spacing="3" fill="${INKRED}">${S.stampText}</text>
+      </g>` : ""}
+    </g>
+    </g>
+  </svg>`;
+}
+window.__setTime__ = render;
+window.__init__ = (cues) => { CUES.length = 0; CUES.push(...cues); render(0); };
+render(0);
+</script>
+</body></html>

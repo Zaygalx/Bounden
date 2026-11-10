@@ -323,18 +323,19 @@ signatures, answers are ciphertext. The full design, and the
 measured failure of the simpler rendezvous it replaced, are in
 `NOTES.md` ("Buyer experience pass").
 
-**The little cashier in the demo film is an illustration.** The
-film's animated cashier character — the shop's seal given a dry
-voice — is a presenter drawn for the film, not the agent and not
-a recording of it. Its lines, including the closing "I can't.
-Here is the complete list of things I am able to do.", were
-written for the film and are spoken by a synthesized voice; they
-are not output of the judgement model or of the worker. The
-narration is likewise a synthesized voice standing in for the
-owner, who directed the film from his phone. What the agent
+**The bear in the demo film is an illustration.** The film's
+presenter is a cartoon mascot — a small bear in a shopkeeper's
+apron, drawn for the film — who plays the cashier and does all
+of the film's talking in a synthesized voice. He is a presenter,
+not the agent and not a recording of it. Every line he speaks,
+including the closing "I can't steal from this shop. Not won't.
+Can't. Here is the complete list of things I am able to do.",
+was written for the film; his lines are illustration, not
+output of the judgement model or of the worker. What the agent
 itself did is on-chain and in the worker's log, and the film
-shows both. `docs/FILM.md` (Script v3 and its as-shot note)
-records exactly what is real in the film and how it was made.
+shows both. `docs/FILM.md` (Scripts v3–v4 and the as-shot
+note) records exactly what is real in the film and how it was
+made.
 
 Full plan: [docs/PLAN.md](docs/PLAN.md) · Pre-flight evidence:
 [docs/PREFLIGHT.md](docs/PREFLIGHT.md) · Downloads design:

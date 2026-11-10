@@ -130,3 +130,17 @@ Buyer (the robber = the owner): fe9591cc09aa84478e6c8c622c402f2007eae6e651829769
 - serve.sh secret literals scrubbed to runtime reads and
   boot-tested. Docs: FILM.md as-shot note, NOTES.md entry,
   SUBMISSION.md #11 closed. NOT posted; owner reviews first.
+- REWORK PASS 1 (10 Nov 2026): owner rejected the placard
+  presenter (flat, not alive) and the v3 film's clarity.
+  Built the MASCOT (film/shoot/mascot-anim.html +
+  render-mascot.mjs, cues-mascot-proof.json): full-colour
+  cartoon bear, honey-brown/cream, deep-green apron; walk,
+  wave, speak, point, card, stamp slam, shrug, shake,
+  thumbs-up at 24fps. Proof reel film/mascot-proof-reel.mp4
+  (15.5s over the Act 1 background, his intro line at 2.7s).
+  Script v4 written into docs/FILM.md; ALL lines recorded
+  en_US-joe-medium (voices-v4.sh -> assets/voice/v4/,
+  durations merged): hook 9.10, act1 12.09, collect 3.54,
+  w1 12.14, w2 10.65, w3 10.50, climax 7.96. Narrator (ryan)
+  retired. README disclosure updated. Film NOT re-assembled —
+  pass 2 waits on the owner's word on the bear + the words.

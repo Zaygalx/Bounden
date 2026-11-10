@@ -489,3 +489,129 @@ The raw capture files (`film/render/`, ~157 MB) and the
 assembly intermediates (`film/build/`) are retained in the
 working tree and excluded from git for size, as are the local
 TTS environment and voice models.
+
+## Script v4 — the mascot pass (10 Nov 2026, rework pass 1)
+
+**Why v4 exists.** The owner watched the finished v3 film and
+rejected two things. (1) The presenter: the seal placard read as a
+flat card with a face, not a living character. He asked for an
+animated **mascot** that feels alive — something that plainly does
+not belong on serious ledger paper, and is there anyway, in its own
+real colours. (2) Clarity: he watched the demo and did not
+understand the product from it. In v4 the mascot does **all** the
+talking — he still claims to *be* the cashier; there is no separate
+narrator — and every beat is named in plain words before or as it
+happens, so a viewer with zero context understands Bounden in one
+viewing.
+
+**Status of this pass.** Pass 1 is the mascot build, his proof
+reel, and the recorded v4 narration — *not* a re-assembly. The
+film is re-assembled (pass 2) only after the owner approves the
+character and the words. The real takes, the evidence and every
+honesty rule above are untouched: v4 replaces the presenter layer
+only.
+
+### The mascot (casting)
+
+A small full-colour cartoon bear, original to this film:
+honey-brown fur, cream belly and muzzle, and a deep-green
+shopkeeper's apron — one nod to the Day-Book green; the rest of
+him is his own colours, not the site's ink palette. Soft, rounded,
+teddy-like: a living cartoon standing on ledger paper. He is warm,
+honest, and a bit proud of his leash; he is never drawn tempted or
+shady.
+
+Built as a deterministic, cue-driven SVG character
+(`film/shoot/mascot-anim.html`, rendered by
+`film/shoot/render-mascot.mjs` through the same capture plumbing
+as v3). His action set: a **walk cycle** (he travels along the
+bottom edge of the frame), idle breathing and blinking, a **wave**
+hello, **pointing** up at the action, **holding up a small code
+card**, a two-paw **stamp slam** with a whole-body bounce, a
+**puzzled shrug** with a head tilt, a slow **arms-folded
+head-shake**, a happy **thumbs-up**, and **speaking mouth flaps**
+synced loosely to his lines.
+
+His limits are v3's limits, unchanged: he lives in the bottom
+corner zone, he **never covers** hashes, logs, prices or the
+permission object, and he **vacates the frame entirely** during
+evidence close-ups.
+
+Proof reel: `film/mascot-proof-reel.mp4` (15.5s over the real
+Act 1 take background: he walks in, waves, introduces himself in
+his own voice, points at the shop, stamp-slams, shrugs puzzled,
+shakes his head, and gives the thumbs-up; cues in
+`film/shoot/cues-mascot-proof.json`).
+
+### One voice
+
+The mascot speaks every line himself, first person — he *is* the
+cashier. Voice: `en_US-joe-medium` (Piper, local), the clear
+neutral English the owner approved. The separate narrator voice
+(en_US ryan) is **retired** in v4. Recorded by
+`film/shoot/voices-v4.sh` into `film/assets/voice/v4/`;
+durations are merged into `film/assets/voice/durations.json`.
+
+Plain-language rules for the lines: short sentences; no
+unexplained jargon (a word like "attestation" is never spoken;
+what things mean is said in plain words); every beat is named
+before or as it happens.
+
+### The lines, the captions, the map
+
+The 59-second map is unchanged (hook 0:00–0:04, Act 1 0:04–0:24,
+walls 0:24–0:52, climax 0:52–0:57, end card 0:57–0:59). One
+honest flag for pass 2: the recorded lines total ≈66 seconds of
+speech at the voice's natural pace, so pass 2 must pace the lines
+across their beats (speech riding over the action, as v3's edit
+did) or trim with the owner's approval — the lines below are the
+approved words, recorded in full.
+
+**Hook — 0:00–0:04**
+- Caption: *Meet the cashier*
+- Line (`v4-hook`, 9.10s): "Hi, I'm the cashier. This shop is run
+  by me, a computer programme. Let me show you what I can do. And
+  what I can't."
+
+**Act 1 — 0:04–0:24**
+- Caption: *A customer pays $10*
+- Line (`v4-act1`, 12.09s): "A customer pays ten dollars, like
+  this. I check the money arrived. Then I open his sealed code
+  and give it to him. That's my job. Buy, pay, collect."
+- Caption (at the collection): *His code is delivered — only he
+  can open it*
+- Line (`v4-act1-collect`, 3.54s): "Only he can open it, because
+  only his wallet can sign for it."
+
+**Wall 1 — 0:24–0:34**
+- Caption: *Attack 1: a hidden order — treated as just words*
+- Line (`v4-w1`, 12.14s): "Now I try to rob my own shop. I hide a
+  secret order inside the payment: send all the money to me.
+  Watch. The shop reads it as just words on a receipt. Nothing
+  moves."
+
+**Wall 2 — 0:34–0:45**
+- Caption: *Attack 2: an unfair refund — refused*
+- Line (`v4-w2`, 10.65s): "Next, I try a refund I don't deserve,
+  on an old order. The contract checks its own rules. Too late,
+  it says. Refund rejected."
+
+**Wall 3 — 0:45–0:52**
+- Caption: *Attack 3: sending money out — the key can't*
+- Line (`v4-w3`, 10.50s): "Last try. I use my own key to send the
+  shop's money out directly. My key only opens two doors, and
+  this isn't one of them. It won't even start."
+
+**Climax — 0:52–0:57**
+- Caption: *The complete list of what he can do*
+- Line (`v4-climax`, 7.96s): "I can't steal from this shop. Not
+  won't. Can't. Here is the complete list of things I am able to
+  do." (The allowlist reveal follows, as in v3.)
+
+**End card — 0:57–0:59** (silent, as before)
+- Text: "Bounden. The agent is bound. The money is not."
+
+The disclosure duty carries over with updated wording: the
+mascot is an illustrated presenter who plays the cashier, and his
+lines are illustration, not model output — see the README
+disclosure, updated in this pass.

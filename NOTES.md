@@ -3040,3 +3040,48 @@ from git for size (see `docs/FILM.md`); scripts, logs,
 transcripts and evidence stills are committed. The film is NOT
 posted and the form is NOT touched — the owner reviews first
 (SUBMISSION #11 done; #12–#13 wait on him).
+
+## Demo film rework pass 1 — the mascot + Script v4 (10 Nov 2026)
+
+The owner watched the finished v3 film and rejected two things:
+the animated cashier read as a flat placard, not a living
+character, and the demo did not explain the product clearly
+enough to understand in one viewing. This pass replaces the
+presenter layer only — the real takes, the evidence and every
+honesty rule stand. The film is NOT re-assembled here; pass 2
+waits on the owner's approval of the character and the words.
+
+- MASCOT (film/shoot/mascot-anim.html + render-mascot.mjs):
+  a small full-colour cartoon bear, original to this film —
+  honey-brown fur, cream belly and muzzle, deep-green
+  shopkeeper's apron. Deterministic cue-driven SVG on the v3
+  capture plumbing, rendered at 24fps (v3 used 12). Action
+  set: walk cycle along the bottom edge, idle breathing and
+  blinking, wave, point up, hold up a code card, two-paw stamp
+  slam with a whole-body bounce, puzzled shrug + head tilt,
+  arms-folded head-shake, thumbs-up, speaking mouth flaps.
+  Every pose was eyeballed on rendered frames before assembly.
+  His limits are unchanged: bottom corner zone only, never
+  over hashes/logs/prices/the permission object, vacates
+  entirely for evidence close-ups, never drawn tempted.
+- PROOF REEL: film/mascot-proof-reel.mp4, 15.5s over the real
+  Act 1 take background (build/s1-raw.mp4) — walks in, waves,
+  introduces himself in his own voice, points, stamp-slams
+  ("SEALED"), shrugs puzzled, shakes his head, thumbs-up.
+  Cues: film/shoot/cues-mascot-proof.json.
+- SCRIPT v4 (docs/FILM.md): ONE voice — the mascot IS the
+  cashier and does all the talking; the en_US ryan narrator is
+  retired. Plain language throughout: short sentences, no
+  unexplained jargon, every beat named as it happens, and a
+  short on-screen caption written for each beat.
+- VOICES: all lines re-recorded with en_US-joe-medium (Piper,
+  local) by film/shoot/voices-v4.sh into film/assets/voice/v4/;
+  durations merged into film/assets/voice/durations.json.
+  Hook 9.10s; Act 1 12.09s; collection 3.54s; wall 1 12.14s;
+  wall 2 10.65s; wall 3 10.50s; climax 7.96s. Honest flag for
+  pass 2: the lines total ~66s of speech at natural pace
+  against the 59s map — pass 2 must pace them across their
+  beats or trim with the owner's approval.
+- README disclosure updated for the presenter change: the
+  bear is an illustrated presenter who plays the cashier; his
+  lines are illustration, not model output.

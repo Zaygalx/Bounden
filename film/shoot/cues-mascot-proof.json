@@ -1,0 +1,1 @@
+[{"type":"startx","x":330},{"at":0.0,"dur":1.5,"dx":-330,"type":"walk"},{"at":1.6,"dur":1.0,"type":"wave"},{"at":2.7,"dur":5.25,"type":"speak"},{"at":8.15,"dur":1.2,"type":"point"},{"at":9.85,"text":"SEALED","type":"stamp"},{"at":10.9,"dur":1.5,"type":"shrug"},{"at":12.5,"dur":1.6,"type":"shake"},{"at":14.2,"dur":1.3,"type":"thumbs"}]
