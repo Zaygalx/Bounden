@@ -2310,3 +2310,77 @@ same exports, same env contract, same live/fixture semantics).
 - **Checklist:** SUBMISSION.md #15 stays DONE, with the redesign noted
   under it. Remaining Stage 5 unchanged: film (#11), X post (#12–13),
   the one-shot form.
+
+## Stage 5 — storefront v3 "The Day-Book" + RPC resilience (Tue 10 Nov 2026)
+
+The owner rejected v2 as well ("AI slop... no vibe, no lightness") and
+his screenshot exposed a functional failure beside the aesthetic one:
+the home page had greeted him with "Live read failed — showing fixture
+data. NEAR RPC returned HTTP 429" and fixture stats (3 products, 10
+sealed) instead of the live ones. Both fixed in this pass.
+
+- **Skill adopted (the owner's explicit route):** Anthropic's official
+  `frontend-design` skill, fetched verbatim from
+  https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md
+  and installed unedited at ~/workspace/custom-skills/frontend-design/
+  with SOURCE.md (origin URL + fetch date) and the Apache-2.0 LICENSE.
+  Vercel's `web-design-guidelines` (vercel-labs/agent-skills) installed
+  alongside as a review checklist; its fetched rules were run over the
+  new code (focus-visible, theme-color, scroll-margin under the sticky
+  header, touch targets, labelled spellcheck-free inputs applied; its
+  Title-Case headings rule deliberately not adopted — it conflicts with
+  the governing skill's sentence-case discipline).
+- **Resilience (commit `a103a81`):** `near.ts` now rotates across
+  rpc.testnet.near.org → rpc.testnet.fastnear.com →
+  near-testnet.drpc.org (all three verified live with real view calls;
+  Lava discontinued, Ankr needs a key), 2 attempts per endpoint with
+  backoff, 15s timeout, fresh socket per attempt (the endpoints reset
+  reused keep-alive sockets — measured UND_ERR_SOCKET on rapid second
+  calls), JSON-RPC errors fatal. `NEAR_RPC_URLS` overrides for tests.
+  `shop.ts` adds a 30s read-through cache; degradation is now
+  live → last-known LIVE (mode `cached`, banner states the read's age)
+  → fixture with the honest banner. `evidence.ts` serves last-known
+  delivery evidence on read failure.
+- **Failure-mode tests (local, mock RPC):** (A) healthy primary —
+  fully live, no banner; (B) every endpoint failing after a warm cache
+  — home served last-known live ("last live read, from 30 seconds
+  ago"), stats 2/2/4 from real data, zero fixture content; (C) primary
+  429ing everything with fastnear as fallback — page fully LIVE via
+  rotation, no banner. A 429 can no longer greet a visitor with
+  fixture numbers while any endpoint or the cache can answer.
+- **Design v3 (commit `42eda17`):** "The Day-Book" — the storefront as
+  a merchant's hand-kept ledger, letterpress on warm paper. Paper
+  #FAF5EA, ink #282219, ledger green #14684C (the one accent),
+  sealing-wax red #B23A1F reserved for stamps and refusals. Newsreader
+  (display + prose), Archivo (UI), IBM Plex Mono only for data values.
+  Products are ruled ledger entries; the live figures are a
+  bookkeeper's summary sentence ("The book so far: 2 goods for sale, 2
+  sealed units in the vault, 4 orders entered, and 5 of 5 attack cases
+  refused"), not stat cards; order states and attack verdicts are ink
+  stamps with a single press-in motion, disabled under
+  prefers-reduced-motion; the hero carries the shop's seal. No all-caps
+  eyebrows, no single-word headline accent, no numbered section
+  markers (checkout stepper and order timeline keep numbers — true
+  sequences). All v2 function and honesty preserved.
+- **Gates:** typecheck clean; `next build` passes (7 routes + 404);
+  local production render of every route with live env — all 200,
+  live data, no banners, zero `usdc.testnet`.
+- **Deploy:** same route as v1/v2 (clean copy
+  ~/workspace/.deploy/bounden-web, `.vercel` carried over, env
+  untouched), `vercel deploy --prod` — deployment
+  bounden-y1ayrxl7o, aliased to https://bounden.vercel.app.
+- **Live verification (production, against a fresh direct contract
+  read made at verification time):** chain said licence-pro avail 1
+  ($25), api-credit-basic avail 1 ($10), sealed total 2, orders 0–3
+  (4 recorded; order 3 Fulfilled with
+  `near-ai:687dd756…a6726f`). Site matched exactly: all seven routes
+  200, NO fixture or cached banner anywhere (fully live), home figures
+  2/2/4/5-of-5, order 3 attestation hash rendered, constitution
+  permission object + attack stamps, checkout's exact ft_transfer_call
+  to the Circle token contract, zero `usdc.testnet`; production CSS
+  carries Newsreader + Archivo and no trace of Fraunces/Inter.
+- **Checklist:** SUBMISSION.md #15 stays DONE, v3 noted under it.
+  Remaining Stage 5 unchanged: film (#11), X post (#12–13), one-shot
+  form. Honest limits: verification is markup/render-level plus the
+  CSS bundle — no physical-device screenshot was taken in this pass;
+  the owner sees it on his phone as the real device check.
