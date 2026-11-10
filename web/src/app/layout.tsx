@@ -1,20 +1,21 @@
-import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Mono, Inter } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Archivo, IBM_Plex_Mono, Newsreader } from "next/font/google";
 import Link from "next/link";
 import StatusPill from "@/components/StatusPill";
 import { MobileTabBar, PrimaryNav } from "@/components/SiteNav";
 import "./globals.css";
 
-const display = Fraunces({
+const display = Newsreader({
   subsets: ["latin"],
   variable: "--font-display",
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
 });
 
-const ui = Inter({
+const ui = Archivo({
   subsets: ["latin"],
   variable: "--font-ui",
+  weight: ["400", "500", "600", "700"],
 });
 
 const mono = IBM_Plex_Mono({
@@ -22,6 +23,10 @@ const mono = IBM_Plex_Mono({
   variable: "--font-mono",
   weight: ["400", "500", "600"],
 });
+
+export const viewport: Viewport = {
+  themeColor: "#faf5ea",
+};
 
 export const metadata: Metadata = {
   title: {
@@ -42,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
 
         <div className="notice-bar" role="note">
-          <strong>Demo inventory</strong>
+          <strong>Demo inventory.</strong>
           Every product here is a clearly marked test item with no real-world
           value. The shop runs on NEAR testnet and settles in testnet USDC.
         </div>

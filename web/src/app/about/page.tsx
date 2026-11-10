@@ -29,7 +29,6 @@ export default function AboutPage() {
       </div>
 
       <section className="prose-section">
-        <span className="sec-num">01</span>
         <div>
           <h2>On-chain: commitments only</h2>
           <p>
@@ -43,7 +42,6 @@ export default function AboutPage() {
       </section>
 
       <section className="prose-section">
-        <span className="sec-num">02</span>
         <div>
           <h2>Off-chain: the sealed vault</h2>
           <p>
@@ -57,7 +55,6 @@ export default function AboutPage() {
       </section>
 
       <section className="prose-section">
-        <span className="sec-num">03</span>
         <div>
           <h2>On fulfilment: re-encrypted to the buyer</h2>
           <p>
@@ -74,7 +71,6 @@ export default function AboutPage() {
       </section>
 
       <section className="prose-section">
-        <span className="sec-num">04</span>
         <div>
           <h2>Downloadable assets: signed, expiring links</h2>
           <p>

@@ -44,56 +44,48 @@ export default async function HomePage() {
     return (acc ?? 0) + p.inventoryAvailable;
   }, null);
 
-  const stats: { num: React.ReactNode; label: string; sub?: string }[] = [
-    {
-      num: products.length,
-      label: "Products live",
-      sub:
-        mode === "live"
-          ? "read from the contract"
-          : mode === "cached"
-            ? `last read ${cachedAt ? formatAge(cachedAt) : "recently"}`
-            : "fixture catalogue",
-    },
-    {
-      num: sealedUnits ?? "—",
-      label: "Sealed units available",
-      sub: "hashes on-chain, codes off-chain",
-    },
+  const bookFigures: React.ReactNode[] = [
+    <>
+      <span className="fig">{products.length}</span>{" "}
+      {products.length === 1 ? "good" : "goods"} for sale
+    </>,
+    <>
+      <span className="fig">{sealedUnits ?? "—"}</span> sealed units in the
+      vault
+    </>,
   ];
   if (ordersRecorded !== null) {
-    stats.push({
-      num: ordersRecorded,
-      label: "Orders recorded",
-      sub: "on the shop contract",
-    });
-  }
-  stats.push({
-    num: (
+    bookFigures.push(
       <>
-        5<span className="accent">/5</span>
-      </>
-    ),
-    label: "Attack cases refused",
-    sub: "live and reproducible — see the Constitution",
-  });
+        <span className="fig">{ordersRecorded}</span> orders entered
+      </>,
+    );
+  }
+  bookFigures.push(
+    <>
+      <span className="fig">5 of 5</span> attack cases refused
+    </>,
+  );
 
   return (
     <>
       <ModeBanner mode={mode} liveError={liveError} cachedAt={cachedAt} />
 
       <section className="hero">
-        <p className="hero-eyebrow">An agent-run shop on NEAR testnet</p>
+        <div className="seal" aria-hidden="true">
+          <span className="seal-name">Bounden</span>
+          <span className="seal-sub">kept in the open</span>
+        </div>
         <h1>
-          The cashier <em>cannot steal</em>. Its powers are public, and they
-          end where its job ends.
+          The cashier cannot steal. Its powers are public, and they end
+          where its job ends.
         </h1>
         <p className="hero-sub">
-          Bounden is a working digital-goods shop run by an autonomous agent.
-          The agent holds exactly one key, and that key can call exactly two
-          contract methods — fulfil an order, or refund inside a band the
-          contract enforces. Everything else is refused by the protocol
-          itself, not by the agent's good behaviour.
+          Bounden is a working digital-goods shop on NEAR testnet, run by an
+          autonomous agent. The agent holds exactly one key, and that key can
+          call exactly two contract methods — fulfil an order, or refund
+          inside a band the contract enforces. Everything else is refused by
+          the protocol itself, not by the agent's good behaviour.
         </p>
         <div className="hero-cta">
           <a className="btn" href="#shop">
@@ -105,21 +97,30 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="stats-strip" aria-label="Shop figures">
-        {stats.map((s) => (
-          <div className="stat" key={s.label}>
-            <div className="stat-num">{s.num}</div>
-            <div className="stat-label">{s.label}</div>
-            {s.sub ? <div className="stat-sub">{s.sub}</div> : null}
-          </div>
-        ))}
-      </section>
+      <div className="book-summary" aria-label="Shop figures">
+        <p>
+          {mode === "fixture" ? "The sample book: " : "The book so far: "}
+          {bookFigures.map((f, i) => (
+            <span key={i}>
+              {i > 0 && (i === bookFigures.length - 1 ? ", and " : ", ")}
+              {f}
+            </span>
+          ))}
+          .
+          {mode === "cached" && (
+            <>
+              {" "}
+              Figures last read {cachedAt ? formatAge(cachedAt) : "recently"}.
+            </>
+          )}
+        </p>
+      </div>
 
       <section id="shop" aria-labelledby="shop-heading">
         <div className="section-head">
           <h2 id="shop-heading">The shop</h2>
           <span className="muted small">
-            Priced in USD · settled in USDC (Circle, NEAR testnet)
+            Prices in US dollars, settled in USDC (Circle, NEAR testnet)
           </span>
         </div>
         <p className="lede">
@@ -128,38 +129,43 @@ export default async function HomePage() {
           never the cashier.
         </p>
 
-        <div className="grid">
+        <div className="ledger">
           {products.map((p) => (
-            <article className="product-card" key={p.id}>
-              <div className="card-top">
-                <span className="badge">{KIND_LABELS[p.kind]}</span>
-                <span className="stock">
+            <article className="entry" key={p.id}>
+              <div>
+                <h3>
+                  <Link href={`/products/${p.id}`}>{p.name}</Link>
+                </h3>
+                <div className="entry-meta">
+                  <span>{KIND_LABELS[p.kind]}</span>
                   <span
                     className={`stock-dot${!p.active ? " out" : p.inventoryAvailable === null ? " unknown" : p.inventoryAvailable === 0 ? " out" : ""}`}
                     aria-hidden="true"
                   />
-                  {!p.active
-                    ? "Not for sale"
-                    : p.inventoryAvailable === null
-                      ? "Availability not read"
-                      : p.inventoryAvailable === 0
-                        ? "Sold out"
-                        : `${p.inventoryAvailable} sealed`}
-                </span>
+                  <span>
+                    {!p.active
+                      ? "Not for sale"
+                      : p.inventoryAvailable === null
+                        ? "Availability not read"
+                        : p.inventoryAvailable === 0
+                          ? "Sold out"
+                          : `${p.inventoryAvailable} sealed`}
+                  </span>
+                </div>
               </div>
-              <h3>{p.name}</h3>
-              <div className="spacer" />
-              <div className="price-row">
-                <span className="price">{formatUsd(p.price_usd)}</span>
-                <span className="price-note">
+              <div className="entry-price">
+                <div className="amount">{formatUsd(p.price_usd)}</div>
+                <div className="note">
                   testnet USDC
                   <br />
                   to the contract
-                </span>
+                </div>
               </div>
-              <Link className="btn btn-block" href={`/products/${p.id}`}>
-                View product
-              </Link>
+              <div className="entry-action">
+                <Link className="text-link" href={`/products/${p.id}`}>
+                  View product
+                </Link>
+              </div>
             </article>
           ))}
           {products.length === 0 && (
@@ -184,6 +190,8 @@ export default async function HomePage() {
             name="id"
             inputMode="numeric"
             placeholder="Order id, e.g. 3"
+            autoComplete="off"
+            spellCheck={false}
             required
           />
           <button className="btn" type="submit">

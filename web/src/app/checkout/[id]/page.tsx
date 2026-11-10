@@ -56,7 +56,7 @@ export default async function CheckoutPage({
       <ModeBanner mode={mode} liveError={liveError} cachedAt={cachedAt} />
 
       <div className="page-head">
-        <span className="badge">Checkout — explainer</span>
+        <span className="badge">Checkout, explained</span>
         <h1>How to buy: {product.name}</h1>
         <p className="lede">
           Price: <strong>{formatUsd(product.price_usd)}</strong>, settled in
