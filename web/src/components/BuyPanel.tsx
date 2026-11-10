@@ -3,8 +3,12 @@
 import { internalActionToNaj } from "@near-wallet-selector/core";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { formatUsd } from "@/lib/format";
-import { buildPurchaseTransactions } from "@/lib/purchase";
+import { formatNear, formatUsd } from "@/lib/format";
+import {
+  buildPurchaseTransactions,
+  classifyTokenPanic,
+  TOKEN_CONTRACT_ID,
+} from "@/lib/purchase";
 import { useWallet } from "./WalletProvider";
 
 /**
@@ -15,6 +19,16 @@ import { useWallet } from "./WalletProvider";
  * page holds no keys and signs nothing; it builds the payload and
  * the wallet does the rest. On success the buyer is sent to their
  * order's tracking page.
+ *
+ * Before any of that, a pre-flight reads the buyer's standing: an
+ * account the token contract has never seen (no storage
+ * registration), one whose USDC cannot cover the price, or one
+ * whose NEAR cannot cover the batch's network fees would otherwise
+ * fail mid-purchase — the payment panicking on-chain after the
+ * order was already created, or the batch dying for gas. The
+ * pre-flight stops the purchase before anything is numbered or
+ * signed and says, in plain words, what is missing and where the
+ * missing testnet funds come from.
  */
 
 const RPC_ENDPOINTS = [
@@ -74,6 +88,170 @@ async function probeNextOrderId(contractId: string): Promise<number> {
   throw new Error("The order book probe ran off its page. Nothing was signed.");
 }
 
+/** One read-only call against a contract, walking the same RPC
+ *  rotation the order probe uses. Resolves with the decoded JSON
+ *  value (null is a real answer on NEAR); rejects when no endpoint
+ *  served the call. */
+async function callView(
+  contractId: string,
+  methodName: string,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  const argsBase64 = btoa(JSON.stringify(args));
+  for (const url of RPC_ENDPOINTS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: "bounden-buy",
+          method: "query",
+          params: {
+            request_type: "call_function",
+            finality: "final",
+            account_id: contractId,
+            method_name: methodName,
+            args_base64: argsBase64,
+          },
+        }),
+      });
+      if (!res.ok) continue;
+      const json = (await res.json()) as {
+        result?: { result?: number[] };
+        error?: unknown;
+      };
+      if (json.error || !json.result || !Array.isArray(json.result.result)) {
+        continue;
+      }
+      const text = new TextDecoder().decode(
+        new Uint8Array(json.result.result),
+      );
+      return JSON.parse(text) as unknown;
+    } catch {
+      // Try the next endpoint.
+    }
+  }
+  throw new Error("no endpoint served the call");
+}
+
+/** One read-only account view (the NEAR balance), walking the same
+ *  RPC rotation. Resolves with the account object; rejects when no
+ *  endpoint served the call. */
+async function callAccountView(
+  accountId: string,
+): Promise<{ amount?: string }> {
+  for (const url of RPC_ENDPOINTS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: "bounden-buy",
+          method: "query",
+          params: {
+            request_type: "view_account",
+            finality: "final",
+            account_id: accountId,
+          },
+        }),
+      });
+      if (!res.ok) continue;
+      const json = (await res.json()) as {
+        result?: { amount?: string };
+        error?: unknown;
+      };
+      if (json.error || !json.result) continue;
+      return json.result;
+    } catch {
+      // Try the next endpoint.
+    }
+  }
+  throw new Error("no endpoint served the call");
+}
+
+/** The headroom the batch's network fees must fit inside: the two
+ *  calls attach 105 Tgas and a single yocto of deposit, and their
+ *  true burn is a small fraction of this — 0.01 NEAR covers them
+ *  with room to spare. */
+const MIN_NEAR_HEADROOM_YOCTO = 10n ** 22n; // 0.01 NEAR
+
+type Preflight = { kind: "ok" } | { kind: "stop"; message: string };
+
+/**
+ * The pre-flight: is this buyer known to the payment token, can
+ * their USDC cover the price, and can their NEAR cover the network
+ * fees? Runs before the order is numbered and before anything is
+ * signed — a stop here creates nothing.
+ */
+async function preflightPurchase(
+  accountId: string,
+  priceBaseUnits: string,
+): Promise<Preflight> {
+  let storage: unknown;
+  let balanceRaw: unknown;
+  try {
+    storage = await callView(TOKEN_CONTRACT_ID, "storage_balance_of", {
+      account_id: accountId,
+    });
+    if (storage !== null && storage !== undefined) {
+      balanceRaw = await callView(TOKEN_CONTRACT_ID, "ft_balance_of", {
+        account_id: accountId,
+      });
+    }
+  } catch {
+    return {
+      kind: "stop",
+      message:
+        "The chain could not be read to check your USDC, so the purchase stopped before anything was signed. Nothing was created — try again in a moment.",
+    };
+  }
+  if (storage === null || storage === undefined) {
+    return {
+      kind: "stop",
+      message:
+        "Your wallet is connected, but this account is not yet registered with the USDC contract, so a payment from it would be refused. Registration arrives with your first testnet USDC: claim some at faucet.circle.com (choose NEAR testnet and USDC) — the delivery registers the account as it lands, and it can take a minute to settle. Nothing was signed and no order was created.",
+    };
+  }
+  let balance = 0n;
+  try {
+    balance = BigInt(String(balanceRaw));
+  } catch {
+    balance = 0n;
+  }
+  let price: bigint | null = null;
+  try {
+    price = BigInt(priceBaseUnits);
+  } catch {
+    price = null;
+  }
+  if (price !== null && balance < price) {
+    return {
+      kind: "stop",
+      message: `Your wallet is connected, but it holds ${formatUsd(balance.toString())} in USDC — short of the ${formatUsd(priceBaseUnits)} this costs. Top up with testnet USDC at faucet.circle.com (choose NEAR testnet and USDC); a delivery can take a minute to settle. Nothing was signed and no order was created.`,
+    };
+  }
+  let nearYocto: bigint;
+  try {
+    const account = await callAccountView(accountId);
+    nearYocto = BigInt(String(account.amount ?? "0"));
+  } catch {
+    return {
+      kind: "stop",
+      message:
+        "The chain could not be read to check your NEAR balance, so the purchase stopped before anything was signed. Nothing was created — try again in a moment.",
+    };
+  }
+  if (nearYocto < MIN_NEAR_HEADROOM_YOCTO) {
+    return {
+      kind: "stop",
+      message: `Your wallet is connected, but it holds ${formatNear(nearYocto.toString())} — not enough NEAR for the network fees on the two calls. About 0.01 NEAR covers them with room to spare. Testnet NEAR is free: a wallet created at testnet.mynearwallet.com arrives funded, and most testnet wallets offer a faucet drip for more. Nothing was signed and no order was created.`,
+    };
+  }
+  return { kind: "ok" };
+}
+
 type Phase =
   | { kind: "idle" }
   | { kind: "working"; label: string }
@@ -102,6 +280,20 @@ export default function BuyPanel({
 
   const buy = async () => {
     try {
+      if (!accountId) {
+        setPhase({
+          kind: "error",
+          message:
+            "The wallet is not connected yet. Nothing was signed — connect it above and try again.",
+        });
+        return;
+      }
+      setPhase({ kind: "working", label: "Checking your USDC first…" });
+      const preflight = await preflightPurchase(accountId, priceUsd);
+      if (preflight.kind === "stop") {
+        setPhase({ kind: "error", message: preflight.message });
+        return;
+      }
       setPhase({ kind: "working", label: "Numbering your order…" });
       const orderId = await probeNextOrderId(contractId);
       const selector = await getSelector();
@@ -135,13 +327,34 @@ export default function BuyPanel({
       router.push(`/orders/${orderId}`);
       router.refresh();
     } catch (err) {
-      setPhase({
-        kind: "error",
-        message:
-          err instanceof Error
-            ? `The purchase did not complete: ${err.message}`
-            : "The purchase did not complete. Nothing further was signed.",
-      });
+      // Backstop for the race the pre-flight cannot see (a balance
+      // that moved between the check and the signature): if the
+      // token contract's own panic is in the failure, answer with
+      // the same plain guidance instead of the raw chain error.
+      const panic = classifyTokenPanic(
+        err instanceof Error ? err.message : "",
+      );
+      if (panic === "unregistered") {
+        setPhase({
+          kind: "error",
+          message:
+            "The purchase did not complete: the payment was refused because this account is not registered with the USDC contract. Claim testnet USDC at faucet.circle.com (choose NEAR testnet and USDC) — the delivery registers the account as it lands. If an order was numbered for this attempt it stands in the book unpaid, and no USDC moved.",
+        });
+      } else if (panic === "insufficient") {
+        setPhase({
+          kind: "error",
+          message:
+            "The purchase did not complete: the payment was refused because the USDC balance does not cover the price. Top up at faucet.circle.com (choose NEAR testnet and USDC) and buy again. If an order was numbered for this attempt it stands in the book unpaid, and no USDC moved.",
+        });
+      } else {
+        setPhase({
+          kind: "error",
+          message:
+            err instanceof Error
+              ? `The purchase did not complete: ${err.message}`
+              : "The purchase did not complete. Nothing further was signed.",
+        });
+      }
     }
   };
 

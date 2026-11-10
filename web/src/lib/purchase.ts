@@ -42,6 +42,29 @@
 export const TOKEN_CONTRACT_ID =
   "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af";
 
+/**
+ * Classify a signing failure by the token contract's known panics.
+ * When the payment call dies inside the token — the paying account
+ * is not registered with it, or its balance cannot cover the amount
+ * — the raw chain error is a JSON blob no buyer should have to read
+ * (the owner's own first purchase surfaced exactly that). BuyPanel
+ * uses this to answer in plain language instead. Returns null for
+ * anything else, so unknown failures keep their original wording.
+ */
+export function classifyTokenPanic(
+  message: string,
+): "unregistered" | "insufficient" | null {
+  if (/not registered/i.test(message)) return "unregistered";
+  if (
+    /insufficient|doesn'?t have enough|not enough|less than the amount|underflow/i.test(
+      message,
+    )
+  ) {
+    return "insufficient";
+  }
+  return null;
+}
+
 /** Gas for create_order, as proven by the order-3 creation tx. */
 export const CREATE_ORDER_GAS = "5000000000000"; // 5 Tgas
 

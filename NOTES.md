@@ -2748,3 +2748,83 @@ verification was visual and flow-level.
   figures unchanged (2 goods / 4 sealed / 5 orders, 5 of 5
   attack cases refused); the shipped CSS carries the collision
   guard; storefront commit follows this entry.
+
+## BuyPanel pre-flight — plain-language stops before signing (10 Nov, owner-found)
+
+- **What the owner's retry exposed.** With the NAJ fix live, the
+  owner bought again as bounden.testnet. This time `create_order`
+  landed — **order 5**: buyer bounden.testnet, api-credit-basic,
+  state **Created**, unpaid, and it stays in the book as a true
+  record — while `ft_transfer_call` panicked inside the Circle
+  USDC contract: "The account bounden.testnet is not registered".
+  At tap time his account had no storage registration and no
+  balance on the token contract; his Circle-faucet delivery of
+  20 testnet USDC settled minutes later (the delivery registers
+  the account), and his next attempt completed as **order 6,
+  Fulfilled by the on-duty cashier** (attestation
+  `near-ai:c4191a04bb0fd68ae9e10e86ef25cf68a3230eb07b68ca26e9fae65ecf58b71a`).
+  The gap: a fresh-wallet buyer met a raw contract panic and left
+  a stranded unpaid order behind. Judges following the
+  "Testing as a judge" note would hit the same wall.
+- **The fix — a pre-flight in BuyPanel, before the order is
+  numbered and before anything is signed.** Walking the panel's
+  existing RPC rotation, it reads the connected account's
+  `storage_balance_of` and `ft_balance_of` on the Circle USDC
+  contract and its NEAR balance via `view_account`, and stops
+  with a plain Day-Book message — never a raw error — when:
+  the account is not registered with the token contract (says
+  registration arrives with the first faucet delivery), its USDC
+  is short of the price (names both figures), or its NEAR is
+  under ~0.01 NEAR of headroom for the batch's network fees
+  (says testnet NEAR is free and where wallets get it). USDC
+  guidance points at faucet.circle.com, matching the checkout
+  and About pages. A stop creates nothing and signs nothing.
+  As a backstop for races between the check and the signature,
+  the signing catch now runs failures through
+  `classifyTokenPanic` (new pure helper in purchase.ts) and
+  translates the token's known panics — not registered,
+  insufficient balance — into the same plain guidance, noting a
+  numbered order would stand unpaid with no USDC moved. Payload
+  semantics, gas, deposits and the one-confirmation batch are
+  unchanged (create_order 5 Tgas/0; ft_transfer_call
+  100 Tgas/1 yocto; conversion via internalActionToNaj).
+- **Verification (local production build, headless Chromium,
+  seeded Meteor sessions as in the last pass; the SDK's
+  test.rpc.fastnear.com and the page's rpc.testnet.near.org
+  forwarded through Node — sandbox egress quirks, not app
+  defects).** Typecheck and build clean; the classifier
+  unit-checked against the owner's exact error blob.
+  (a1) A fresh implicit account (3183b8c6…7276; exists with
+  0.003 NEAR, never registered on the token): Buy stopped with
+  the registration message, no order created.
+  (a2) bounden7 at 5 USDC: Buy stopped — "it holds $5.00 in
+  USDC — short of the $10.00 this costs" — no order created.
+  (a3) A purpose-built account (9bd66230…bfe1) registered and
+  holding 10 USDC but only 0.003 NEAR: Buy stopped — "not
+  enough NEAR for the network fees on the two calls. About
+  0.01 NEAR covers them…" — no order created.
+  (b) bounden7 topped up to exactly 10 USDC: pre-flight passed,
+  the Meteor SDK's log showed both transformed transactions at
+  the exact proven figures (create_order {"product_id":
+  "api-credit-basic"} 5 Tgas/0; ft_transfer_call amount
+  "10000000", msg "7", 100 Tgas/1 yocto) and the SDK opened
+  Meteor's own web signing route
+  (wallet.meteorwallet.app/connect/testnet/sign?…) — aborted
+  by design, nothing signed; `get_order(7)` read null before
+  and after every case.
+- **Test-float movements made for this verification** (agent
+  test accounts only; the owner's funds untouched): buyer-2 →
+  bounden7 5 USDC (buyer-2 5 → 0, bounden7 5 → 10); bounden7 →
+  a3 account 10 USDC, plus 0.003 NEAR to create it and a
+  0.00125 NEAR storage_deposit on its behalf (bounden7 USDC
+  10 → 0). USDC float after order 6 and these moves: buyer-2 0 /
+  bounden7 0 / a3 10 / bounden.testnet 10 / bounden11 treasury
+  40 = 60 (the owner's 20 USDC faucet delivery is new test
+  money he brought in himself; 10 of it sits in the treasury
+  as order 6's payment).
+- **Deployed** (`bounden-p6hgjhzwo`); routes 200 (the bare
+  /orders path answers 307 — the lookup route's standing
+  redirect, unchanged); live figures truthful after order 6:
+  2 goods / 3 sealed / 7 orders entered; api-credit-basic
+  2 sealed units available; zero `usdc.testnet` on the pages
+  checked.
