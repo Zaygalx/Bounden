@@ -2828,3 +2828,173 @@ verification was visual and flow-level.
   2 goods / 3 sealed / 7 orders entered; api-credit-basic
   2 sealed units available; zero `usdc.testnet` on the pages
   checked.
+
+## Buyer experience pass — delivery counter, page speed, navigation truth (10 Nov 2026, owner-found)
+
+Trigger: the owner's own first end-to-end purchase (order 6,
+bounden.testnet, Fulfilled, attestation near-ai:c4191a04b…) surfaced
+three defects, all confirmed exactly as reported: (1) the order page
+showed the buyer only evidence hashes — no way existed anywhere to
+collect the item bought; (2) pages hung on loading skeletons (home
+measured at 39.2 s, /orders/6 at 10.3 s server response by curl that
+morning); (3) tapping for the order landed on the Shop page.
+
+### Phase 0 — audits
+
+**Delivery internals.** Codes rest in the FileVault
+(bounden-secrets/v3/worker-vault), AES-256-GCM under the vault key.
+prepareDelivery decodes the head code inside the vault and re-seals
+it under a fresh per-order key; the DeliveryRecord — ciphertext
+(base64 iv|tag|ct), per-order delivery key, commitment, evidence
+hash, buyer — PERSISTS in vault-state.json after finalizeDelivery.
+Verified for every stored record (orders 0, 1, 2, 3, 4, 6): sha256 of
+the ciphertext package == the record's evidence hash, and the code
+recovered with the record's key hashes to the record's commitment.
+Order 6: evidence ac124cf152f675f711b… == the hash on the owner's
+order page; commitment a435391bba678307…. The gap was never the
+sealing — it was the absence of any buyer-gated release channel
+between the vault (cashier's machine, outbound HTTPS only) and the
+storefront (Vercel, stateless).
+
+**Performance.** The exact view calls the pages make were timed per
+endpoint from the sandbox: rpc.testnet.near.org (first in the old
+sequential rotation) 3.4–3.8 s per call with 2 of 6 connections
+terminated mid-response; fastnear 0.42–0.82 s; dRPC 0.21–0.83 s. The
+old client rotated sequentially with a 15 s timeout and 2 attempts
+per endpoint, and the pages compounded it: the layout probed order
+ids one at a time (7 orders = 7 sequential reads on EVERY route),
+fetchProducts looped products and their two reads sequentially, and
+the order page awaited order → product → evidence in series.
+
+**Navigation (static audit).** "Track Order" (sidebar, mobile tab
+bar) and the footer's "Track an order" all pointed at /#track — the
+shop home page's track section; /orders itself was a bare redirect
+handler that bounced a bare visit back to "/". Tapping Track Order
+therefore opened the shop, exactly as the owner said. Logo, Shop,
+Constitution, About hrefs were correct; the order-page Look up form
+(/orders?id=N → /orders/N) was correct; BuyPanel already pushed to
+/orders/<id> after a buy.
+
+### Fix 1 — the delivery counter
+
+Design (as shipped). On a Fulfilled order's page, a buyer connected
+with the buying wallet gets a "Collect your item" action. Collection
+asks the wallet to sign a short note (NEP-413 signMessage; no
+transaction, no fee) binding the order, the buyer account, and a
+one-time P-256 key generated in the tab. The note is filed at a
+rendezvous on the storefront (/api/collect/*); the cashier worker —
+extended with src/delivery-counter.ts, the only new worker logic —
+polls the rendezvous each cycle and answers a note ONLY when: a
+finalized delivery record exists for the order; the order is
+Fulfilled on-chain with that signer as buyer of record; the signing
+key is registered on the account (RPC access-key view) and the
+NEP-413 signature verifies (construction mirrored byte-for-byte from
+the wallet-selector core's own verifier); and the note is fresh
+(10 min) and names the order. The answer seals the code (recovered
+in worker memory only, sha256-checked against the consumed
+commitment before release) to the one-time key: ECDH P-256 →
+HKDF-SHA-256 → AES-256-GCM. The page receives nothing before proof,
+and after proof only ciphertext its tab alone can open; the revealed
+code's SHA-256 is computed in the browser and shown against the
+commitment. Refusals carry plain reasons from the cashier ("The
+wallet that signed is not the buyer of record for this order."). A
+replayed note can only draw a reply sealed to a key the replayer
+does not hold. Worker changes are additive and env-gated
+(BOUNDEN_COUNTER_URL + BOUNDEN_COUNTER_SECRET, set together or the
+counter stays off); fulfil/refund paths untouched; suite 71/71
+(61 prior + 10 new: NEP-413 round-trip/tamper, note parsing,
+seal/unseal, counter release + buyer/state/staleness/forgery
+refusals, config gating). Retroactivity: records persist for orders
+0–4 and 6, and collection follows CURRENT chain state — orders 2, 3,
+4 (and 6, for its buyer) are collectable today; order 0 (Refunded)
+and order 1 (RefundRejected) hold records but their states no longer
+offer collection, by the same gate that refuses unpaid orders.
+
+The rendezvous store — two iterations, both measured. v1 was
+serverless instance memory with mutual re-announcement. It failed
+its first live test: a test collection note for order 4 sat unseen
+for a full 120 s (the worker's journal shows no sighting) while the
+next note (order 6) was answered in ~30 s — notes and polls were
+being served by different instances, and one instance's memory is
+simply not a post box. v2 (shipped): a private Vercel Blob store
+(bounden-rendezvous-2, store_OYYx4NK2B1uU5DY3, linked to the
+project; an unlinked first store was created and deleted in the
+process), one JSON file per note/answer under collect/, 15-minute
+retention swept on read. Contents are public-safe by construction
+(signatures in, sealed ciphertext out); the store's token never
+leaves the storefront's server side. One transport note: reads use
+head() + an authenticated fetch of the private URL rather than the
+SDK's get(), whose transport stalled indefinitely (>85 s) through
+the sandbox egress proxy while the equivalent fetch answered in
+~1–2 s; every rendezvous call is abort-bounded.
+
+Proofs. Local stack (production build + real v3 vault, read-only +
+real chain views + buyer-2's key): order 4 collected
+(BOUNDEN-TEST-CREDIT-0003; sha256 == consumed commitment; evidence
+hash == vault record); wrong-account, unpaid-order (5), and
+not-my-order (6 as buyer-2) requests all refused with their plain
+reasons; worker endpoints 401 unauthenticated. Live, after deploy:
+the production worker answered a fresh order-4 collection in ~50 s
+end to end (code + both hashes verified again against production),
+and refused order 6 to buyer-2 with the buyer-of-record reason.
+Order 6's own collection awaits the owner's tap with his wallet —
+the last UI proof, deliberately his. Pre-proof hygiene verified:
+the served /orders/6 HTML contains the counter section and zero code
+strings.
+
+### Fix 2 — page speed
+
+web/src/lib/near.ts: the sequential rotation is now a race — all
+endpoints are asked at once with a 4 s per-attempt timeout, the
+first definitive answer wins, a JSON-RPC error still surfaces as
+definitive, and one retry race runs if every endpoint fails
+retryably (worst case ≈ 8.4 s per read with the whole RPC layer
+down, after which the standing cached/fixture degradation answers
+with its banner — the skeleton can no longer be a final state).
+shop.ts: product reads run concurrently, and a new cached
+fetchOrderCount probes ids in parallel batches of 8 (the contract
+has no counter view) — the layout and home page share it instead of
+each probing one id at a time. The order page fetches product and
+evidence concurrently.
+
+Before → after (curl, sandbox egress, same method both times):
+home 39.2 s → 1.1–1.9 s across three post-deploy runs (last 1.12 s);
+/orders/6 10.3 s → 0.62–0.81 s; product page (no baseline taken) →
+0.63–0.77 s; tracker /orders → 0.52 s. Local production build, cold
+process: /orders/6 3.59 s cold, 0.69 s warm.
+
+### Fix 3 — navigation truth
+
+"Track Order" (both navs) and footer "Track an order" now lead to
+/orders, which is a real tracker page (new orders/page.tsx replacing
+route.ts): the lookup form lives there, ?id=<n> still forwards
+straight to the order, and a malformed id is answered on the page in
+words instead of bouncing to the shop. The home page keeps its own
+track section and form — it was never the broken part; the broken
+part was navigation calling the shop "Track Order". Verification:
+real taps in a mobile viewport (390×844) against the shipped
+production build — 10/10 targets landed on their named routes
+(Constitution, Track Order → /orders, tracker form → /orders/6,
+About, logo → /, Shop → /, home form → /orders/4, order-page lookup
+→ /orders/6, footer → /orders, product link), with screenshots; the
+collect panel's not-connected state screenshotted on /orders/6.
+Stated plainly: those clicks ran against the identical build on
+localhost, not the live domain — from this sandbox, Chromium cannot
+tunnel through the egress proxy at all (ERR_TUNNEL_CONNECTION_FAILED
+in every proxy mode tried), so live-domain taps need the platform
+browser or the owner's phone. The live domain itself was verified by
+timings, served-HTML hrefs (Track Order now /orders), the tracker
+page's presence, and the full production collection above.
+
+### Operations
+
+Deployments: bounden-nwmcb2rd3 (counter with the v1 rendezvous —
+superseded the same morning), then bounden-p4uefhe5c (Blob
+rendezvous), both aliased to https://bounden.vercel.app.
+BOUNDEN_RENDEZVOUS_SECRET set in Vercel production env and in the
+worker unit (both /etc and ~/.config copies, so the watchdog's
+restore keeps it); worker rebuilt (dist) and restarted — journal:
+leash verified, "delivery counter on duty", polling normal. The
+rendezvous secret value lives only in those two places and
+bounden-secrets/rendezvous-secret.txt (0600); it authenticates the
+worker to the rendezvous and unlocks nothing by itself.

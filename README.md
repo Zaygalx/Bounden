@@ -302,6 +302,26 @@ agent-run digital-goods business can adopt.
 | Cashier (agent worker) | Holds one allowlisted function-call key; fulfils orders and in-band refunds; the only decryptor of sealed inventory |
 | NEAR AI Cloud | Order/refund judgements inside a TEE; attestation hash logged on-chain per decision |
 | Storefront | Catalogue, checkout, order status, and a public Constitution page listing the agent's powers |
+| Delivery counter | The collection point on each fulfilled order's page: the buyer signs a short note, the cashier verifies it against the buyer of record, and the code is sealed to a one-time key in the buyer's own tab — items are collected against proof, never posted |
+
+**Collecting what you bought.** Fulfilment seals each item into the
+cashier's vault and puts only hashes on-chain: the commitment of the
+code the order consumed, and the SHA-256 of its sealed delivery
+package as evidence. To collect, open the order's page with the
+buying wallet connected and use the delivery counter. The wallet
+signs one short note (a NEP-413 message — no transaction, no fee)
+binding the order to a one-time key generated in the buyer's tab;
+the cashier checks the signature against the buyer of record and
+the order's fulfilled state, and answers with the code sealed to
+that one-time key. It is opened in the browser, nowhere else, and
+the page shows the code's SHA-256 beside the commitment the order
+consumed so the buyer can check the item against the chain
+themselves. Signed notes and sealed answers wait for their other
+side in a small private store on the storefront (fifteen minutes,
+then gone); no code and no key ever enters it — requests are
+signatures, answers are ciphertext. The full design, and the
+measured failure of the simpler rendezvous it replaced, are in
+`NOTES.md` ("Buyer experience pass").
 
 Full plan: [docs/PLAN.md](docs/PLAN.md) · Pre-flight evidence:
 [docs/PREFLIGHT.md](docs/PREFLIGHT.md) · Downloads design:

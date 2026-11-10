@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import CollectPanel from "@/components/CollectPanel";
 import HashValue from "@/components/HashValue";
 import ModeBanner from "@/components/ModeBanner";
 import OrderTimeline from "@/components/OrderTimeline";
@@ -22,7 +23,7 @@ export async function generateMetadata({
 const STATE_EXPLAINED: Record<OrderState, string> = {
   Created: "The order exists but has not been paid. Pay the contract exactly the order amount to move it forward.",
   Paid: "Payment accepted and recorded by the contract. The cashier will fulfil this order on its next pass.",
-  Fulfilled: "The cashier has released the sealed item and recorded the delivery evidence hash on-chain.",
+  Fulfilled: "The cashier has released the sealed item and recorded the delivery evidence hash on-chain. Its buyer collects the item itself at the delivery counter below.",
   Cancelled: "Cancelled by the buyer before payment. No money moved.",
   Refunded: "The buyer was refunded in full by the contract, inside the refund band.",
   RefundRejected:
@@ -45,12 +46,15 @@ export default async function OrderPage({
   const { data: order, mode, liveError, cachedAt } = Number.isNaN(orderId)
     ? { data: null, mode: "fixture" as const, liveError: undefined, cachedAt: undefined }
     : await fetchOrder(orderId);
-  const product =
-    order !== null ? (await fetchProduct(order.product_id)).data : null;
-  const evidence =
+  // The product read and the evidence read are independent of each
+  // other — fetch them together, not one after the other.
+  const [product, evidence] =
     order !== null && !Number.isNaN(orderId)
-      ? await fetchDeliveryEvidence(orderId)
-      : null;
+      ? await Promise.all([
+          fetchProduct(order.product_id).then((r) => r.data),
+          fetchDeliveryEvidence(orderId),
+        ])
+      : [null, null];
 
   return (
     <>
@@ -184,6 +188,10 @@ export default async function OrderPage({
               </tbody>
             </table>
           </div>
+
+          {order.state === "Fulfilled" && mode !== "fixture" && (
+            <CollectPanel orderId={orderId} buyer={order.buyer} state={order.state} />
+          )}
         </>
       )}
     </>

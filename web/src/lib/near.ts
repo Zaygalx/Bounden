@@ -12,8 +12,20 @@ import type { AccessKeyPermissionView } from "./types";
  * Resilience (Stage 5 v3): the public testnet RPC rate-limits (HTTP
  * 429) and occasionally drops connections, and a shop page must not
  * greet a visitor with a fixture fallback for a transient transport
- * failure. So a query rotates across several public endpoints, with a
- * retry and backoff on rate limits and server errors:
+ * failure. So a query is served by several public endpoints.
+ *
+ * Buyer-experience pass (10 Nov 2026): the rotation is now a RACE, not
+ * a queue. Measured that morning: the first endpoint in the old
+ * sequential rotation (rpc.testnet.near.org) took 3.4–3.8 s per call
+ * and dropped connections mid-response, while fastnear and dRPC
+ * answered in 0.2–0.8 s — sequential rotation made every page pay the
+ * slowest endpoint first, and a dropped connection burned a second
+ * full attempt plus sleeps before a healthy endpoint was even asked
+ * (home page: 39 s server time). Now all endpoints are asked at once
+ * with a short per-attempt timeout; the first definitive answer wins.
+ * If every endpoint fails retryably, one more race runs after a short
+ * pause. A JSON-RPC error is a definitive answer from a healthy node
+ * and is surfaced, not raced past.
  *
  *   endpoints = NEAR_RPC_URLS (comma list, full override — used by the
  *               failure-mode tests)
@@ -57,8 +69,9 @@ export function rpcUrl(): string {
   return rpcEndpoints()[0] ?? "https://rpc.testnet.near.org";
 }
 
-const REQUEST_TIMEOUT_MS = 15_000;
-const ATTEMPTS_PER_ENDPOINT = 2;
+const REQUEST_TIMEOUT_MS = 4_000;
+const RACE_ROUNDS = 2;
+const ROUND_PAUSE_MS = 400;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -118,21 +131,67 @@ async function attempt(url: string, params: Record<string, unknown>): Promise<At
   return { kind: "ok", value: json.result };
 }
 
+type RaceResult =
+  | { kind: "ok"; value: unknown }
+  | { kind: "fatal"; message: string }
+  | { kind: "retryable"; failures: string[] };
+
+/** Ask every endpoint at once; settle on the first definitive answer. */
+async function raceOnce(endpoints: string[], params: Record<string, unknown>): Promise<RaceResult> {
+  return new Promise<RaceResult>((resolve) => {
+    let remaining = endpoints.length;
+    let fatal: string | null = null;
+    const failures: string[] = [];
+    if (remaining === 0) {
+      resolve({ kind: "retryable", failures: ["no endpoints configured"] });
+      return;
+    }
+    for (const url of endpoints) {
+      attempt(url, params).then(
+        (outcome) => {
+          if (outcome.kind === "ok") {
+            resolve({ kind: "ok", value: outcome.value });
+            return;
+          }
+          if (outcome.kind === "fatal") fatal = outcome.message;
+          else failures.push(outcome.message);
+          remaining -= 1;
+          if (remaining === 0) {
+            resolve(
+              fatal !== null
+                ? { kind: "fatal", message: fatal }
+                : { kind: "retryable", failures },
+            );
+          }
+        },
+        (err: unknown) => {
+          failures.push(err instanceof Error ? err.message : String(err));
+          remaining -= 1;
+          if (remaining === 0) {
+            resolve(
+              fatal !== null
+                ? { kind: "fatal", message: fatal }
+                : { kind: "retryable", failures },
+            );
+          }
+        },
+      );
+    }
+  });
+}
+
 async function query(params: Record<string, unknown>): Promise<unknown> {
   const endpoints = rpcEndpoints();
-  const failures: string[] = [];
-  for (const url of endpoints) {
-    for (let i = 0; i < ATTEMPTS_PER_ENDPOINT; i++) {
-      if (i > 0) await sleep(300);
-      const outcome = await attempt(url, params);
-      if (outcome.kind === "ok") return outcome.value;
-      if (outcome.kind === "fatal") throw new NearRpcError(outcome.message);
-      failures.push(outcome.message);
-    }
-    await sleep(600);
+  let lastFailures: string[] = [];
+  for (let round = 0; round < RACE_ROUNDS; round++) {
+    if (round > 0) await sleep(ROUND_PAUSE_MS);
+    const result = await raceOnce(endpoints, params);
+    if (result.kind === "ok") return result.value;
+    if (result.kind === "fatal") throw new NearRpcError(result.message);
+    lastFailures = result.failures;
   }
   throw new NearRpcError(
-    `NEAR RPC failed on all ${endpoints.length} endpoint(s). Last failure: ${failures[failures.length - 1] ?? "none"}`,
+    `NEAR RPC failed on all ${endpoints.length} endpoint(s). Last failure: ${lastFailures[lastFailures.length - 1] ?? "none"}`,
   );
 }
 

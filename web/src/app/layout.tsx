@@ -5,7 +5,7 @@ import SealMark from "@/components/SealMark";
 import { MobileTabBar, SidebarNav } from "@/components/SiteNav";
 import WalletControl from "@/components/WalletControl";
 import WalletProvider from "@/components/WalletProvider";
-import { contractId, fetchOrder, fetchProducts } from "@/lib/shop";
+import { contractId, fetchOrderCount, fetchProducts } from "@/lib/shop";
 import { formatAge } from "@/lib/format";
 import "./globals.css";
 
@@ -45,30 +45,19 @@ export const metadata: Metadata = {
    with yesterday's numbers baked into the sidebar. */
 export const dynamic = "force-dynamic";
 
-/** Count orders by probing sequential ids until the chain says stop.
- *  Same probe the home page runs; live (or last-known live) data only. */
-async function countOrders(): Promise<number | null> {
-  try {
-    let n = 0;
-    while (n < 64) {
-      const r = await fetchOrder(n);
-      if (r.mode === "fixture" || r.data === null) break;
-      n++;
-    }
-    return n;
-  } catch {
-    return null;
-  }
-}
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const contract = contractId();
-  const { data: products, mode, cachedAt } = await fetchProducts();
+  // The shell's two reads are independent — run them together. (The
+  // layout wraps every route, so its cost is every page's cost.)
+  const [{ data: products, mode, cachedAt }, countResult] = await Promise.all([
+    fetchProducts(),
+    fetchOrderCount(),
+  ]);
   const sealedUnits = products.reduce<number | null>((acc, p) => {
     if (p.inventoryAvailable === null) return acc;
     return (acc ?? 0) + p.inventoryAvailable;
   }, null);
-  const ordersRecorded = mode !== "fixture" ? await countOrders() : null;
+  const ordersRecorded = mode !== "fixture" ? countResult.data : null;
 
   return (
     <html lang="en" className={`${display.variable} ${ui.variable} ${mono.variable}`}>
@@ -168,7 +157,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                       <Link href="/constitution">Constitution</Link>
                     </li>
                     <li>
-                      <Link href="/#track">Track an order</Link>
+                      <Link href="/orders">Track an order</Link>
                     </li>
                     <li>
                       <Link href="/about">How inventory stays secret</Link>

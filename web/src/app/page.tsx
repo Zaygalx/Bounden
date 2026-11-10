@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ModeBanner from "@/components/ModeBanner";
-import { fetchOrder, fetchProducts } from "@/lib/shop";
+import { fetchOrderCount, fetchProducts } from "@/lib/shop";
 import { formatAge, formatUsd } from "@/lib/format";
 import type { ProductKind } from "@/lib/types";
 
@@ -19,26 +19,12 @@ const KIND_LABELS: Record<ProductKind, string> = {
   DownloadableAsset: "Download",
 };
 
-/** Count orders by probing sequential ids until the chain says stop.
- *  Live (or last-known live) data only — fixture counts would dress
- *  samples up as state. */
-async function countOrders(): Promise<number | null> {
-  try {
-    let n = 0;
-    while (n < 64) {
-      const r = await fetchOrder(n);
-      if (r.mode === "fixture" || r.data === null) break;
-      n++;
-    }
-    return n;
-  } catch {
-    return null;
-  }
-}
-
 export default async function HomePage() {
-  const { data: products, mode, liveError, cachedAt } = await fetchProducts();
-  const ordersRecorded = mode !== "fixture" ? await countOrders() : null;
+  const [{ data: products, mode, liveError, cachedAt }, countResult] = await Promise.all([
+    fetchProducts(),
+    fetchOrderCount(),
+  ]);
+  const ordersRecorded = mode !== "fixture" ? countResult.data : null;
   const sealedUnits = products.reduce<number | null>((acc, p) => {
     if (p.inventoryAvailable === null) return acc;
     return (acc ?? 0) + p.inventoryAvailable;
@@ -180,6 +166,8 @@ export default async function HomePage() {
           Order ids are sequential numbers, starting at 0. The order page
           shows the state machine, the delivery evidence hash, and — where a
           NEAR AI Cloud judgement authorised the step — its attestation hash.
+          Once an order is fulfilled, its buyer collects the item itself
+          from the delivery counter on that page.
         </p>
         <form className="lookup" action="/orders" method="get">
           <label className="skip-link" htmlFor="track-id">

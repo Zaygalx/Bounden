@@ -103,31 +103,33 @@ async function live<T>(
 
 export async function fetchProducts(): Promise<DataResult<ShopProduct[]>> {
   return live("products", async (contract) => {
-    const out: ShopProduct[] = [];
-    for (const id of productIds()) {
-      const p = await viewCall<ChainProduct | null>(contract, "get_product", {
-        product_id: id,
-      });
-      if (p === null) continue;
-      const available = await viewCall<number>(contract, "inventory_available", {
-        product_id: id,
-      }).catch(() => null);
-      out.push({ ...p, inventoryAvailable: available });
-    }
-    return out;
+    // Products — and each product's two reads — are independent: fetch
+    // them concurrently. The sequential loop this replaces multiplied
+    // the page's wait by every product in the book.
+    const found = await Promise.all(
+      productIds().map(async (id) => {
+        const p = await viewCall<ChainProduct | null>(contract, "get_product", {
+          product_id: id,
+        });
+        if (p === null) return null;
+        const available = await viewCall<number>(contract, "inventory_available", {
+          product_id: id,
+        }).catch(() => null);
+        return { ...p, inventoryAvailable: available };
+      }),
+    );
+    return found.filter((p): p is ShopProduct => p !== null);
   }, FIXTURE_PRODUCTS);
 }
 
 export async function fetchProduct(id: string): Promise<DataResult<ShopProduct | null>> {
   const fixture = FIXTURE_PRODUCTS.find((p) => p.id === id) ?? null;
   return live(`product:${id}`, async (contract) => {
-    const p = await viewCall<ChainProduct | null>(contract, "get_product", {
-      product_id: id,
-    });
+    const [p, available] = await Promise.all([
+      viewCall<ChainProduct | null>(contract, "get_product", { product_id: id }),
+      viewCall<number>(contract, "inventory_available", { product_id: id }).catch(() => null),
+    ]);
     if (p === null) return null;
-    const available = await viewCall<number>(contract, "inventory_available", {
-      product_id: id,
-    }).catch(() => null);
     return { ...p, inventoryAvailable: available };
   }, fixture);
 }
@@ -138,6 +140,31 @@ export async function fetchOrder(id: number): Promise<DataResult<ChainOrder | nu
     (contract) => viewCall<ChainOrder | null>(contract, "get_order", { order_id: id }),
     fixtureOrder(id),
   );
+}
+
+/**
+ * How many orders the book holds. The contract keeps no counter view,
+ * and ids are sequential from 0, so the count is the first id the
+ * chain answers null for. Probing runs in parallel batches — the
+ * one-at-a-time probe this replaces ran once per order, per page, in
+ * both the layout and the home page, and was the single largest term
+ * in the shop's page times. Orders are append-only, so a null inside
+ * a batch can only be the tip.
+ */
+export async function fetchOrderCount(): Promise<DataResult<number | null>> {
+  return live("order-count", async (contract) => {
+    const BATCH = 8;
+    const CAP = 512;
+    for (let start = 0; start < CAP; start += BATCH) {
+      const ids = Array.from({ length: BATCH }, (_, i) => start + i);
+      const orders = await Promise.all(
+        ids.map((id) => viewCall<ChainOrder | null>(contract, "get_order", { order_id: id })),
+      );
+      const firstNull = orders.findIndex((o) => o === null);
+      if (firstNull !== -1) return start + firstNull;
+    }
+    return CAP;
+  }, null);
 }
 
 export interface ConstitutionData {

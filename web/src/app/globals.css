@@ -1071,6 +1071,41 @@ table.kv th {
   margin-bottom: 0.3rem;
 }
 
+/* ------------------------- delivery counter ----------------------- */
+
+.collect-panel {
+  border-top: 3px double var(--rule-strong);
+  padding-top: 1.6rem;
+  margin-top: 2.2rem;
+}
+.collect-code {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-card);
+  padding: 0.9rem 1.1rem;
+  margin: 0.8rem 0;
+}
+.collect-code .the-code {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  word-break: break-all;
+}
+.collect-check {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  word-break: break-all;
+}
+.collect-status {
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
 /* --------------------------- constitution ------------------------- */
 
 .spec-grid {
