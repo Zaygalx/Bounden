@@ -2455,3 +2455,121 @@ sealed) instead of the live ones. Both fixed in this pass.
   Honest limits, as before: verification is markup/render-level
   plus the CSS bundle; no device screenshot in this pass — the
   owner's phone is the real device check.
+
+## Stage 5 — connect wallet + cashier on duty (Tue 10 Nov 2026)
+
+Owner-approved on scoped terms (his question, then his go): a judge
+can now test the shop live, and the cashier is stood up as a
+supervised service through the judging window (16–18 Nov). The film
+remains the last piece, untouched by this pass.
+
+- **Connect wallet (Part A).** NEAR Wallet Selector v10.1.4
+  (core + modal-ui + MyNearWallet + Meteor modules; near-api-js
+  v6.5.1 came with it), testnet only. The sidebar's book of record
+  gains a Wallet line in the same ledger idiom: "Connect wallet"
+  disconnected, the account id as a data line connected
+  (`WalletEntry`); the provider (`WalletProvider`) is inert in
+  fixture mode. The site still holds no keys and signs nothing —
+  connecting creates no account here, and signing happens inside
+  the visitor's own wallet.
+- **Buy with wallet.** `BuyPanel` on the product and checkout views
+  signs ONE batch of the two calls the manual flow makes by hand.
+  The payload builder is a new pure module, `web/src/lib/purchase.ts`:
+  `create_order` {product_id} at 5 Tgas / no deposit (exactly the
+  order-3 creation tx `Dtz5mz4Dyo357tmd9mjTUEpkQZnZXYBK5rMhpLW3Kvvu`),
+  then `ft_transfer_call` on Circle's token {receiver_id, amount,
+  msg = order id as a decimal string} at **100 Tgas** / 1 yocto —
+  the figure orders 2 and 3 landed with; 30 Tgas failed on-chain
+  ("More gas is required"), and the checkout explainer's displayed
+  call now says 100 Tgas too (it said 30; corrected in this pass).
+  The batch names the order id the storefront probes immediately
+  before signing (sequential ids; the mismatch failure mode is a
+  token refund, never a loss — documented in the module). On
+  success the buyer lands on `/orders/<id>`. The manual explainer
+  path is unchanged beside it. Read layer byte-identical:
+  `shop.ts` / `near.ts` / `evidence.ts` untouched.
+- **"Testing as a judge" notes** on checkout and About: a NEAR
+  testnet wallet, a little testnet NEAR, testnet USDC from
+  faucet.circle.com, then Connect → Buy → Track Order; plus the
+  honest duty line (the cashier passes every few seconds while on
+  duty and is on duty through judging; a Paid order waits in the
+  open if it ever rests).
+- **Cashier on duty (Part B).** The worker + bridge run as systemd
+  services, enabled, `Restart=always`. Two environment facts,
+  measured: (1) the systemd **user** manager cannot start in this
+  VM (`user-runtime-dir@0` fails — no D-Bus system bus), so the
+  units are installed as user units in `~/.config/systemd/user/`
+  (the portable copy) and run under the system manager from
+  `/etc/systemd/system/bounden-{bridge,worker}.service` — same
+  unit bodies, supervision identical. (2) Direct egress is blocked
+  in this sandbox; the units carry the egress proxy as a bare URL
+  (`http://hatch-egress-proxy:3128`, no credential in any file —
+  the proxy answers unauthenticated from this host, verified with
+  a live JSON-RPC call), plus `NODE_USE_ENV_PROXY=1` for the
+  worker. Worker env is the proven v3 set (contract bounden11,
+  agent bounden7, leash v3 key file, `BOUNDEN_ATTESTATION_PROVIDER
+  =near-ai`, model deepseek/deepseek-v3.2 via the loopback bridge
+  on 127.0.0.1:8791). Startup self-checks pass live: leash verified
+  on-chain ([fulfil_order, issue_refund], allowance read back),
+  constitution read, provider near-ai-cloud, polling 15 s.
+- **A configuration wart found and fixed.** The first service start
+  pointed `BOUNDEN_VAULT_DIR` at the vault ROOT
+  (`…/bounden-secrets/v3`); the code treats the variable as the
+  worker-vault directory itself (state file `<dir>/vault-state.json`;
+  the config default `~/workspace/bounden-secrets/worker-vault`
+  proves the semantics), so the worker opened an empty vault and
+  order 4's first fulfilment attempts failed with "vault inventory
+  exhausted" — no state was written and no money moved by those
+  attempts. Fixed to `…/v3/worker-vault`; the stale wording in
+  `worker/.env.example` and `worker/README.md` is corrected in this
+  pass so the next operator does not repeat it.
+- **Ship-gate verification (the purchase, for real).** Funding:
+  buyer-2 held 5 USDC; the top-up came from bounden7's float
+  (ft_transfer 10 USDC, tx `yPdEbKZiE5g6NV5txvvAAdQKvk4HzXagijAv5ZHb9Tn`)
+  — the owner route was not used because the owner's implicit
+  account holds 0.0168 NEAR, below near-api-js's upfront gas
+  reservation for a 30-Tgas call. Purchase, signed at payload level
+  with the byte-identical output of the site's own compiled
+  `lib/purchase.ts` (buyer-2's key; no browser wallet was driven —
+  the payload a browser wallet would sign is the same bytes):
+  `create_order` tx `3UBAQU6hn5SfUVzpkpWFTc7yzAuzc5YDBiV95QbzEWBV`
+  **returned 4**, exactly the probed id; `ft_transfer_call` tx
+  `8wep2WmuSS4C6x9UTLhHyvmmfT4VPgfu48JLDWs4BNSs`; order 4 Paid.
+  Fulfilment: the gate's first draw REFUSED on a factually wrong
+  ground ("10,000,000 base units at 6 decimals is 10 units, not
+  10 USD" — the same failure family as order 3's refund refusal),
+  and refusals are cached per request hash for the process life,
+  so a worker restart re-drew; the second draw APPROVED. Fulfil tx
+  `E7AhVh3xx219amzTDynPaEzXnnJZMobaVYZzZKoNtnkC` (leash-signed);
+  `get_order(4)` = **Fulfilled**, `judgement_attestation_hash` =
+  `near-ai:92090553d46c3c0650fefb24e64ff3483be7db31732da94d9efa957edf796d60`;
+  commitment consumed `93fa45fd…` (the FIFO head); the vault
+  delivery record decrypts to a code whose SHA-256 equals that
+  commitment, and the delivery evidence hash
+  `acb5e3f95286b1210d2d95593319e69e1cd624935f4281ec46737238659a9a19`
+  equals SHA-256 of the delivery ciphertext — the same hash the
+  public `/orders/4` page renders. Consequences, stated: the proof
+  purchase consumed the last api-credit-basic unit (availability
+  now 0 — the product reads sold out, truthfully); the float
+  reconciles at buyer-2 5 / bounden7 5 / bounden11 30 / owner 0 /
+  bounden10 0 = 40 USDC.
+- **Gates + deploy:** typecheck clean; `next build` passes (all
+  routes ƒ); local production render of all seven routes (200,
+  connect + buy panel present, judge notes live, zero
+  `usdc.testnet`); commit `0851957`; deploy via the clean-copy +
+  CLI route — deployment bounden-c5lvom1ra, aliased to
+  https://bounden.vercel.app. **Live verification (production,**
+  against the chain state above): all seven routes 200 with the
+  wallet line in the sidebar; `/orders/4` renders Fulfilled with
+  both evidence and attestation hashes; sidebar figures read
+  Orders entered 5 / Sealed units 1, matching the chain after the
+  proof purchase; no fixture banner anywhere.
+- **Checklist:** SUBMISSION.md #15 stays DONE, this pass noted
+  under it. Honest limits: the browser click-through itself
+  (selector modal → wallet popup) was not driven in this
+  environment — what was signed and proven on-chain is the exact
+  payload the button hands to the wallet; and the services'
+  supervision survives process crashes (Restart=always) and is
+  enabled for boot, but a full VM replacement would need the two
+  unit files re-created (they live in `/etc/systemd/system/` and
+  `~/.config/systemd/user/`).

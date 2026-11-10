@@ -64,7 +64,7 @@ cannot reach a log line.
 | `BOUNDEN_CONTRACT_ACCOUNT_ID` | Shop contract account |
 | `BOUNDEN_AGENT_ACCOUNT_ID` | Registered agent account |
 | `BOUNDEN_AGENT_KEY_FILE` | Leashed keypair credential (vault path) |
-| `BOUNDEN_VAULT_DIR` | Vault root (worker vault in `<dir>/worker-vault`) |
+| `BOUNDEN_VAULT_DIR` | The worker-vault directory itself (state file is `<dir>/vault-state.json`) |
 | `BOUNDEN_VAULT_KEY_FILE` | 32-byte vault encryption key file |
 | `NEAR_RPC_URL` | Default `https://rpc.testnet.near.org` |
 | `BOUNDEN_POLL_INTERVAL_MS` | Default 15000 |
