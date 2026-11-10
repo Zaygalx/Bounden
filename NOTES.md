@@ -2231,3 +2231,82 @@ a narrow gitleaks allowlist rather than scrubbing or rewriting history.
   Fulfilled with the full `near-ai:687dd756…6726f` hash.
 - **Checklist:** SUBMISSION.md #15 closed with the production URL.
   Remaining Stage 5: film (#11), X post (#12–13), the one-shot form.
+
+
+## Stage 5 — storefront redesign (10 Nov 2026)
+
+The owner reviewed https://bounden.vercel.app and rejected the design
+in plain terms: not professional, no layout, no tabs, visibly
+AI-generated. Full presentation-layer overhaul of `web/` in response;
+the data layer was NOT touched (`web/src/lib/shop.ts` byte-identical —
+same exports, same env contract, same live/fixture semantics).
+
+- **Design system ("vault ledger"):** deep ink/charcoal surfaces
+  (`#0d0c0a`–`#221e16`), paper-cream text (`#f2ead8`), one warm amber
+  accent (`#e9a13b`); hairline ledger-rule background texture, no
+  gradients, no glassmorphism. Type via `next/font/google`: Fraunces
+  (display serif), Inter (UI), IBM Plex Mono (every hash, address,
+  amount and permission object). No new runtime dependencies.
+- **App shell:** slim amber demo-inventory notice bar on every page;
+  sticky header (wordmark, live status pill with the contract id +
+  "NEAR testnet", primary tabs Shop / Constitution / Track Order /
+  About with active states); fixed bottom tab bar ≤760px (44px+
+  targets, safe-area inset); structured footer (blurb, explore links
+  incl. the GitHub repo, ledger facts: contract / network / settlement
+  / demo inventory); skip link, landmarks, per-route titles,
+  `loading.tsx` skeleton, designed 404 (`not-found.tsx`) and error
+  state (`error.tsx`).
+- **Home:** guarantee hero ("The cashier cannot steal. Its powers are
+  public, and they end where its job ends."), live stats strip —
+  products live (2), sealed units available (2), orders recorded (4,
+  counted by probing sequential order ids in live mode only), attack
+  cases refused 5/5 (labelled as documented, linking to the
+  Constitution) — product grid with category badges and chain stock,
+  track-order section (`#track`).
+- **Product page:** price/settlement/stock panel + real client-side
+  tabs (Overview / What you receive / Delivery & refunds, the last
+  carrying the buying mini-stepper and the refund band with a link to
+  the Constitution).
+- **Checkout:** the explainer contract unchanged (storefront never
+  signs; the exact `ft_transfer_call` byte-identical, still naming
+  Circle's real testnet USDC contract) presented as a numbered stepper
+  plus a styled code card with a copy button; "What cannot happen" as a
+  ruled list.
+- **Orders:** lookup form on the page, status timeline
+  (Created → Paid → Fulfilled; Cancelled / Refunded / RefundRejected
+  rendered as honest terminal branches), record table, and an Evidence
+  table with BOTH hashes in mono with copy buttons — the delivery
+  evidence hash is read from the contract's fulfilment log by the new
+  `web/src/lib/evidence.ts` (shop.ts untouched; a failed live read
+  renders "not read", never a fixture value). Order 3 renders the
+  delivery evidence hash `41612014…66e1bf`, matching the on-chain
+  fulfilment record.
+- **Constitution:** parameters as spec-sheet cards (price band,
+  refund cap, refund window, settlement token, owner, contract); the
+  cashier's function-call permission as an inspectable object
+  (holder, public key with copy, receiver, method chips
+  `fulfil_order` / `issue_refund`, allowance bar against the 0.25 NEAR
+  leash); powers-not-held ruled list; the v3 attack record as a
+  results table (5 cases, the attempt, where each died, outcome) with
+  a link to `attacks/README.md`.
+- **Gates:** `npm run typecheck` clean; `next build` passes (7 routes
+  + 404). Local production render check with live env: all routes 200
+  with live data, stats 2/2/4/5, order 3's full `near-ai:` hash +
+  evidence hash, permission object, 3 product tabs, zero
+  `usdc.testnet`, no fixture banner.
+- **Commits:** `c1cc6b4` (design system + app shell), `2d2cbe0`
+  (pages), both as Hassan Dosunmu; pushed, remote head verified
+  `2d2cbe043d7a5344271ab825b789f53ddace55aa`.
+- **Deploy:** deploy copy refreshed (`~/workspace/.deploy/bounden-web`,
+  `.vercel` carried over, env untouched), `vercel deploy --prod` via
+  the local CLI — aliased to https://bounden.vercel.app.
+- **Live verification (production URL):** all seven routes HTTP 200,
+  demo notice on every page, zero `usdc.testnet`, no fixture banner;
+  home shows both live products at $25.00/$10.00 with stats 2/2/4/5;
+  `/orders/3` Fulfilled with the full `near-ai:687dd756…6726f` hash and
+  the delivery evidence hash; `/constitution` renders the spec sheet,
+  the permission object and the attack table; product page renders its
+  three tabs.
+- **Checklist:** SUBMISSION.md #15 stays DONE, with the redesign noted
+  under it. Remaining Stage 5 unchanged: film (#11), X post (#12–13),
+  the one-shot form.
