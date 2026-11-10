@@ -2184,3 +2184,50 @@ a narrow gitleaks allowlist rather than scrubbing or rewriting history.
   the same step; its head is verified by the same read-back.
 - **Checklist:** SUBMISSION.md #5 closed (this entry is its full
   record); the fields table's repository-link row updated to LIVE.
+
+## Stage 5 — storefront fixes + Vercel deploy (10 Nov 2026, ~01:20 WAT)
+
+- **Token label fix (commit `23bb7ff`).** The live shop settles in
+  Circle's NEAR testnet USDC (contract
+  `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`),
+  not the same-name `usdc.testnet` lookalike. Every user-visible
+  reference in `web/` corrected: the product page settlement row now
+  reads "USDC (Circle, NEAR testnet), paid to the shop contract"; the
+  checkout explainer's exact `ft_transfer_call` now names the real
+  token contract (and its lede matches); the fixture constitution's
+  `payment_token` mirrors the live value; a types.ts comment and the
+  web README updated. No identifiers or env names renamed.
+- **Description softening (commit `a15837d`).** SUBMISSION.md's form
+  description no longer claims "each decision's attestation hash" is
+  written on-chain (orders 0–2 ran under the null provider). It now
+  reads: "when a judgement approves an order, its attestation hash is
+  written on-chain with that order" — true of the mechanism and
+  demonstrated on order 3. Recounted: **1,667 characters** (limit
+  20–2,000); checklist #2 and rules cross-check #5 updated.
+- **Gates:** `web/` typecheck clean; `next build` passes (7 routes).
+  Both fix commits pushed; remote head verified == local.
+- **Deploy:** no Vercel CLI binary existed on this machine (only the
+  OAuth MCP wrapper, not connected), so the CLI (65.14.0) was
+  installed locally under `~/workspace/.tools/vercel-cli` and picked
+  up the existing login (**zaygal**). Deployed from a clean copy of
+  `web/` at `~/workspace/.deploy/bounden-web` (repo kept pristine).
+  New project `bounden` (`prj_NKpmtNmTPE1st4m4Jaa3jHwPO1Mj`) in team
+  zaygals-projects — the same team as Evenly. Production env set
+  BEFORE the production deploy: `BOUNDEN_CONTRACT_ACCOUNT_ID` =
+  bounden11.testnet, `BOUNDEN_PRODUCT_IDS` = licence-pro,api-credit-basic,
+  `BOUNDEN_AGENT_PUBLIC_KEY` = the leash v3 key
+  (`ed25519:8ixy4dmq…gcCTws4`). Production alias:
+  **https://bounden.vercel.app**.
+- **Live verification (public URL, after deploy):** `/`,
+  `/products/licence-pro`, `/products/api-credit-basic`,
+  `/constitution`, `/orders/3`, `/checkout/licence-pro`, `/about` —
+  all HTTP 200. Home shows the live chain product names and prices
+  ($25.00 / $10.00); licence-pro shows 1 sealed unit left (live
+  inventory). No fixture banner, no fallback or error text, and zero
+  `usdc.testnet` strings on any route; "Demo inventory" notice on
+  every page. `/constitution` renders the real constitution (Circle
+  token id, bounden11/bounden7) and the leash permission object
+  (`fulfil_order`, `issue_refund`). `/orders/3` renders order 3
+  Fulfilled with the full `near-ai:687dd756…6726f` hash.
+- **Checklist:** SUBMISSION.md #15 closed with the production URL.
+  Remaining Stage 5: film (#11), X post (#12–13), the one-shot form.
