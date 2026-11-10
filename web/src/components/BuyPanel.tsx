@@ -1,6 +1,6 @@
 "use client";
 
-import type { Transaction } from "@near-wallet-selector/core";
+import { internalActionToNaj } from "@near-wallet-selector/core";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatUsd } from "@/lib/format";
@@ -119,8 +119,18 @@ export default function BuyPanel({
         kind: "working",
         label: "Your wallet is asking for its signature…",
       });
+      // The selector's signAndSendTransactions expects near-api-js
+      // Action objects, not the plain internal shape purchase.ts
+      // builds in — wallet modules convert from the NAJ form (Meteor
+      // runs each action through najActionToInternal, which throws
+      // "Unsupported NAJ action" on a plain object). Convert with the
+      // selector's own helper: the resulting NAJ actions carry the
+      // identical method, args, gas and deposit purchase.ts built.
       await wallet.signAndSendTransactions({
-        transactions: transactions as unknown as Transaction[],
+        transactions: transactions.map((tx) => ({
+          receiverId: tx.receiverId,
+          actions: tx.actions.map((action) => internalActionToNaj(action)),
+        })),
       });
       router.push(`/orders/${orderId}`);
       router.refresh();

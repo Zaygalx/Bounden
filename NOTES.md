@@ -2664,3 +2664,87 @@ remains the last piece, untouched by this pass.
   they are effectively desktop options); Ledger needs its
   hardware and a WebHID-capable browser. That is the NEAR
   ecosystem's shape, not a defect of the list.
+
+## Wallet defects fix — invisible list + "Unsupported NAJ action" (10 Nov, owner-found)
+
+The owner tested the shipped Connect Wallet with his own phone
+and his own Meteor wallet and found two real defects the earlier
+DOM-level verification had missed. Both fixed; this time the
+verification was visual and flow-level.
+
+- **Defect 1 — the wallet list was invisible.** Root cause: a
+  CSS class-name collision. The selector's wallet rows are
+  `<li class="single-wallet sidebar …">`, and the Day-Book's own
+  `.sidebar` layout rule (inside the desktop media query:
+  `position: sticky; height: 100dvh; overflow-y: auto;
+  background: var(--paper-deep); flex-direction: column; ruled
+  border`) swallowed every row — each wallet became a
+  full-viewport cream column, the options list measured
+  12,740px tall inside a 350px clipped modal, and the owner saw
+  one wallet and a wall of empty cream ("The white already over
+  covered it"). The modal's stock stylesheet never resets those
+  properties. It was the only collision (checked `.content`,
+  `.title`, `.icon`, `.description` and the other bare names the
+  modal uses — none exist in the site globals). Fix: one
+  modal-scoped guard block at the end of `globals.css`
+  (`.nws-modal-wrapper … .single-wallet.sidebar`) handing the
+  rows back the modal's own stock properties — static position,
+  auto height, row direction, stock option background, stock
+  padding, no ruled border. Nothing leaks into the site; the
+  site's sidebar is an `<aside>` in the shell, untouched.
+  Verified by screenshot, not DOM counts: headless Chromium
+  against the production build with the site's CSS, desktop
+  (1280px) and phone (390px) — all 14 wallets render as compact
+  rows, icons + dark names on light rows, list scrolls inside
+  the modal. Re-shot against the live deployment after deploy
+  with the same result (one cosmetic exception: HOT Wallet's
+  icon is a remote asset that failed to load through the
+  sandbox proxy; its name renders legibly regardless).
+- **Defect 2 — a real purchase died with "Unsupported NAJ
+  action".** Root cause: an action-format mismatch across the
+  selector boundary. `purchase.ts` built actions in the plain
+  internal shape (`{type: "FunctionCall", params: {…}}`), but
+  @near-wallet-selector/core 10.1.4's `signAndSendTransactions`
+  expects near-api-js `Action` objects (`Transaction.actions`
+  is typed `Array<NAJAction>`), and the Meteor module runs every
+  action through core's `najActionToInternal`, which throws
+  exactly `Unsupported NAJ action` on a plain object — the
+  owner's error, reproduced verbatim in Node against the old
+  construction before the fix. Fix: `BuyPanel` converts each
+  built action with the selector's own exported
+  `internalActionToNaj` at the signing call; the
+  `as unknown as Transaction[]` cast is gone and the types line
+  up on their own. Payload semantics unchanged: same two calls,
+  same args, create_order at 5 Tgas / 0 deposit, the
+  ft_transfer_call to Circle's USDC at 100 Tgas / 1 yoctoNEAR,
+  order id as `msg`. The batch still signs as ONE wallet
+  confirmation, so the on-page copy ("One wallet confirmation
+  signs both calls") stays true and unchanged.
+- **Flow-level proof (local production build, headless
+  Chromium):** a Meteor session for the shop's agent account
+  (bounden7.testnet, testnet key from the project vault, seeded
+  into an ephemeral browser profile only) restored the site's
+  connected state; clicking **Buy — $10.00** on api-credit-basic
+  numbered order 5, passed conversion, and the Meteor SDK's own
+  log showed the two transformed transactions it was about to
+  present — `create_order {"product_id":"api-credit-basic"}`
+  5 Tgas/0 to bounden11.testnet, then `ft_transfer_call
+  {"receiver_id":"bounden11.testnet","amount":"10000000",
+  "msg":"5"}` 100 Tgas/1 yocto to the Circle USDC contract —
+  after which the SDK opened Meteor's own web signing route
+  (`wallet.meteorwallet.app/connect/testnet/sign?…`), aborted
+  in the sandbox by design: nothing was signed and no order
+  was created. (Driving this required forwarding the SDK's
+  testnet RPC, test.rpc.fastnear.com, through Node — the
+  sandbox browser cannot reach it directly; an environment
+  quirk, not an app defect.) Byte-level: the NAJ conversion
+  round-trips through Meteor's `najActionToInternal` back to
+  the identical internal action, and the transformed
+  transactions carry the purchase.ts figures exactly.
+- **No orphan:** direct contract read after the owner's failed
+  attempt and after the verification drive — `get_order(5)` is
+  null; the book still holds exactly 5 orders.
+- Deployed (`bounden-jupwo9yni`); all seven routes 200; live
+  figures unchanged (2 goods / 4 sealed / 5 orders, 5 of 5
+  attack cases refused); the shipped CSS carries the collision
+  guard; storefront commit follows this entry.

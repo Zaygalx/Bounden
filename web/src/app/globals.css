@@ -1476,3 +1476,26 @@ table.attacks td.case {
   border-left: 3px solid var(--red);
   color: var(--ink);
 }
+
+/* Wallet-selector modal: class-name collision guard.
+   The selector's wallet rows are <li class="single-wallet sidebar …"> —
+   the bare `sidebar` class is also the Day-Book's own layout sidebar
+   (sticky, 100dvh tall, paper-deep, column, ruled border). The modal's
+   stock stylesheet never resets those properties, so every wallet row
+   became a full-viewport cream column and the list read as empty —
+   one wallet visible, the rest pushed thousands of pixels down a
+   clipped modal. These overrides are scoped to the modal wrapper and
+   only hand the rows back the modal's own stock properties; nothing
+   here reaches the site's layout, whose sidebar is an <aside> styled
+   through .shell, not a list item inside .nws-modal-wrapper. */
+.nws-modal-wrapper .nws-modal .wallet-options-wrapper .options-list .single-wallet.sidebar {
+  display: flex;
+  position: static;
+  top: auto;
+  height: auto;
+  overflow-y: visible;
+  flex-direction: row;
+  background-color: var(--option-wallet-bg-color);
+  border-right: none;
+  padding: 12px;
+}

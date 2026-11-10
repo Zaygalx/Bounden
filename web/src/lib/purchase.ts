@@ -30,7 +30,12 @@
  *
  * This module is pure and dependency-free on purpose: the same builder
  * the page uses is what the live verification harness compiles and
- * signs with, so what is verified is what ships.
+ * signs with, so what is verified is what ships. The actions are
+ * built in the wallet selector's plain internal shape; BuyPanel
+ * converts them to near-api-js Action objects with the selector's
+ * own internalActionToNaj at the signing call, because that is the
+ * form signAndSendTransactions (and every wallet module behind it)
+ * accepts — the conversion changes the wrapper, never the payload.
  */
 
 /** Circle's NEAR testnet USDC — the only token the shop accepts. */
