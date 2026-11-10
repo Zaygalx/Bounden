@@ -3,7 +3,7 @@ import { Archivo, IBM_Plex_Mono, Newsreader } from "next/font/google";
 import Link from "next/link";
 import SealMark from "@/components/SealMark";
 import { MobileTabBar, SidebarNav } from "@/components/SiteNav";
-import WalletEntry from "@/components/WalletEntry";
+import WalletControl from "@/components/WalletControl";
 import WalletProvider from "@/components/WalletProvider";
 import { contractId, fetchOrder, fetchProducts } from "@/lib/shop";
 import { formatAge } from "@/lib/format";
@@ -119,7 +119,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   </div>
                 )}
               </dl>
-              <WalletEntry />
               <p className="side-book-note">
                 {mode === "live"
                   ? "Read live from the contract."
@@ -136,7 +135,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <SealMark small />
                 <span className="brand-name">Bounden</span>
               </Link>
+              <WalletControl />
             </header>
+
+            <div className="column-head">
+              <WalletControl />
+            </div>
 
             <main className="container" id="main">
               {children}

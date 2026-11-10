@@ -2609,3 +2609,58 @@ remains the last piece, untouched by this pass.
   (16–18 Nov). Sealed totals: api-credit-basic 6 registered
   (3 consumed by orders 2–4, 3 available), licence-pro 3
   registered (2 consumed, 1 available).
+
+### Connect Wallet fix — full wallet list + top-right control (10 Nov 2026)
+
+- Owner-reported defect, with his phone screenshot: clicking
+  "Connect wallet" offered effectively one faded wallet
+  (MyNearWallet) and "Create a new wallet" — his own wallet,
+  Meteor, was nowhere he could use it. Cause, verified in code:
+  `setupWalletSelector` had been given only two modules
+  (my-near-wallet, meteor-wallet).
+- Fix: registered the full first-party module set at the pinned
+  selector version (core 10.1.4; every module installed
+  @10.1.4): MyNearWallet, Meteor Wallet, HERE Wallet, Near
+  Mobile Wallet, HOT Wallet, Bitte Wallet, Sender, Nightly,
+  WELLDONE Wallet, XDEFI, Math Wallet, Coin98 Wallet, Ramper
+  Wallet, Ledger — 14 modules. Deliberately not registered
+  (reasons recorded in `WalletProvider.tsx`): wallet-connect
+  (requires a WalletConnect project id this project does not
+  hold), ethereum-wallets (requires an app-level wagmi config),
+  near-snap (its bundled Node keystore imports `fs` and breaks
+  the browser build outright — build failure reproduced, then
+  the module was dropped).
+- Placement (owner addition, from the same annotated
+  screenshot): the wallet control left the sidebar's data block
+  and now lives top-right of the shell on every route — on
+  desktop a header row for the content column, right edge
+  aligned to the content's own measure; on mobile, the right
+  end of the top bar. Day-Book idiom throughout: a ledger-green
+  action in the site's button style, never a floating pill and
+  never library stock; connected, the same spot shows the
+  account id as a truncated mono data line (full id on hover)
+  with a plain Disconnect beside it. The sidebar book keeps its
+  five data entries and no Wallet row. Buy flow, read logic,
+  and the site-holds-no-keys invariant untouched.
+- Verification (headless Chromium against the local production
+  build, DOM level): the modal lists all 14 wallets by name —
+  MyNearWallet, **Meteor Wallet** (second in the list), Here,
+  Near Mobile, HOT, Bitte, Sender, Nightly, WELLDONE, XDEFI,
+  Math, Coin98, Ramper, Ledger; clicking Meteor enters its own
+  connect route with no page errors. Desktop: the control's
+  right edge sits exactly on the content's right edge; mobile:
+  control at the top bar's right end, sidebar and desktop
+  header row hidden as designed. Deployed
+  (`bounden-587k3j07a`); all seven routes 200; the shipped
+  bundle and SSR HTML carry the new modules and the top-right
+  control; live figures unchanged (2 goods / 4 sealed /
+  5 orders).
+- Ecosystem note, stated plainly: of the 14, the browser-web
+  wallets (MyNearWallet, Meteor via its web app, HERE, Near
+  Mobile, HOT, Bitte, Ramper) can connect from a phone browser;
+  Sender, Nightly, WELLDONE, XDEFI, Math and Coin98 are
+  browser-extension wallets — they list everywhere but can only
+  connect where the extension/app is installed (on iOS Safari
+  they are effectively desktop options); Ledger needs its
+  hardware and a WebHID-capable browser. That is the NEAR
+  ecosystem's shape, not a defect of the list.

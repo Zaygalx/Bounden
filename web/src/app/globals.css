@@ -236,6 +236,8 @@ p {
 .topbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   background: var(--paper);
   border-bottom: 1px solid var(--rule-strong);
   box-shadow: 0 3px 0 -2px var(--paper), 0 4px 0 -2px var(--rule-strong);
@@ -248,6 +250,12 @@ p {
   font-size: 1.35rem;
 }
 
+/* The wallet control's desktop home: a header row for the content
+   column, its right edge aligned with the content's own measure. */
+.column-head {
+  display: none;
+}
+
 @media (min-width: 900px) {
   .shell {
     display: grid;
@@ -256,6 +264,16 @@ p {
   }
   .topbar {
     display: none;
+  }
+  .column-head {
+    display: flex;
+    justify-content: flex-end;
+    width: min(1060px, 100% - 2.5rem);
+    margin-inline: auto;
+    padding-top: 1.5rem;
+  }
+  .column-head + .container {
+    padding-top: 1.3rem;
   }
   .sidebar {
     display: flex;
@@ -1371,32 +1389,50 @@ table.attacks td.case {
 
 /* ---------------- wallet + buy (Stage 5: connect wallet) --------- */
 
-/* The wallet's line in the sidebar book — same ledger idiom as the
-   entries it sits under: a small label, then the fact in mono, or a
-   plain invitation in place of the fact. Never a floating chip. */
-.wallet-entry {
-  padding-bottom: 0.7rem;
+/* The wallet control, top-right of the shell: disconnected, a
+   ledger-green action in the site's own button idiom; connected,
+   the account id as a mono data line — truncated with grace, the
+   full id on hover — and a plain disconnect beside it. */
+.wallet-control {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
 }
-.wallet-label {
-  display: block;
+.wallet-control-connect {
+  background: var(--green);
+  border: 1px solid var(--green);
+  color: #fdfbf3;
   font-family: var(--font-ui);
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  color: var(--ink-soft);
+  line-height: 1.2;
+  padding: 0.55rem 1.1rem;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 140ms ease, border-color 140ms ease;
 }
-.wallet-account {
-  display: block;
-  margin-top: 0.12rem;
+.wallet-control-connect:hover {
+  background: var(--green-deep);
+  border-color: var(--green-deep);
+}
+.wallet-control-connect:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+.wallet-control-account {
   font-family: var(--font-mono);
   font-size: 0.87rem;
-  overflow-wrap: anywhere;
+  max-width: min(15rem, 36vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.wallet-action {
-  display: inline-block;
-  margin-top: 0.12rem;
-  padding: 0.3rem 0;
+.wallet-control-disconnect {
   background: none;
   border: 0;
+  padding: 0.3rem 0;
   font-family: var(--font-ui);
   font-size: 0.92rem;
   font-weight: 600;
@@ -1404,11 +1440,12 @@ table.attacks td.case {
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
+  white-space: nowrap;
 }
-.wallet-action:hover {
+.wallet-control-disconnect:hover {
   color: var(--green);
 }
-.wallet-action:focus-visible {
+.wallet-control-disconnect:focus-visible {
   outline: 2px solid var(--green);
   outline-offset: 2px;
 }

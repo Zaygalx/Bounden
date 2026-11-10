@@ -3,11 +3,24 @@
 import "@near-wallet-selector/modal-ui/styles.css";
 import {
   setupWalletSelector,
+  type WalletModuleFactory,
   type WalletSelector,
 } from "@near-wallet-selector/core";
 import { setupModal, type WalletSelectorModal } from "@near-wallet-selector/modal-ui";
+import { setupBitteWallet } from "@near-wallet-selector/bitte-wallet";
+import { setupCoin98Wallet } from "@near-wallet-selector/coin98-wallet";
+import { setupHereWallet } from "@near-wallet-selector/here-wallet";
+import { setupHotWallet } from "@near-wallet-selector/hot-wallet";
+import { setupLedger } from "@near-wallet-selector/ledger";
+import { setupMathWallet } from "@near-wallet-selector/math-wallet";
 import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
+import { setupNearMobileWallet } from "@near-wallet-selector/near-mobile-wallet";
+import { setupNightly } from "@near-wallet-selector/nightly";
+import { setupRamperWallet } from "@near-wallet-selector/ramper-wallet";
+import { setupSender } from "@near-wallet-selector/sender";
+import { setupWelldoneWallet } from "@near-wallet-selector/welldone-wallet";
+import { setupXDEFI } from "@near-wallet-selector/xdefi";
 import {
   createContext,
   useContext,
@@ -70,7 +83,35 @@ export default function WalletProvider({
       initRef.current = (async () => {
         const selector = await setupWalletSelector({
           network: "testnet",
-          modules: [setupMyNearWallet(), setupMeteorWallet()],
+          // The full first-party module set at this selector version —
+          // a visitor connects with the wallet they actually use
+          // (Meteor, MyNearWallet, HERE, …), not the two we happened
+          // to register first. Not registered, deliberately:
+          // wallet-connect needs a WalletConnect project id this
+          // project does not hold, and ethereum-wallets needs an
+          // app-level wagmi config; neither is a drop-in module.
+          // near-snap is also out: its bundled Node keystore imports
+          // `fs` and breaks the browser build outright.
+          modules: [
+            setupMyNearWallet(),
+            setupMeteorWallet(),
+            setupHereWallet(),
+            setupNearMobileWallet(),
+            setupHotWallet(),
+            // Bitte's and Sender's factories ship with a stricter
+            // generic than the core's module list accepts; the
+            // modules themselves are the standard ones, so widen
+            // those two entries.
+            setupBitteWallet() as WalletModuleFactory,
+            setupSender() as WalletModuleFactory,
+            setupNightly(),
+            setupWelldoneWallet(),
+            setupXDEFI(),
+            setupMathWallet(),
+            setupCoin98Wallet(),
+            setupRamperWallet(),
+            setupLedger(),
+          ],
         });
         selectorRef.current = selector;
         modalRef.current = setupModal(selector, {
