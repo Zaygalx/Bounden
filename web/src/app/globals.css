@@ -101,7 +101,7 @@ h3 {
 }
 
 section[id] {
-  scroll-margin-top: 130px;
+  scroll-margin-top: 84px;
 }
 h1 {
   font-size: clamp(2rem, 5.2vw, 3.15rem);
@@ -157,7 +157,7 @@ p {
   top: 0.5rem;
 }
 
-/* ------------------------- notice + header ------------------------ */
+/* ------------------------- notice + shell ------------------------- */
 
 .notice-bar {
   background: var(--green-deep);
@@ -172,124 +172,172 @@ p {
   font-weight: 700;
 }
 
-.site-header {
+/* One shell on every route: on desktop a sidebar — the book's front
+   board, carrying the brand, the destinations, and the ledger data
+   block; on small screens a compact top bar with the same brand. */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  text-decoration: none;
+  color: var(--ink);
+}
+.brand:hover {
+  color: var(--ink);
+}
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+/* The logo: the hero seal reduced to its monogram in a double ring,
+   so it stays a stamp, not a glyph, at brand size. */
+.seal-mark {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  position: relative;
+  border: 2px solid var(--green);
+  border-radius: 50%;
+  color: var(--green-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-6deg);
+}
+.seal-mark::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--green);
+  border-radius: 50%;
+}
+.seal-mark-b {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.32rem;
+  line-height: 1;
+}
+.seal-mark.sm {
+  width: 36px;
+  height: 36px;
+}
+.seal-mark.sm .seal-mark-b {
+  font-size: 1.08rem;
+}
+
+.sidebar {
+  display: none;
+}
+.topbar {
+  display: flex;
+  align-items: center;
   background: var(--paper);
   border-bottom: 1px solid var(--rule-strong);
   box-shadow: 0 3px 0 -2px var(--paper), 0 4px 0 -2px var(--rule-strong);
   position: sticky;
   top: 0;
   z-index: 50;
+  padding: 0.55rem 1.25rem;
 }
-.header-inner {
-  width: min(1060px, 100% - 2.5rem);
-  margin-inline: auto;
-  display: flex;
-  align-items: center;
-  gap: 1.2rem;
-  flex-wrap: wrap;
-  padding: 0.85rem 0 0.7rem;
+.topbar .brand-name {
+  font-size: 1.35rem;
 }
-.wordmark {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  text-decoration: none;
-  color: var(--ink);
-  margin-right: auto;
-}
-.wordmark:hover {
-  color: var(--ink);
-}
-.wordmark-mark {
-  width: 11px;
-  height: 11px;
-  background: var(--green);
-  border-radius: 2px;
-  transform: rotate(45deg) translateY(-1px);
-  flex: none;
-  align-self: center;
-}
-.wordmark-name {
-  font-family: var(--font-display);
-  font-size: 1.65rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-.wordmark-tag {
-  font-style: italic;
-  color: var(--ink-soft);
-  font-size: 0.98rem;
-}
-@media (max-width: 640px) {
-  .wordmark-tag {
+
+@media (min-width: 900px) {
+  .shell {
+    display: grid;
+    grid-template-columns: 276px minmax(0, 1fr);
+    align-items: start;
+  }
+  .topbar {
     display: none;
+  }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow-y: auto;
+    background: var(--paper-deep);
+    border-right: 4px double var(--rule-strong);
+    padding: 1.7rem 1.45rem 1.5rem;
   }
 }
 
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-family: var(--font-ui);
-  font-size: 0.8rem;
-  color: var(--ink-soft);
-  border: 1px solid var(--rule-strong);
-  border-radius: 999px;
-  padding: 0.28rem 0.7rem;
-  background: var(--paper-card);
+/* Sidebar destinations: ruled rows, kept like entries in the book. */
+.side-nav {
+  margin-top: 2.4rem;
+  display: grid;
 }
-.status-pill code {
-  font-size: 0.78rem;
-  color: var(--ink);
-}
-.status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--green);
-  flex: none;
-}
-.status-pill.fixture .status-dot {
-  background: var(--red);
-}
-.status-net {
-  color: var(--ink-faint);
-}
-
-.nav-tabs {
+.side-nav-item {
   display: flex;
-  gap: 0.25rem;
-  width: 100%;
-  order: 3;
-}
-.nav-tab {
+  align-items: center;
+  min-height: 50px;
   font-family: var(--font-ui);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--ink-soft);
   text-decoration: none;
-  padding: 0.45rem 0.8rem;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+  padding: 0.7rem 0.2rem 0.7rem 0.95rem;
+  border-top: 1px solid var(--rule);
 }
-.nav-tab:hover {
+.side-nav-item:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+.side-nav-item:hover {
   color: var(--ink);
 }
-.nav-tab[aria-current="page"] {
+.side-nav-item[aria-current="page"] {
   color: var(--green-deep);
-  border-bottom-color: var(--green);
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--green);
 }
-@media (max-width: 760px) {
-  .nav-tabs {
-    display: none;
-  }
+
+/* The sidebar foot: the shop's data as ruled ledger entries — the
+   contract of record first, then the live figures. Data furniture,
+   aligned to the book's grid; never a floating chip. */
+.side-book {
+  margin-top: auto;
+  padding-top: 2rem;
+}
+.side-entries {
+  margin: 0;
+  border-top: 3px double var(--rule-strong);
+}
+.side-entry {
+  padding: 0.55rem 0 0.62rem;
+  border-bottom: 1px solid var(--rule);
+}
+.side-entry dt {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.side-entry dd {
+  margin: 0.12rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.87rem;
+  overflow-wrap: anywhere;
+}
+.side-book-note {
+  margin: 0.7rem 0 0;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--ink-faint);
+  max-width: none;
 }
 
 .tabbar {
   display: none;
 }
-@media (max-width: 760px) {
+@media (max-width: 899px) {
   .tabbar {
     display: flex;
     position: fixed;

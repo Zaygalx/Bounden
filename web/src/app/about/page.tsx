@@ -104,6 +104,23 @@ export default function AboutPage() {
         — every one carries a test marker, which is the point of the{" "}
         <Link href="/">demo inventory notice</Link>.
       </p>
+
+      <section className="prose-section">
+        <div>
+          <h2>Why there is no login here</h2>
+          <p>
+            Visitors sometimes look for the sign-in button. There isn't one,
+            and that is by design. This shop keeps <strong>no accounts and
+            no passwords</strong>; it stores nothing about you that you could
+            log in to see. Your NEAR wallet is your name here — it places the
+            order and it pays, and the contract knows the order by the wallet
+            that made it. Your <strong>order number is your receipt</strong>:
+            enter it on the <Link href="/#track">track page</Link> at any
+            time and the whole record is there — state, delivery evidence,
+            and attestation — with no account needed.
+          </p>
+        </div>
+      </section>
     </>
   );
 }

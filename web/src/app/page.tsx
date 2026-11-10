@@ -8,7 +8,7 @@ import type { ProductKind } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Bounden — the agent is bound. The money is not.",
+  title: "Bounden",
   description:
     "A digital-goods shop run by an autonomous cashier whose authority is exactly two contract methods. It cannot steal, redirect, or over-refund — and its powers are public.",
 };

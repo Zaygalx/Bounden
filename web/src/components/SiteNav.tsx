@@ -10,16 +10,16 @@ const TABS = [
   { href: "/about", label: "About", match: (p: string) => p.startsWith("/about") },
 ];
 
-/** Primary tabs in the sticky header (desktop / tablet). */
-export function PrimaryNav() {
+/** The four destinations as a ruled vertical list in the sidebar. */
+export function SidebarNav() {
   const pathname = usePathname() ?? "/";
   return (
-    <nav className="nav-tabs" aria-label="Primary">
+    <nav className="side-nav" aria-label="Primary">
       {TABS.map((t) => (
         <Link
           key={t.label}
           href={t.href}
-          className="nav-tab"
+          className="side-nav-item"
           aria-current={t.match(pathname) ? "page" : undefined}
         >
           {t.label}

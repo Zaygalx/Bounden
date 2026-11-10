@@ -65,6 +65,10 @@ export default async function CheckoutPage({
           buying is a wallet action, and these are the exact calls your
           wallet makes.
         </p>
+        <p>
+          <strong>No account, no login</strong> — the transfer from your
+          wallet is the whole checkout.
+        </p>
       </div>
 
       <ol className="stepper">
