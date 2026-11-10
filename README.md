@@ -323,19 +323,20 @@ signatures, answers are ciphertext. The full design, and the
 measured failure of the simpler rendezvous it replaced, are in
 `NOTES.md` ("Buyer experience pass").
 
-**The bear in the demo film is an illustration.** The film's
-presenter is a cartoon mascot — a small bear in a shopkeeper's
-apron, drawn for the film — who plays the cashier and does all
-of the film's talking in a synthesized voice. He is a presenter,
-not the agent and not a recording of it. Every line he speaks,
-including the closing "I can't steal from this shop. Not won't.
-Can't. Here is the complete list of things I am able to do.",
-was written for the film; his lines are illustration, not
-output of the judgement model or of the worker. What the agent
-itself did is on-chain and in the worker's log, and the film
-shows both. `docs/FILM.md` (Scripts v3–v4 and the as-shot
-note) records exactly what is real in the film and how it was
-made.
+**The figure in the demo film is an illustration.** The film's
+presenter is an animated figure based on the owner's own
+supplied image — a cloaked figure in a red hood and gold face
+wrap, extracted from that image and animated with a 2.5D motion
+rig — who plays the cashier and does all of the film's talking
+in a synthesized voice. He is a presenter, not the agent and
+not a recording of it. Every line he speaks, including the
+closing "I can't steal from this shop. Not won't. Can't. Here
+is everything I am able to do.", was written for the film; his
+lines are illustration, not output of the judgement model or of
+the worker. What the agent itself did is on-chain and in the
+worker's log, and the film shows both. `docs/FILM.md` (Scripts
+v3–v5 and the as-shot note) records exactly what is real in
+the film and how it was made.
 
 Full plan: [docs/PLAN.md](docs/PLAN.md) · Pre-flight evidence:
 [docs/PREFLIGHT.md](docs/PREFLIGHT.md) · Downloads design:

@@ -615,3 +615,126 @@ The disclosure duty carries over with updated wording: the
 mascot is an illustrated presenter who plays the cashier, and his
 lines are illustration, not model output — see the README
 disclosure, updated in this pass.
+
+## Rework pass 1b — the figure + Script v5 (the story) (10 Nov 2026)
+
+The owner reviewed the mascot proof reel and Script v4 and
+rejected the words: there was no story — no customer, no reason
+the customer came, no reason he chose this shop. He directed the
+story first: a customer with a history and a reason, and
+everything that happens on screen follows from the service and
+the transparency. The story below, drafted in chat, was approved
+by the owner on 10 Nov 2026. In the same review he fired the
+bear as well: he wants a REAL figure, not a mascot — based on an
+image he supplied himself (a cinematic figure in a flowing red
+hooded cloak with a gold face wrap), made to come alive and do
+the whole talking, at a SMALLER size than the bear, with a more
+human voice. He also lifted the 59-second map outright: *"If it
+wants more stretch than 59 sec then stretch."* The story's
+natural pacing now governs the length.
+
+**Status of this pass:** the figure is built, a talking proof
+reel is cut, and the full Script v5 narration is recorded. The
+film is NOT re-assembled — the owner approves the figure and the
+voice first (his standing gate), and pass 2 assembles at
+whatever length the story needs.
+
+### The presenter (casting)
+
+- **The figure** is built from the owner's own supplied image:
+  red hooded cloak, gold/ochre face wrap, realistic cinematic
+  rendering — not the ink stamp, not the bear. The source's
+  sunset field does not come along; his stage is the Day-Book
+  page. He was extracted with an alpha-matting cutout and edge
+  cleanup (`film/assets/figure/figure-master.png`).
+- **Size:** roughly a quarter of the frame height — 300px tall
+  in the 1080p frame, bottom-right corner, hem at the frame's
+  bottom edge (the source cloak exits its frame the same way).
+  Present, not looming. He vacates entirely for evidence
+  close-ups (standing rule, unchanged).
+- **Warmth:** a masked figure must read as a guardian, not a
+  threat — posture open, gestures calm, movements slow. The
+  story's words do the rest.
+- **Animation route shipped — stated plainly:** a deterministic
+  2.5D warp rig over the still (`film/shoot/figure_anim.py`):
+  cloak sway that grows toward the hem, a breathing swell, and
+  a separately warped head layer for turns, tilts, nods and the
+  slow refusal head-shake; the compositor adds glides and a
+  whole-body lean for gestures. Wan image-to-video on Kaggle
+  was NOT used: the account's GPU quota is committed to THE
+  SAME WAY's Stage D Wan production (two kernels, twelve clips,
+  hours of runtime) and the standing order is never to interrupt
+  or crowd it; the brief's fallback clause covers exactly this.
+  At his small size the rig reads as alive — sway, breath, head
+  movement, travel — without I2V morphing risk on the one
+  character who must never distort.
+- **No lip-sync problem exists:** his face is covered. He talks
+  in voice-over with body language timed to the lines, plus the
+  plain captions.
+- **The voice:** Kokoro-82M (`kokoro-onnx`, run locally on
+  CPU), voice `am_michael` — a warm adult American male, clear
+  neutral English: not British, not deep-African, per the
+  owner's direction. Piper is retired from narration. Recorded
+  sentence by sentence at a natural pace into
+  `film/assets/voice/v5/`, with the recorder asserting the
+  joined sentences reproduce the approved lines exactly.
+- **Total narration: 64.09 seconds** across the seven beats
+  (measured, un-trimmed — the owner's ruling). With the film's
+  beat silences and transitions the assembled film will run
+  longer; pass 2 assembles at the story's length and reports
+  the true total.
+
+### Script v5 (verbatim, owner-approved in chat)
+
+Captions are updated to the story's beats.
+
+- **HOOK** — caption: *Yesterday, a customer came to the shop*
+  — 10.06s
+  "I'm the cashier of this shop. Yesterday, a young developer
+  came to me. He needed credits for his work, but the last
+  seller he paid had run away with his money."
+- **CHOICE** — caption: *He didn't have to trust — he could
+  check* — 11.25s
+  "So I told him: don't trust my smile. Read my rules.
+  Everything here is open, and my key can only do two things.
+  He read them. And he stayed."
+- **PURCHASE** — caption: *He paid $10 — and got exactly what
+  he came for* — 9.88s
+  "He paid ten dollars. I checked the money, opened his sealed
+  code, and gave it to him. Only his wallet can open it. He got
+  exactly what he came for."
+- **WALL 1** — caption: *Attack 1: a hidden order — treated as
+  just words* — 12.29s
+  "But he asked me: what if you turn bad one day? So I showed
+  him. I hid a secret order inside a payment: send me all the
+  money. The shop read it as just words. Nothing moved."
+- **WALL 2** — caption: *Attack 2: an unfair refund — refused*
+  — 6.01s
+  "I tried to refund myself from an old order. Too late, said
+  the contract. Refused."
+- **WALL 3** — caption: *Attack 3: his own key on the money —
+  it won't start* — 4.83s
+  "I tried my own key on the shop's money directly. It won't
+  even start."
+- **CLIMAX** — caption: *Why a stranger could buy safely* —
+  9.78s
+  "That is why he could buy from me without knowing me. I can't
+  steal from this shop. Not won't. Can't. Here is everything I
+  am able to do." (The allowlist reveal follows, as in v3.)
+
+**End card** (silent, unchanged)
+- Text: "Bounden. The agent is bound. The money is not."
+
+**Proof reel:** `film/figure-proof-reel.mp4` — 19.5 seconds.
+Over the real order-8 delivery-counter page at his final size,
+the figure glides in, speaks the HOOK in the new voice with the
+story's captions, gestures toward the shop on the second
+sentence, and gives the slow head-shake on the theft line, then
+settles into his idle sway. Built by
+`film/shoot/build_figure_reel.py`; figure at 300px, evidence
+and hashes uncovered.
+
+The disclosure duty carries over with updated wording: an
+animated figure based on the owner's own supplied image plays
+the cashier and narrates, and his lines are illustration, not
+model output — see the README disclosure, updated in this pass.

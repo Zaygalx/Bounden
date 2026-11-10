@@ -144,3 +144,32 @@ Buyer (the robber = the owner): fe9591cc09aa84478e6c8c622c402f2007eae6e651829769
   w1 12.14, w2 10.65, w3 10.50, climax 7.96. Narrator (ryan)
   retired. README disclosure updated. Film NOT re-assembled —
   pass 2 waits on the owner's word on the bear + the words.
+- REWORK PASS 1B (10 Nov 2026): owner rejected the v4 WORDS
+  (no story) and fired the bear. Story approved in chat
+  (customer with a history and a reason; walls answer his
+  doubt; climax = why a stranger could buy). New presenter:
+  the owner's own supplied image — red hooded cloak, gold face
+  wrap. Cut out with rembg (isnet + alpha matting), cleaned
+  (3x upscale, alpha erosion, fringe decontamination, unsharp)
+  -> assets/figure/figure-master.png. Animation shipped: 2.5D
+  warp rig (figure_anim.py: cloak sway, breathing, feathered
+  head layer for turns/tilts/shake; compositor glides + leans).
+  Wan I2V NOT used — Kaggle GPU committed to THE SAME WAY
+  Stage D; standing no-crowding order; brief's fallback clause.
+  Voice: Kokoro-82M via kokoro-onnx, LOCAL CPU (torch index
+  read-timed-out via the proxy; onnx route needs none),
+  am_michael, en-US, speed 1.0; voices-v5.py asserts the
+  approved lines verbatim, sentence-joined -> assets/voice/v5/.
+  Durations: hook 10.06, choice 11.25, purchase 9.88,
+  wall1 12.29, wall2 6.01, wall3 4.83, climax 9.78 — TOTAL
+  64.09s, un-trimmed (59s map LIFTED by the owner).
+  Proof reel film/figure-proof-reel.mp4 (build_figure_reel.py):
+  19.5s over the order-8 delivery-counter page; figure 300px
+  bottom-right; glide-in 2.8s, HOOK from 0.9s, gesture lean on
+  sentence 2, slow head-shake (3.4deg x2) on the theft line,
+  idle settle; captions = the hook's three sentences. Verified:
+  frames eyeballed at 5 timepoints, silence-detect confirms
+  voice 0.94->10.92s, peak -1.45 dB. Docs: FILM.md Script v5,
+  README disclosure (figure wording), NOTES entry. Film NOT
+  re-assembled — pass 2 waits on the owner's approval of the
+  figure + voice and assembles at the story's length.

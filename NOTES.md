@@ -3085,3 +3085,82 @@ waits on the owner's approval of the character and the words.
 - README disclosure updated for the presenter change: the
   bear is an illustrated presenter who plays the cashier; his
   lines are illustration, not model output.
+
+## Demo film rework pass 1b — the figure + Script v5 (10 Nov 2026)
+
+- OWNER'S VERDICT ON PASS 1: the WORDS were rejected — no
+  story. His questions defined the fix: who is this customer,
+  why did he come, why did he choose this shop; everything on
+  screen follows from the service and the transparency. A story
+  draft (young developer, cheated by a previous seller, chooses
+  the shop because he doesn't have to trust it; the three walls
+  answer his "what if you turn bad one day?"; climax = why he
+  could buy from a stranger) was approved in chat. In the same
+  review the BEAR WAS FIRED: the owner supplied his own image
+  (a cinematic figure in a flowing red hooded cloak with a gold
+  face wrap) and directed: make it real, make it come alive and
+  do the whole talking, a little bit smaller, voice more human.
+  He also LIFTED the 59-second map: the story's natural pacing
+  governs; nothing is trimmed to a clock.
+- FIGURE: the owner's image (400×400) was cut out with rembg
+  (isnet-general-use + alpha matting), then cleaned — 3×
+  Lanczos upscale, alpha erosion, colour-bleed fringe removal,
+  unsharp mask — into film/assets/figure/figure-master.png
+  (1095×1182 RGBA). Verified visually on Day-Book paper and on
+  grey: red cloak and gold wrap read cinematic, edges clean.
+  The source cloak exits its frame at the bottom, so he
+  composites standing at the page's bottom edge, cloak flowing
+  off-frame. Posture is open and calm — a guardian, not a
+  threat.
+- ANIMATION (route shipped, stated plainly): a deterministic
+  2.5D warp rig (film/shoot/figure_anim.py) — cloak sway
+  growing toward the hem, breathing swell, and a feathered
+  head layer (hood region rotated about a neck pivot) for
+  turns, tilts, nods and the slow refusal head-shake; the
+  compositor adds glides with a step-bob and whole-body leans
+  for gestures. Wan I2V on Kaggle was NOT used: the account's
+  GPU quota is committed to THE SAME WAY's Stage D Wan
+  production (two kernels, twelve clips) and the standing
+  order is never to interrupt or crowd it; the brief's
+  fallback clause sanctions this route for exactly that case.
+  Honest quality read: presentational motion (sway, breath,
+  head, travel) — at his small size it reads alive without any
+  morphing risk on the one character who must never distort.
+- VOICE: Piper retired. Kokoro-82M via kokoro-onnx, run
+  locally on CPU (the PyTorch CPU wheel index read-timed-out
+  through the egress proxy three times; the onnx route needed
+  no torch — kokoro-onnx + phonemizer + espeakng-loader from
+  PyPI, model files from the kokoro-onnx GitHub release).
+  Voice am_michael — warm adult American male, clear neutral
+  English, speed 1.0. Recorded by film/shoot/voices-v5.py,
+  sentence by sentence with 0.22s joins; the script asserts
+  the joined sentences reproduce the approved lines exactly
+  before writing film/assets/voice/v5/*.wav. Durations merged
+  into film/assets/voice/durations.json: hook 10.06s, choice
+  11.25s, purchase 9.88s, wall1 12.29s, wall2 6.01s, wall3
+  4.83s, climax 9.78s — TOTAL NARRATION 64.09s, un-trimmed per
+  the owner's ruling. Peaks −2.0 to −3.6 dB pre-loudnorm.
+- SCRIPT v5 (docs/FILM.md): the approved customer story, seven
+  beats with story-matched captions; end card silent and
+  unchanged. The figure does all the talking; his face is
+  covered, so there is no lip-sync — voice-over with body
+  language timed to the lines, plus captions.
+- PROOF REEL: film/figure-proof-reel.mp4, 19.5s, 1080p, built
+  by film/shoot/build_figure_reel.py over the real order-8
+  delivery-counter page. The figure (300px tall, bottom-right,
+  per the owner's "a little bit smaller") glides in over 2.8s,
+  starts the HOOK at 0.9s, gestures toward the shop across the
+  second sentence, gives the slow head-shake (3.4°, two
+  oscillations) across the theft line, then settles into idle
+  sway. Captions are the hook's three sentences in the Day-Book
+  idiom. Verified by frame inspection (glide, arrival, gesture
+  beat, idle) and by silence detection (voice 0.94→10.92s,
+  peak −1.45 dB). Hashes and evidence on the page stay
+  uncovered at his final size.
+- Docs: FILM.md Script v5 section; README disclosure rewritten
+  for the figure (an animated figure based on the owner's own
+  supplied image plays the cashier and narrates; his lines are
+  illustration, not model output); shoot LOG entry. Film NOT
+  re-assembled — pass 2 waits on the owner's approval of the
+  figure and the voice, and assembles at the story's natural
+  length.
