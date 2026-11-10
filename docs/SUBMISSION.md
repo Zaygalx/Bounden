@@ -18,7 +18,7 @@ submission-ready target: Sat 14 Nov 18:00 WAT. Hard deadline:
 | Email | Dosunmuh070@gmail.com | FINAL |
 | Team size | 1 | FINAL |
 | Preferred track(s) | business (primary), agents, security | FINAL — justifications below |
-| Description | See "Form description" below (1,642 characters) | FINAL text; paste verbatim — see checklist #9: the judgement mechanism is now proven on-chain (order 3); only the sentence's universal "each decision" phrasing overreaches the full order history, so a quantifier softening remains for paste time |
+| Description | See "Form description" below (1,667 characters) | FINAL text; paste verbatim — the #9 quantifier softening was applied 10 Nov 2026: the judgement sentence now claims the on-chain attestation hash only where a judgement approves an order (proven on order 3) and is silent on orders 0–2, which ran under the null provider |
 | Repository link | `https://github.com/Zaygalx/Bounden` | ✅ **LIVE** — pushed 9 Nov 2026 ~20:43 WAT on the owner's go-ahead; public, `main` branch; signed-out read-back confirms visibility public and the README naming `bounden11.testnet` as the live shop (see NOTES.md, "Stage 5 — GitHub push") |
 | Demo post link | The X post below | ⏳ PENDING — the post needs the film, and the film is shot after the live pass (`docs/FILM.md`) |
 | NEAR mainnet payout account | `bounden.near` | ✅ **CLAIMED** — live on mainnet holding exactly 0.1 NEAR, owned by the project key (claim tx `HLbPm1PS…GPL7K`); funding fully reconciled in `docs/PREFLIGHT.md` §5; custody handover complete (owner's own key added — see NOTES.md) |
@@ -47,9 +47,9 @@ public on-chain object anyone can inspect.
   by a shipped, live, reproducible attack suite with five named
   cases.
 
-## Form description (paste verbatim — 1,642 characters, limit 20–2,000)
+## Form description (paste verbatim — 1,667 characters, limit 20–2,000)
 
-Bounden is a digital-goods shop run by an autonomous agent that is structurally incapable of theft. The cashier's entire on-chain authority is two NEAR contract methods - fulfil_order and issue_refund - exercised through an allowlisted function-call access key. The shop contract is the constitution: a catalogue, a price band that binds even the owner, a refund band (a $50 cap inside a one-hour window), and a treasury only the owner can withdraw, to the owner account only. The cashier cannot move the treasury, redirect a payout, or refund outside the band, because those operations do not exist inside its authority - and anyone can verify that, because every power it holds is a public, inspectable on-chain object. Buyers pay the contract directly in a USD stablecoin (Circle's NEAR testnet USDC) via ft_transfer_call; the cashier never touches payment. Its order and refund judgements come from NEAR AI Cloud TEE inference, and each decision's attestation hash is written on-chain with the order, verifiable after the fact. Inventory is sealed: on-chain you will find only SHA-256 commitments, never a usable code; plaintext lives in the worker's encrypted vault and is delivered re-encrypted to the buyer. The repo ships a live, reproducible attack suite - prompt-injection treasury drain, out-of-band refund, payout redirect, inventory dump, price-band violation - each case printing the on-chain rejection it hit. Bounden is a template: an open constitution and storefront any agent-run digital-goods business can adopt. Solo build, all code written after 19 Oct 2026. Testnet build; demo inventory is clearly fake and test-marked.
+Bounden is a digital-goods shop run by an autonomous agent that is structurally incapable of theft. The cashier's entire on-chain authority is two NEAR contract methods - fulfil_order and issue_refund - exercised through an allowlisted function-call access key. The shop contract is the constitution: a catalogue, a price band that binds even the owner, a refund band (a $50 cap inside a one-hour window), and a treasury only the owner can withdraw, to the owner account only. The cashier cannot move the treasury, redirect a payout, or refund outside the band, because those operations do not exist inside its authority - and anyone can verify that, because every power it holds is a public, inspectable on-chain object. Buyers pay the contract directly in a USD stablecoin (Circle's NEAR testnet USDC) via ft_transfer_call; the cashier never touches payment. Its order and refund judgements come from NEAR AI Cloud TEE inference, and when a judgement approves an order, its attestation hash is written on-chain with that order, verifiable after the fact. Inventory is sealed: on-chain you will find only SHA-256 commitments, never a usable code; plaintext lives in the worker's encrypted vault and is delivered re-encrypted to the buyer. The repo ships a live, reproducible attack suite - prompt-injection treasury drain, out-of-band refund, payout redirect, inventory dump, price-band violation - each case printing the on-chain rejection it hit. Bounden is a template: an open constitution and storefront any agent-run digital-goods business can adopt. Solo build, all code written after 19 Oct 2026. Testnet build; demo inventory is clearly fake and test-marked.
 
 ## X demo post (full text — 265 characters, limit 280)
 
@@ -113,7 +113,7 @@ is opened.
 | # | Item | Source of truth | Verification method | State / unblock |
 |---|---|---|---|---|
 | 1 | Project name "Bounden" | This pack; repo name | Read back on the form before submitting | ✅ ready |
-| 2 | Description pasted verbatim, 1,642 chars | This pack, "Form description" | Character-count the form field after pasting; diff against this pack | ✅ text ready; count at paste time — subject only to the #9 quantifier softening |
+| 2 | Description pasted verbatim, 1,667 chars | This pack, "Form description" | Character-count the form field after pasting; diff against this pack | ✅ text ready; count at paste time — the #9 quantifier softening was applied 10 Nov 2026 and the text recounted (1,667 chars) |
 | 3 | Tracks: business, agents, security | This pack, "Tracks" | Confirm all three selectable in one submission (HACKATHON.md) | ✅ ready |
 | 4 | Team lead / email / team size 1 | Owner identity (Dosunmuh070@gmail.com) | Owner confirms the email inbox is monitored for judging comms | ✅ ready |
 | 5 | Repo link live and public | `https://github.com/Zaygalx/Bounden` | Open the URL signed-out; confirm the README renders and the walkthrough commands are present | ✅ **DONE 9 Nov 2026 ~20:43 WAT** — owner approved the push in chat ("Ok push", choosing the allowlist over a history scrub). Initial push: 41 commits, head `a9f463ace7f3970d1808b28ae6f801bc4ff183d0`; unauthenticated read-back: visibility **public**, default branch `main`, remote head == local head, repo page HTTP 200, raw README names `bounden11.testnet` as the live shop. Pre-push gate: gitleaks full-history scan went from 11 findings (all `generic-api-key`, all public artefacts) to **zero** under the narrow `.gitleaks.toml` allowlists committed in `a9f463a`; negative controls (planted fake keys outside the allowlist, inside a fixture under a different field name, and in NOTES.md) all still flag. Full record: NOTES.md, "Stage 5 — GitHub push" |
@@ -166,4 +166,9 @@ Found while preparing this pack — stated plainly, per house rules:
    been proven on-chain (closing attempt, order 3 — see #9);
    the residual flag is only its universal "each decision"
    phrasing against orders 0–2, which ran under the null
-   provider.
+   provider. **RESOLVED 10 Nov 2026:** the sentence now reads
+   "when a judgement approves an order, its attestation hash is
+   written on-chain with that order" — true of the mechanism and
+   demonstrated on order 3, and silent on orders 0–2, which
+   carried no AI judgement. The description was recounted at
+   1,667 characters.
