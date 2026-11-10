@@ -326,8 +326,8 @@ measured failure of the simpler rendezvous it replaced, are in
 **The figure in the demo film is an illustration.** The film's
 presenter is an animated figure based on the owner's own
 supplied image — a cloaked figure in a red hood and gold face
-wrap, extracted from that image and animated with a 2.5D motion
-rig — who plays the cashier and does all of the film's talking
+wrap, rebuilt from that image as a rigged 3D animated
+character — who plays the cashier and does all of the film's talking
 in a synthesized voice. He is a presenter, not the agent and
 not a recording of it. Every line he speaks, including the
 closing "I can't steal from this shop. Not won't. Can't. Here

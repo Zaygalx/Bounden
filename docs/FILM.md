@@ -667,7 +667,12 @@ whatever length the story needs.
   or crowd it; the brief's fallback clause covers exactly this.
   At his small size the rig reads as alive — sway, breath, head
   movement, travel — without I2V morphing risk on the one
-  character who must never distort.
+  character who must never distort. **Superseded the same day
+  by pass 1c (below): the owner rejected the warp rig outright
+  — a treated still is not an animated character — and the
+  presenter was rebuilt as a rigged 3D character in Blender.
+  This bullet stands as the record of what pass 1b shipped and
+  why it was replaced.**
 - **No lip-sync problem exists:** his face is covered. He talks
   in voice-over with body language timed to the lines, plus the
   plain captions.
@@ -738,3 +743,81 @@ The disclosure duty carries over with updated wording: an
 animated figure based on the owner's own supplied image plays
 the cashier and narrates, and his lines are illustration, not
 model output — see the README disclosure, updated in this pass.
+
+
+## Rework pass 1c — a living character, not a treated still (10 Nov 2026)
+
+The owner watched the pass-1b proof reel and rejected the
+animation outright: *"you just used the image like that. I
+said turn it into an animation, a living character, not just
+a static image. Turn it. Let it move. Let it be able to swing
+hand. Let it be dynamic. If it's Blender you will use, use
+Blender. Whatever tool you know you will use, just try."*
+The 2.5D warp rig (`film/shoot/figure_anim.py`) is RETIRED —
+it must not ship again under any circumstances. What passed
+and stands from 1b: the story (Script v5), the Kokoro
+am_michael voice and its recorded lines, his size and corner,
+and the approval gate.
+
+**The presenter now:** a rigged 3D character built in
+Blender 5.2.3, rendered locally on CPU — he never touches the
+Kaggle quota THE SAME WAY is using. He is modelled from the
+owner's reference: the crimson bell cloak with cloth folds,
+the hood with its forward-flopped point, the gold wrap around
+the lower face with its tail hanging down the chest, and a
+shadowed face that is never seen — no face was invented for
+him; his identity is carried by silhouette, cloak and wrap,
+exactly as in the source image. Stated plainly: he is a
+stylised 3D figure, not a photoreal double of the still. At
+his 300px size the identity reads instantly, and every
+movement is real skeletal animation.
+
+**The rig** (`film/shoot/figure3d_build.py`; the baked scene
+is `film/shoot/figure3d.blend`): 25 bones — hips, spine,
+chest, neck, head; shoulder, upper arm, forearm and hand on
+both sides; thigh, shin and foot under the cloak; and six
+cloak hem bones driven with phase-lagged swings, so the
+cloth keeps moving after he stops. The cloak mesh is skinned
+with procedural weights — chest and spine at the top, hem
+bones at the hem; sleeves, hands, hood and wrap ride their
+bones rigidly. The choreography is written as semantic stage
+directions ("raise the right arm forward 56 degrees") and
+converted into bone space analytically, then baked at 24fps.
+
+**His action set:** a walked entrance — gait cycle with
+counter-swinging arms, body bob and lateral sway, hem swing,
+and a presenter's turn to face the audience as he arrives; a
+raised-hand greeting whose forearm and hand keep swinging
+through "I'm the cashier of this shop"; a beckoning curl as
+the developer arrives; open-hands emphasis; the slow
+head-shake across "run away with his money"; a hand to his
+chest on "don't trust my smile"; a full point toward the
+shop on "Read my rules"; wide open arms on "Everything here
+is open"; a nod on "He read them"; a small bow on "And he
+stayed"; and a breathing idle underneath everything — chest
+rise, hem micro-sway, slow head drift.
+
+**Rendering, stated plainly:** Blender's Workbench engine —
+studio lighting, shadows, cavity shading — rendered as a
+transparent layer at about 1.8x and composited over the page
+with a whisper of warm grade and a contact shadow pooled
+from his own silhouette. The photographic engines were
+measured on this machine and rejected: Eevee under software
+OpenGL took ~108 seconds for one test frame; Cycles ~33
+seconds per frame at half the delivery resolution (a
+591-frame reel would run to most of a day); Workbench
+rendered the reel's frames at roughly 1.7 seconds each. The
+look is clean stylised 3D — bold shapes, soft studio
+modelling — chosen deliberately, at his small size, over a
+photoreal pipeline this machine cannot run.
+
+**Proof reel v2:** `film/figure-proof-reel-v2.mp4` — 24.6
+seconds over the real order-8 delivery-counter page, timed
+to the recorded HOOK and CHOICE lines, built by
+`film/shoot/build_figure_reel_v2.py`. Verified: frames
+inspected at the walk, wave, head-shake, point, open-arms
+and idle beats; voice measured on the track from 0.96s to
+22.49s; the Evidence hashes and the delivery counter stay
+uncovered throughout. The film is NOT re-assembled — pass 2
+still waits on the owner's approval, now of the animated
+character (the voice is unchanged and already approved).

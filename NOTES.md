@@ -3164,3 +3164,67 @@ waits on the owner's approval of the character and the words.
   re-assembled — pass 2 waits on the owner's approval of the
   figure and the voice, and assembles at the story's natural
   length.
+
+
+## Demo film rework pass 1c — the figure, animated for real (10 Nov 2026)
+
+- OWNER'S VERDICT ON PASS 1B: the ANIMATION was rejected
+  outright — "you just used the image like that. I said turn
+  it into an animation, a living character, not just a static
+  image. Turn it. Let it move. Let it be able to swing hand.
+  Let it be dynamic. If it's Blender you will use, use
+  Blender." The 2.5D warp rig (figure_anim.py) is RETIRED
+  permanently — never ship a treated still again. The story,
+  the Kokoro voice, his size and the approval gate all stood.
+- CHARACTER: a rigged 3D figure built in Blender 5.2.3 from
+  the owner's reference (film/shoot/figure3d_build.py; baked
+  scene film/shoot/figure3d.blend, 764K). Crimson bell cloak
+  (procedural lathe, fold-displaced, skinned to chest/spine
+  plus six phase-lagged hem bones), hood shell with a
+  forward-flopped point, gold wrap band + chest tail, face a
+  shadowed sphere with faint eyes — no face invented. Arms
+  are red bell sleeves with visible hands (palm, fingers,
+  thumb); legs under the cloak walk. 25 bones in all.
+  Choreography is semantic ("point = left arm forward 56,
+  out 24; chest yaw -11; head yaw -14") converted into bone
+  space by conjugation with each bone's rest orientation and
+  baked per frame at 24fps — walk-in with gait + turn to
+  camera, swinging-hand wave, beckon, shrug emphasis, slow
+  head-shake on the theft line, hand-to-chest, the point on
+  "Read my rules", open arms, nod, bow, breathing idle.
+- BUILD LESSONS (measured, for the next Blender job on this
+  box): (1) bone parenting via parent_type='BONE' with a
+  hand-computed matrix_parent_inverse mangled every part's
+  transform (unit spheres ballooned to r=1 at the origin,
+  capsules rotated 90 degrees); the route that works is
+  uniform vertex-group skinning — bake each part's transform
+  into its vertices, one group per bone, weight 1. (2)
+  Engines: Eevee under xvfb/llvmpipe ~108s for a single
+  640x520 frame; Cycles steady at ~33s/frame at 640x520,
+  32 samples — both dead ends for a 591-frame reel; Workbench
+  (studio light, shadows, cavity, MATERIAL colours) ~0.7s at
+  640x520 and ~1.7s at the 1200x982 delivery layer. The full
+  sequence rendered locally on CPU in ~17 minutes — zero
+  Kaggle contention with THE SAME WAY's Stage D.
+- PROOF REEL v2: film/figure-proof-reel-v2.mp4, 24.6s, 1080p,
+  2.1MB, built by film/shoot/build_figure_reel_v2.py — the
+  Blender layer graded warm, contact shadow from his own
+  alpha, composited at 300px bottom-right over the real
+  order-8 delivery-counter page; captions are the seven
+  spoken blocks (hook 3 + choice 4). Audio: hook at 0.90s,
+  choice at 11.36s; silence detection confirms voice
+  0.96->22.49s. QA: frames eyeballed at walk, wave, shake,
+  point, open-arms and idle beats on the composited reel;
+  Evidence hashes and the delivery counter uncovered in
+  every frame. Honest quality read: clean stylised 3D, bold
+  and readable at his size, unmistakably ALIVE — gait, arm
+  swings, cloak lag, breath — but he is a stylised character,
+  not a photoreal rendering of the owner's still, and the
+  segmented sleeve joints show at full-canvas inspection
+  (they soften to nothing at his 300px stage size).
+- Docs: FILM.md pass-1c section (+ supersession note on the
+  1b animation bullet), README disclosure corrected (the
+  figure is a rigged 3D character now, not a 2.5D rig),
+  shoot LOG entry. Film NOT re-assembled — pass 2 waits on
+  the owner's approval of the animated character and
+  assembles at the story's natural length.

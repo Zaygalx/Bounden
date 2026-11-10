@@ -173,3 +173,28 @@ Buyer (the robber = the owner): fe9591cc09aa84478e6c8c622c402f2007eae6e651829769
   README disclosure (figure wording), NOTES entry. Film NOT
   re-assembled — pass 2 waits on the owner's approval of the
   figure + voice and assembles at the story's length.
+- REWORK PASS 1C (10 Nov 2026): owner rejected the 1b
+  ANIMATION outright — a treated still is not a living
+  character; "let it swing hand... If it's Blender you will
+  use, use Blender." Warp rig figure_anim.py RETIRED.
+  Presenter rebuilt as a rigged 3D character in Blender
+  5.2.3 (figure3d_build.py; baked scene figure3d.blend):
+  crimson folded cloak skinned to chest/spine + 6 lagged
+  hem bones, hood with flopped point, gold wrap + tail,
+  shadowed face (none invented), bell sleeves with real
+  hands, legs walking under the cloak — 25 bones.
+  Choreography semantic, conjugated into bone space, baked
+  at 24fps: walk-in + turn, swinging-hand wave, beckon,
+  head-shake on the theft line, hand-to-chest, point on
+  "Read my rules", open arms, nod, bow, breathing idle.
+  Render: Workbench (Eevee ~108s/frame and Cycles ~33s/
+  frame measured and rejected on this box; Workbench
+  ~1.7s/frame at 1200x982), CPU-only, no Kaggle use.
+  Proof reel v2 film/figure-proof-reel-v2.mp4
+  (build_figure_reel_v2.py): 24.6s over the order-8
+  delivery-counter page, hook + choice in the approved
+  Kokoro voice (track-verified 0.96->22.49s), seven caption
+  blocks, figure 300px bottom-right, evidence uncovered.
+  Docs: FILM.md pass 1c, README disclosure corrected,
+  NOTES entry. Film NOT re-assembled — pass 2 waits on the
+  owner's approval of the animated character.
