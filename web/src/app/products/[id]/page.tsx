@@ -54,12 +54,12 @@ export default async function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { data: product, mode, liveError } = await fetchProduct(id);
+  const { data: product, mode, liveError, cachedAt } = await fetchProduct(id);
   if (product === null) notFound();
 
   return (
     <>
-      <ModeBanner mode={mode} liveError={liveError} />
+      <ModeBanner mode={mode} liveError={liveError} cachedAt={cachedAt} />
 
       <div className="page-head">
         <span className="badge">{KIND_LABELS[product.kind]}</span>

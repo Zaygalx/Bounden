@@ -42,8 +42,8 @@ export default async function OrderPage({
 }) {
   const { id } = await params;
   const orderId = /^\d+$/.test(id) ? Number(id) : NaN;
-  const { data: order, mode, liveError } = Number.isNaN(orderId)
-    ? { data: null, mode: "fixture" as const, liveError: undefined }
+  const { data: order, mode, liveError, cachedAt } = Number.isNaN(orderId)
+    ? { data: null, mode: "fixture" as const, liveError: undefined, cachedAt: undefined }
     : await fetchOrder(orderId);
   const product =
     order !== null ? (await fetchProduct(order.product_id)).data : null;
@@ -54,7 +54,7 @@ export default async function OrderPage({
 
   return (
     <>
-      <ModeBanner mode={mode} liveError={liveError} />
+      <ModeBanner mode={mode} liveError={liveError} cachedAt={cachedAt} />
 
       <div className="page-head">
         <span className="badge">Track order</span>

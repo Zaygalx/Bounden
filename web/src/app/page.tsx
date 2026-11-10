@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import ModeBanner from "@/components/ModeBanner";
 import { fetchOrder, fetchProducts } from "@/lib/shop";
-import { formatUsd } from "@/lib/format";
+import { formatAge, formatUsd } from "@/lib/format";
 import type { ProductKind } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -20,13 +20,14 @@ const KIND_LABELS: Record<ProductKind, string> = {
 };
 
 /** Count orders by probing sequential ids until the chain says stop.
- *  Live mode only — fixture counts would dress samples up as state. */
+ *  Live (or last-known live) data only — fixture counts would dress
+ *  samples up as state. */
 async function countOrders(): Promise<number | null> {
   try {
     let n = 0;
     while (n < 64) {
       const r = await fetchOrder(n);
-      if (r.mode !== "live" || r.data === null) break;
+      if (r.mode === "fixture" || r.data === null) break;
       n++;
     }
     return n;
@@ -36,8 +37,8 @@ async function countOrders(): Promise<number | null> {
 }
 
 export default async function HomePage() {
-  const { data: products, mode, liveError } = await fetchProducts();
-  const ordersRecorded = mode === "live" ? await countOrders() : null;
+  const { data: products, mode, liveError, cachedAt } = await fetchProducts();
+  const ordersRecorded = mode !== "fixture" ? await countOrders() : null;
   const sealedUnits = products.reduce<number | null>((acc, p) => {
     if (p.inventoryAvailable === null) return acc;
     return (acc ?? 0) + p.inventoryAvailable;
@@ -47,7 +48,12 @@ export default async function HomePage() {
     {
       num: products.length,
       label: "Products live",
-      sub: mode === "live" ? "read from the contract" : "fixture catalogue",
+      sub:
+        mode === "live"
+          ? "read from the contract"
+          : mode === "cached"
+            ? `last read ${cachedAt ? formatAge(cachedAt) : "recently"}`
+            : "fixture catalogue",
     },
     {
       num: sealedUnits ?? "—",
@@ -74,7 +80,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <ModeBanner mode={mode} liveError={liveError} />
+      <ModeBanner mode={mode} liveError={liveError} cachedAt={cachedAt} />
 
       <section className="hero">
         <p className="hero-eyebrow">An agent-run shop on NEAR testnet</p>

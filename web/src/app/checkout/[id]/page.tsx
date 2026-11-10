@@ -34,7 +34,7 @@ export default async function CheckoutPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { data: product, mode, liveError } = await fetchProduct(id);
+  const { data: product, mode, liveError, cachedAt } = await fetchProduct(id);
   if (product === null) notFound();
   const contract = contractId() ?? "bounden.testnet";
 
@@ -53,7 +53,7 @@ export default async function CheckoutPage({
 
   return (
     <>
-      <ModeBanner mode={mode} liveError={liveError} />
+      <ModeBanner mode={mode} liveError={liveError} cachedAt={cachedAt} />
 
       <div className="page-head">
         <span className="badge">Checkout — explainer</span>

@@ -65,7 +65,7 @@ const ATTACKS: { case: string; attempt: string; died: string; outcome: string }[
  * it against the chain.
  */
 export default async function ConstitutionPage() {
-  const { data, mode, liveError, note } = await fetchConstitution();
+  const { data, mode, liveError, cachedAt, note } = await fetchConstitution();
   const { constitution: c, agentKey } = data;
   const contract = contractId() ?? "bounden.testnet";
   const fc =
@@ -85,7 +85,7 @@ export default async function ConstitutionPage() {
 
   return (
     <>
-      <ModeBanner mode={mode} liveError={liveError} note={note} />
+      <ModeBanner mode={mode} liveError={liveError} cachedAt={cachedAt} note={note} />
 
       <div className="page-head">
         <span className="badge">The Constitution</span>

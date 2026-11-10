@@ -52,6 +52,19 @@ export function formatTimestampNs(ns: number | null): string {
   return new Date(ms).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
 }
 
+/** Epoch ms → "just now", "42 seconds ago", "3 minutes ago". */
+export function formatAge(atMs: number): string {
+  const seconds = Math.max(0, Math.floor((Date.now() - atMs) / 1000));
+  if (seconds < 5) return "just now";
+  if (seconds < 60) return `${seconds} seconds ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
 /** Basis points → "±10% per update". */
 export function formatBandBps(bps: number): string {
   const pct = bps / 100;

@@ -32,6 +32,11 @@ interface FulfilmentRecord {
   at: number;
 }
 
+/** Last successfully read evidence per order (per server process).
+ *  A failed read serves this before it serves "not read" — the same
+ *  degradation order as the shop data layer. */
+const lastKnown = new Map<number, DeliveryEvidence>();
+
 export async function fetchDeliveryEvidence(
   orderId: number,
 ): Promise<DeliveryEvidence | null> {
@@ -45,12 +50,14 @@ export async function fetchDeliveryEvidence(
     const recs = log.filter((r) => r.order_id === orderId && r.action === "fulfil");
     const rec = recs[recs.length - 1];
     if (!rec) return null;
-    return {
+    const evidence: DeliveryEvidence = {
       evidenceHash: rec.evidence_hash,
       attestationHash: rec.attestation_hash,
       at: rec.at,
     };
+    lastKnown.set(orderId, evidence);
+    return evidence;
   } catch {
-    return null;
+    return lastKnown.get(orderId) ?? null;
   }
 }
