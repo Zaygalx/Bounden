@@ -18,6 +18,12 @@ import * as path from "node:path";
  *   NEAR_RPC_URL                 default https://rpc.testnet.near.org
  *   BOUNDEN_POLL_INTERVAL_MS     default 15000
  *   BOUNDEN_SCAN_LIMIT           max order ids probed per cycle, default 10000
+ *   BOUNDEN_COUNTER_URL          storefront base URL — enables the
+ *                                delivery counter (src/delivery-counter.ts)
+ *   BOUNDEN_COUNTER_SECRET       shared secret for the storefront
+ *                                rendezvous' worker endpoints. Both
+ *                                counter variables must be set together,
+ *                                or the counter stays off.
  */
 export interface WorkerConfig {
   contractAccountId: string;
@@ -28,6 +34,8 @@ export interface WorkerConfig {
   rpcUrl: string;
   pollIntervalMs: number;
   scanLimit: number;
+  counterUrl: string | null;
+  counterSecret: string | null;
 }
 
 function required(env: NodeJS.ProcessEnv, name: string): string {
@@ -61,7 +69,19 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
     rpcUrl: env.NEAR_RPC_URL?.trim() || "https://rpc.testnet.near.org",
     pollIntervalMs: optionalInt(env, "BOUNDEN_POLL_INTERVAL_MS", 15_000),
     scanLimit: optionalInt(env, "BOUNDEN_SCAN_LIMIT", 10_000),
+    ...loadCounterConfig(env),
   };
+}
+
+function loadCounterConfig(env: NodeJS.ProcessEnv): { counterUrl: string | null; counterSecret: string | null } {
+  const url = env.BOUNDEN_COUNTER_URL?.trim() || null;
+  const secret = env.BOUNDEN_COUNTER_SECRET?.trim() || null;
+  if ((url === null) !== (secret === null)) {
+    throw new Error(
+      "BOUNDEN_COUNTER_URL and BOUNDEN_COUNTER_SECRET must be set together (delivery counter), or both left unset",
+    );
+  }
+  return { counterUrl: url, counterSecret: secret };
 }
 
 /** Shape of a NEAR credentials file (as written by near-cli / our setup). */

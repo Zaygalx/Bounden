@@ -2,6 +2,7 @@ import { loadWorkerConfig, loadCredentialsFile } from "./config.js";
 import { NearChainClient, LeashedChainClient } from "./chain.js";
 import { FileVault } from "./vault.js";
 import { selectAttestationProvider } from "./ai-cloud-attestation.js";
+import { DeliveryCounter } from "./delivery-counter.js";
 import { BoundenWorker } from "./worker.js";
 import { assertLeashEvidence } from "./leash.js";
 import { consoleLogger as logger } from "./logger.js";
@@ -71,6 +72,22 @@ async function main(): Promise<void> {
     scanLimit: config.scanLimit,
   });
 
+  // The delivery counter is optional and separately gated: it serves
+  // buyers collecting fulfilled orders, through the storefront
+  // rendezvous. A counter failure must never disturb fulfilment, so it
+  // runs in its own try/catch inside the loop.
+  let counter: DeliveryCounter | null = null;
+  if (config.counterUrl && config.counterSecret) {
+    counter = new DeliveryCounter({
+      vault,
+      chain,
+      logger,
+      siteUrl: config.counterUrl,
+      secret: config.counterSecret,
+    });
+    logger.info("delivery counter on duty", { site: config.counterUrl });
+  }
+
   let stopping = false;
   const stop = (signal: string): void => {
     logger.info("shutdown requested", { signal });
@@ -90,6 +107,15 @@ async function main(): Promise<void> {
       logger.error("poll cycle failed; will retry", {
         message: err instanceof Error ? err.message : String(err),
       });
+    }
+    if (counter && !stopping) {
+      try {
+        await counter.cycle();
+      } catch (err) {
+        logger.error("delivery counter cycle failed; will retry", {
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
     }
     if (!stopping) {
       await new Promise((resolve) => setTimeout(resolve, config.pollIntervalMs));
