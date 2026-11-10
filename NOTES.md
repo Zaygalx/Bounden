@@ -2573,3 +2573,39 @@ remains the last piece, untouched by this pass.
   enabled for boot, but a full VM replacement would need the two
   unit files re-created (they live in `/etc/systemd/system/` and
   `~/.config/systemd/user/`).
+
+### Restock — api-credit-basic +3 sealed units (10 Nov 2026)
+
+- Owner approved in chat ("Ok restock") after the order-4 proof
+  purchase consumed the last unit. Same flow as the original
+  stocking, nothing improvised: worker service stopped, the v3
+  vault gained three fresh codes through `FileVault.addCodes`
+  (driver against the compiled dist), worker service restarted
+  and verified healthy (leash verified on-chain, constitution
+  read, polling at 15s).
+- New codes (test-marked, continuing the sequence):
+  BOUNDEN-TEST-CREDIT-0004 / -0005 / -0006. Commitments
+  (SHA-256, cross-checked with an independent hashlib
+  computation):
+  `a435391bba678307d8197674791a1b5e54aae20e4bd06814e6853231c23f01c9`
+  (…-0004),
+  `b1937225ba11ad5ad88221c006f45fd95928c978ab9add8a71a9cb312582a6de`
+  (…-0005),
+  `7afdd7d799cad4829982472d075ce9be41eaf79c45097931391895e386dfd956`
+  (…-0006). Vault api-credit-basic queue: 6 commitments,
+  3 available. Licence queue untouched (3 commitments,
+  1 available).
+- On-chain: owner-signed `add_inventory_commitments`
+  (the three hashes, FIFO order) on bounden11.testnet, tx
+  `596e5VwBjPqzSyCngRae3WBpHh5FqVZZBFUqeK4qD8XD` (SuccessValue).
+  First attempt at 30 TGas prepaid failed the RPC balance check
+  (owner implicit holds ≈0.0168 NEAR); retried at 12 TGas —
+  actual burn a small fraction of that, as with prior calls.
+- Verified by direct read: `inventory_available`
+  api-credit-basic = **3** (was 0), licence-pro = **1**
+  (unchanged). Live storefront agrees: home reads 1 sealed /
+  3 sealed across the two products; the api-credit-basic
+  product page is purchasable again ahead of judging
+  (16–18 Nov). Sealed totals: api-credit-basic 6 registered
+  (3 consumed by orders 2–4, 3 available), licence-pro 3
+  registered (2 consumed, 1 available).
