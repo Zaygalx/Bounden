@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import BuyPanel from "@/components/BuyPanel";
 import ModeBanner from "@/components/ModeBanner";
 import ProductTabs from "@/components/ProductTabs";
-import { fetchProduct } from "@/lib/shop";
+import { contractId, fetchProduct } from "@/lib/shop";
 import { formatUsd } from "@/lib/format";
 import type { ProductKind } from "@/lib/types";
 
@@ -100,6 +101,13 @@ export default async function ProductPage({
             How the code stays secret
           </Link>
         </div>
+        <BuyPanel
+          productId={product.id}
+          priceUsd={product.price_usd}
+          contractId={contractId()}
+          available={product.inventoryAvailable}
+          active={product.active}
+        />
       </section>
 
       <ProductTabs

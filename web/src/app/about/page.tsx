@@ -107,6 +107,27 @@ export default function AboutPage() {
 
       <section className="prose-section">
         <div>
+          <h2>Testing the shop live</h2>
+          <p>
+            If you are judging this shop, you do not have to take any page
+            here on faith. With a NEAR testnet wallet, a little testnet
+            NEAR for fees, and testnet USDC from{" "}
+            <a href="https://faucet.circle.com" target="_blank" rel="noreferrer">
+              Circle&rsquo;s public faucet
+            </a>
+            , you can connect your wallet in the sidebar, buy a product,
+            and watch the leashed cashier fulfil your order on its
+            tracking page — the same path every order on this shop has
+            taken. The cashier is on duty through the judging period; a
+            paid order is normally fulfilled within the minute, and if it
+            ever waits, it waits in the open at <em>Paid</em>, with its
+            whole record readable.
+          </p>
+        </div>
+      </section>
+
+      <section className="prose-section">
+        <div>
           <h2>Why there is no login here</h2>
           <p>
             Visitors sometimes look for the sign-in button. There isn't one,

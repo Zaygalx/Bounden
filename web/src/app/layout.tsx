@@ -3,6 +3,8 @@ import { Archivo, IBM_Plex_Mono, Newsreader } from "next/font/google";
 import Link from "next/link";
 import SealMark from "@/components/SealMark";
 import { MobileTabBar, SidebarNav } from "@/components/SiteNav";
+import WalletEntry from "@/components/WalletEntry";
+import WalletProvider from "@/components/WalletProvider";
 import { contractId, fetchOrder, fetchProducts } from "@/lib/shop";
 import { formatAge } from "@/lib/format";
 import "./globals.css";
@@ -75,6 +77,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Skip to content
         </a>
 
+        <WalletProvider contractId={contract}>
+
         <div className="notice-bar" role="note">
           <strong>Demo inventory.</strong>
           Every product here is a clearly marked test item with no real-world
@@ -115,6 +119,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   </div>
                 )}
               </dl>
+              <WalletEntry />
               <p className="side-book-note">
                 {mode === "live"
                   ? "Read live from the contract."
@@ -206,6 +211,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </div>
 
         <MobileTabBar />
+        </WalletProvider>
       </body>
     </html>
   );

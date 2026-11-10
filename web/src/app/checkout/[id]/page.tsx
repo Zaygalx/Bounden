@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import BuyPanel from "@/components/BuyPanel";
 import CopyButton from "@/components/CopyButton";
 import ModeBanner from "@/components/ModeBanner";
 import { contractId, fetchProduct } from "@/lib/shop";
+import { TOKEN_CONTRACT_ID } from "@/lib/purchase";
 import { formatUsd } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -21,12 +23,14 @@ export async function generateMetadata({
 }
 
 /**
- * Checkout is an EXPLAINER at this stage: buying is a wallet action
- * (create_order, then pay the contract via the token's
- * ft_transfer_call), and the storefront does not hold keys or sign
- * anything. The page shows the exact calls a wallet makes, with the
- * buyer's own order id and the exact amount — the contract rejects any
- * payment that is not exact, from anyone but the buyer of record.
+ * Checkout is a wallet action with an EXPLAINER kept beside it:
+ * buying is create_order, then pay the contract via the token's
+ * ft_transfer_call, and the storefront does not hold keys or sign
+ * anything. A connected visitor can sign both calls from this page
+ * (BuyPanel — the payload is lib/purchase.ts, the figures the live
+ * orders proved); the explainer below still shows the exact calls
+ * for anyone who would rather make them by hand — same payload,
+ * same contract, no difference in what the chain sees.
  */
 export default async function CheckoutPage({
   params,
@@ -39,14 +43,16 @@ export default async function CheckoutPage({
   const contract = contractId() ?? "bounden.testnet";
 
   const transferCall = {
-    contract: "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af",
+    contract: TOKEN_CONTRACT_ID,
     method: "ft_transfer_call",
     args: {
       receiver_id: contract,
       amount: product.price_usd,
       msg: "<your order id, e.g. 0>",
     },
-    attached_gas: "30 Tgas",
+    // 100 Tgas is the figure the live payments for orders 2 and 3
+    // landed with; 30 Tgas failed on-chain ("More gas is required").
+    attached_gas: "100 Tgas",
     attached_deposit: "1 yoctoNEAR",
   };
   const transferJson = JSON.stringify(transferCall, null, 2);
@@ -70,6 +76,14 @@ export default async function CheckoutPage({
           wallet is the whole checkout.
         </p>
       </div>
+
+      <BuyPanel
+        productId={product.id}
+        priceUsd={product.price_usd}
+        contractId={contractId()}
+        available={product.inventoryAvailable}
+        active={product.active}
+      />
 
       <ol className="stepper">
         <li>
@@ -138,6 +152,33 @@ export default async function CheckoutPage({
           <Link href="/constitution">Constitution</Link>.
         </li>
       </ul>
+
+      <h2>Testing this shop as a judge</h2>
+      <p>
+        The whole purchase can be run live from this page. You need three
+        things, all testnet, all free: a NEAR testnet wallet (for
+        example{" "}
+        <a href="https://testnet.mynearwallet.com" target="_blank" rel="noreferrer">
+          MyNearWallet
+        </a>
+        ), a little testnet NEAR in it for network fees, and testnet USDC
+        from{" "}
+        <a href="https://faucet.circle.com" target="_blank" rel="noreferrer">
+          Circle&rsquo;s public faucet
+        </a>{" "}
+        (choose NEAR testnet). Then: <strong>Connect wallet</strong> in
+        the sidebar, <strong>Buy</strong> above, sign the one batch your
+        wallet shows you, and follow the order on its tracking page.
+      </p>
+      <p>
+        One honest note about the cashier: it is a program on a leash, not
+        a person on a shift. While it is on duty it passes every few
+        seconds, and it is on duty through the judging period — a paid
+        order is normally fulfilled within the minute. If you ever pay
+        while it rests, your order waits at <em>Paid</em> on its tracking
+        page: visible, exact, and first in line when the cashier returns.
+        Nothing about a waiting order is hidden or lost.
+      </p>
 
       <h2>A note on cross-chain payment</h2>
       <p>
