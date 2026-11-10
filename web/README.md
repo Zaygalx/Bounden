@@ -27,7 +27,7 @@ A "Demo inventory" notice is shown on every page in both modes.
 |---|---|
 | `/` | Catalogue (products read via the data layer) + order lookup |
 | `/products/[id]` | Product detail and delivery semantics per kind |
-| `/checkout/[id]` | How payment works: `create_order`, then pay the contract in `usdc.testnet` via `ft_transfer_call` (msg = the order id). The cashier never touches payment. Explainer only at this stage — buying is a wallet action; the storefront holds no keys and signs nothing |
+| `/checkout/[id]` | How payment works: `create_order`, then pay the contract via `ft_transfer_call` on Circle's NEAR testnet USDC contract (msg = the order id). The cashier never touches payment. Explainer only at this stage — buying is a wallet action; the storefront holds no keys and signs nothing |
 | `/orders/[id]` | Order status read from `get_order`, including the judgement attestation hash when one is recorded |
 | `/constitution` | The demo's Act 3: the constitution from `get_constitution` plus the agent key's permission object (receiver, method allowlist, allowance) — every power the agent holds, listed publicly, with the powers it does NOT hold alongside |
 | `/about` | How inventory stays secret on a public chain |

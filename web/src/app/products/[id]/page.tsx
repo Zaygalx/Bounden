@@ -58,7 +58,7 @@ export default async function ProductPage({
           </tr>
           <tr>
             <th>Settlement</th>
-            <td>Testnet USDC (usdc.testnet), paid to the shop contract</td>
+            <td>USDC (Circle, NEAR testnet), paid to the shop contract</td>
           </tr>
         </tbody>
       </table>

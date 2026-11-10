@@ -25,7 +25,7 @@ export default async function CheckoutPage({
   const contract = contractId() ?? "bounden.testnet";
 
   const transferCall = {
-    contract: "usdc.testnet",
+    contract: "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af",
     method: "ft_transfer_call",
     args: {
       receiver_id: contract,
@@ -42,7 +42,7 @@ export default async function CheckoutPage({
       <h1>How to buy: {product.name}</h1>
       <p className="lede">
         Price: <strong>{formatUsd(product.price_usd)}</strong>, settled in
-        testnet USDC. You pay the shop <em>contract</em> — never the cashier.
+        USDC (Circle, NEAR testnet). You pay the shop <em>contract</em> — never the cashier.
         The cashier (an autonomous agent) never touches your payment: it
         cannot, because its only key is allowlisted to fulfil orders and
         issue in-band refunds.

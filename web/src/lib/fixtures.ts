@@ -50,7 +50,8 @@ export const FIXTURE_CONSTITUTION: ChainConstitution = {
   // Hex-shaped but visibly patterned: a placeholder, not a real hash.
   agent_code_hash:
     "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-  payment_token: "usdc.testnet",
+  // The live shop's real settlement token: Circle's NEAR testnet USDC.
+  payment_token: "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af",
   price_band_bps: 1000,
   refund_cap_usd: "50000000",
   refund_window_ns: 3_600_000_000_000,

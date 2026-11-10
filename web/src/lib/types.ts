@@ -1,8 +1,8 @@
 /**
  * Shapes mirroring the shop contract's JSON views
  * (contract/src/lib.rs: Product, Order, ConstitutionView) and the NEAR
- * access-key view. Amounts are stablecoin base units (usdc.testnet:
- * 6 decimals), carried as strings — never floats.
+ * access-key view. Amounts are stablecoin base units (Circle's NEAR
+ * testnet USDC: 6 decimals), carried as strings — never floats.
  */
 
 export type ProductKind = "LicenceKey" | "ApiCreditCode" | "DownloadableAsset";
