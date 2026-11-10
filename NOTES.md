@@ -2384,3 +2384,74 @@ sealed) instead of the live ones. Both fixed in this pass.
   form. Honest limits: verification is markup/render-level plus the
   CSS bundle — no physical-device screenshot was taken in this pass;
   the owner sees it on his phone as the real device check.
+
+## Stage 5 — storefront v3.1, sidebar shell (Tue 10 Nov 2026)
+
+- **Trigger:** the owner reviewed v3 on his phone and gave three
+  instructions, then two clarifications. (1) The header tagline "The
+  agent is bound. The money is not." — circled on his screenshot,
+  called slop — removed. (2) The header contract pill — on reflection
+  NOT removed: "Change the design so it doesn't look like a slop."
+  The contract account stays visible, redesigned as data furniture.
+  (3) "There is no side bar layout" — one consistent sidebar shell
+  on every route. Plus: the ◆ glyph before the wordmark "reads as a
+  placeholder, not a logo" — replaced with a real seal mark. Plus his
+  literal login question: a visitor sees no login/logout/dashboard —
+  intended by the architecture, now explained on the site.
+- **Design (commit `1933a91`):** the Day-Book direction is unchanged
+  (paper #FAF5EA, ledger green, Newsreader + Archivo, Plex Mono for
+  data). The per-page sticky header is gone. In its place, ONE app
+  shell in the root layout: at ≥900px a sidebar (paper-deep board,
+  double-rule right edge) carrying the brand, a ruled vertical nav
+  (Shop / Constitution / Track Order / About, active row marked by a
+  green inset bar), and at its foot a ledger data block — ruled
+  entries in IBM Plex Mono: Contract of record (bounden11.testnet),
+  Network, Goods for sale, Sealed units in the vault, Orders entered,
+  with a mode-honest note under it ("Read live from the contract." /
+  last-live-read age / fixture labelling). Below 900px the sidebar
+  collapses to a compact top bar (logo + wordmark only) and the
+  existing bottom tab bar (breakpoint moved 760px → 899px). The
+  footer is unchanged and still carries Contract as a plain data
+  line; /constitution still carries the full record. The tagline is
+  also gone from both <title>s it decorated.
+- **Logo:** new `SealMark` component — the hero seal reduced to a
+  "B" monogram inside a double ring, same green stamp idiom, slight
+  -6° press rotation; legible at 44px (sidebar) and 36px (top bar).
+  The full circular seal ("Bounden — kept in the open") stays in the
+  hero only, where its text survives.
+- **Copy additions (only):** /about gains a closing section "Why
+  there is no login here" — no accounts, no passwords, nothing stored
+  to log into; the wallet is the identity; the order number is the
+  receipt. Checkout gains one line under the lede: "No account, no
+  login — the transfer from your wallet is the whole checkout." No
+  auth features, no wallet-connect. All other copy untouched,
+  including the hero headline.
+- **Read logic untouched:** `shop.ts` / `near.ts` / `evidence.ts`
+  are byte-identical to v3. The root layout reuses `fetchProducts`
+  and the same sequential `fetchOrder` probe as the home page for
+  the sidebar figures, and the layout is `force-dynamic` so live
+  figures can never be baked into a prerendered shell (build route
+  table: all ƒ). `StatusPill` deleted; header/nav-tab CSS removed.
+- **Gates:** typecheck clean; `next build` passes; local production
+  render (live env) of all seven routes — 200, sidebar + contract
+  entry on every route, tagline and pill absent everywhere, sidebar
+  figures 2/2/4, order 3 attestation rendered, zero `usdc.testnet`,
+  no fixture banner.
+- **Deploy:** same clean-copy + CLI route, env untouched —
+  deployment bounden-mj56fjx9l, aliased to
+  https://bounden.vercel.app.
+- **Live verification (production, against a fresh direct contract
+  read made minutes before):** chain said licence-pro $25.00 avail
+  1, api-credit-basic $10.00 avail 1, sealed total 2, orders 0–3
+  (4 recorded; order 3 Fulfilled, attestation
+  `near-ai:687dd756…a6726f`). Site matched exactly: all seven routes
+  200 with the sidebar shell, live sidebar figures 2/2/4, no banner
+  (fully live), order 3 attestation hash rendered, constitution
+  permission object + attack table, the login section live on
+  /about, the line live on checkout, zero `usdc.testnet`; the
+  production CSS bundle carries the sidebar/seal-mark/side-nav rules
+  and no status-pill or wordmark rules.
+- **Checklist:** SUBMISSION.md #15 stays DONE, v3.1 noted under it.
+  Honest limits, as before: verification is markup/render-level
+  plus the CSS bundle; no device screenshot in this pass — the
+  owner's phone is the real device check.
