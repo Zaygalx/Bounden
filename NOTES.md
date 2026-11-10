@@ -3228,3 +3228,20 @@ waits on the owner's approval of the character and the words.
   shoot LOG entry. Film NOT re-assembled — pass 2 waits on
   the owner's approval of the animated character and
   assembles at the story's natural length.
+
+**Film rework pass 2 — final assembly (10 Nov 2026).** The
+owner approved the pass-1c Blender character with one
+amendment ("make it character bigger. Seeing it is kinda
+straining"), and pass 2 re-assembled the whole film around
+him at 501px on the 1080p frame (from the proof's 300px),
+at Script v5's natural length of 86.96s under his stretch
+ruling. Same real takes as v1; the six v1 honesty notes
+apply unchanged. Verified frame by frame at the new size —
+no beat needed a size exception; he vacates for every
+evidence close-up and steps aside for the climax permission
+list. Outputs: `film/bounden-demo-master.mp4` +
+`film/bounden-demo-x.mp4`; v1 preserved as `*-v1.mp4`.
+Production note: Blender must run under Xvfb here (no
+libEGL on the system). Full record: `docs/FILM.md`,
+"Rework pass 2 — final assembly, as shot"; SUBMISSION #11
+updated. Not posted — the owner reviews the film first.

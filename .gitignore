@@ -25,4 +25,5 @@ __pycache__/
 film/venv/
 film/render/
 film/build/
+film/build2/
 film/assets/voices/

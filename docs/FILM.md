@@ -821,3 +821,73 @@ and idle beats; voice measured on the track from 0.96s to
 uncovered throughout. The film is NOT re-assembled — pass 2
 still waits on the owner's approval, now of the animated
 character (the voice is unchanged and already approved).
+
+## Rework pass 2 — final assembly, as shot (10 Nov 2026)
+
+The owner approved the Blender character from proof reel v2
+with one amendment, his words: *"Yes this is nice but make
+it character bigger. Seeing it is kinda straining."* Pass 2
+is the reworked film, assembled around the animated
+character at the bigger size and at the story's natural
+length.
+
+**Final size: 501px tall on the 1920×1080 frame** (the
+proof reel stood him at ~300px), bottom-right corner, cloak
+hem flush with the frame's bottom edge — measured on the
+baked layer, not estimated. At this size the standing
+constraints were re-verified frame by frame across every
+beat: he never covers a hash, a log line, a price, the
+permission object or any evidence. **No beat needed a size
+exception** — the larger figure holds from the hook to the
+climax. He vacates entirely, exactly as the choreography
+did in v1, during the four evidence close-ups: the
+poisoned-memo explorer glance, the refund-rejection event
+glance, the sealed-code collection reveal, and the two
+permission-object holds (the wall-3 panel hold and the
+climax reveal — on "Here is everything I am able to do" he
+presents the list, then steps aside and fades out so the
+panel reads clean). During the collection reveal his hands
+brush the page's bottom-right corner margin only; the
+evidence stays on screen above him throughout, and both
+appear in order rather than together.
+
+**Duration: 86.96 seconds** — the owner's ruling lifted the
+59-second map ("if it wants more stretch than 59 sec then
+stretch"), so the film runs at Script v5's natural rhythm:
+the seven recorded lines (Kokoro `am_michael`, 64.09s
+total, verbatim) paced with beat silences, the room-tone
+pauses preserved between the walls, and a 2.6-second silent
+end card. The footage is unchanged from the v1 takes — the
+same real purchase (order 8) and collection, the same three
+walls (orders 9, 2, and the leash key's protocol refusal) —
+and the six honesty notes in the v1 as-shot record above
+apply to this cut unchanged. What changed is the presenter
+layer and the words: the character performs Script v5
+across the whole film (the proof reel's hook choreography
+plus new choreography for the purchase narration, the three
+walls and the climax), with sentence captions and one beat
+chip per beat in the Day-Book style.
+
+**Production note:** Blender 5.2.3 was run under Xvfb
+(GLX) — headless it aborts on this machine with "Couldn't
+open libEGL.so.1", which is absent from the system. The
+1,959-frame character sequence rendered under Workbench at
+~1.5s per frame. Assembly scripts:
+`film/shoot/figure3d_film.py` (film choreography),
+`film/shoot/bake_figure_layer.py` (grade + contact shadow +
+the 501px bake), `film/shoot/captions_v5.py`,
+`film/shoot/assemble2.py`.
+
+**Outputs:** `film/bounden-demo-master.mp4` (1920×1080,
+86.96s, ~8.2MB) and `film/bounden-demo-x.mp4` (1280×720,
+~3.3MB) for the post. The v1 cut is preserved in the tree
+as `film/bounden-demo-master-v1.mp4` and
+`film/bounden-demo-x-v1.mp4`. Verified before commit:
+ffprobe duration and streams; frames extracted and
+inspected at every beat and inside every vacate window;
+the master's own silence map re-measured and matched
+against the caption windows (voice starts 0.94s, beat gaps
+at 10.88–12.23, 23.24–24.84, 34.55–38.62, 59.60–61.56,
+67.55–69.79, final voice end 80.10s). **Not posted — the
+owner reviews the finished film first; the X post and the
+submission form follow his word.**

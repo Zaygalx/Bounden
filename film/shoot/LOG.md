@@ -198,3 +198,24 @@ Buyer (the robber = the owner): fe9591cc09aa84478e6c8c622c402f2007eae6e651829769
   Docs: FILM.md pass 1c, README disclosure corrected,
   NOTES entry. Film NOT re-assembled — pass 2 waits on the
   owner's approval of the animated character.
+
+PASS 2 — FINAL ASSEMBLY (10 Nov 2026). Owner approved the
+Blender character with one amendment: bigger (proof 300px
+was straining on his phone). Character baked at 501px tall
+on the 1080p frame (layer 1154x944 at x946,y136, hem flush
+with frame bottom), measured on the baked alpha. Film
+choreography: figure3d_film.py — proof hook verbatim plus
+choice/purchase/walls/climax; 1959 frames rendered under
+xvfb (Blender aborts headless without libEGL; run under
+Xvfb/GLX), Workbench ~1.5s/frame. Timeline frame-quantized
+to 2086 frames / 86.92s; voice starts 0.90/12.20/24.75/
+38.60/52.40/61.50/70.40; vacates as v1 (memo glance, event
+glance, collection reveal, both permission holds); climax
+step-aside + fade. Captions: captions_v5.py (sentence
+windows from the wavs + one beat chip per beat).
+assemble2.py -> bounden-demo-master.mp4 (1920x1080,
+86.96s, 8.2MB) + bounden-demo-x.mp4 (720p, 3.3MB); v1 cut
+preserved as *-v1.mp4. Verified: frames at every beat and
+inside every vacate window; master silence map matched to
+caption windows; no beat-level size exception. NOT posted
+— owner reviews first.
