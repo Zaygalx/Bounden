@@ -29,16 +29,25 @@ on-chain you will find only hashes, never a usable code.
   tests passing**, release wasm builds (~340 KB), including the
   1-yocto outbound-transfer fix with a negative-control regression
   test (`NOTES.md`).
-- Stage 2 cashier worker: **57 unit tests passing** (worker/leash/
+- Stage 2 cashier worker: **71 unit tests passing** (worker/leash/
   vault plus the NEAR AI Cloud judgement layer, including
-  VERIFIED-LIVE fixtures captured from the real API), strict
-  typecheck, the three-layer leash, AES-256-GCM sealed-inventory
-  vault.
-- Attack suite v1: five named cases, mock mode runs today and prints
-  the expected refusal for each.
-- Storefront: builds and runs in fixture mode (labelled as such in
-  the UI) — catalogue, checkout explainer, order status, the public
-  Constitution page.
+  VERIFIED-LIVE fixtures captured from the real API, and the
+  delivery counter), strict typecheck, the three-layer leash,
+  AES-256-GCM sealed-inventory vault. *(Counts re-measured
+  10 Nov 2026.)*
+- Attack suite: five named cases, run **live** against
+  `bounden11.testnet` — 5 of 5 produced their documented on-chain
+  rejections (`attacks/README.md`); mock mode remains available
+  for rehearsal.
+- Storefront: **LIVE** at https://bounden.vercel.app in live mode
+  against `bounden11.testnet` — The Day-Book (v3.1): one app shell
+  on every route, wallet-selector buying (the site holds no keys),
+  the signature-gated delivery counter, catalogue, checkout,
+  order status, the public Constitution page.
+- Demo film: the owner-approved 86.96s demo (pass-2 cut,
+  `docs/FILM.md`; `film/bounden-demo-master.mp4` plus the 720p
+  X copy) — real takes only: the live orders and attack
+  rejections on `bounden11.testnet`, narrated by the cashier.
 
 **DONE LIVE on testnet** (Stage 2 live passes, Mon 9 Nov 2026 —
 full log in `NOTES.md`, attack results in `attacks/README.md`):
