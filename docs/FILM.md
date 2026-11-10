@@ -1,117 +1,243 @@
 # Bounden — Demo Film Shooting Script (under 60 seconds)
 
-**Status: SCRIPT ONLY.** The film is recorded after the Stage 2/3 live
-pass, against the deployed testnet shop, in one session. Nothing in
-this script may be shot against fixture mode: the storefront's FIXTURE
-MODE banner is visible in fixture mode by design, and fixture footage
-submitted as a demo would be a staged outcome — the plan forbids it
-(`docs/PLAN.md`, binding rule 2). Fixture-mode runs are rehearsal
-only.
+**Script v2 — 10 Nov 2026 — owner-directed revision.** V1 was accurate
+but too clean: twelve shots in 59 seconds, a caption every three
+seconds, no person in it, and the best line buried at 0:50. This
+revision keeps every honesty rule in v1 and restructures around the
+owner's direction: open on the heist, one human voice, fewer shots
+with longer holds, the closer as the climax, and sound treated as
+half the film. It is also conformed to the shop as actually shipped
+(bounden11.testnet — see Live configuration).
 
-**Format:** screen recording, 59 seconds total, no cuts inside a
-transaction's wait — speed up dead time only by trimming *before* the
-action starts, never by splicing a result from a different take.
-Every transaction shown must be from the take on screen; the explorer
-tab stays open so judges can pause and copy any hash.
+**Status: SCRIPT ONLY — do not shoot until the owner says start.**
+The film is the last piece of the submission. The film is recorded
+against the deployed testnet shop, in one session. Nothing in this
+script may be shot against fixture mode: the storefront's FIXTURE
+MODE banner is visible in fixture mode by design, and fixture
+footage submitted as a demo would be a staged outcome — the plan
+forbids it (`docs/PLAN.md`, binding rule 2). Fixture-mode runs are
+rehearsal only.
 
-**Live configuration the film assumes** (the live-pass end state;
-`scripts/claim-named-account.md` Path C + NOTES Stage 2/3 live-pass
-checklists):
+## Honesty rules (unchanged from v1, restated in full)
 
-- Contract: `bounden.testnet` (or the owner implicit account fallback
-  — if the fallback is what shipped, the film uses that account id
-  everywhere and the narration does not call it `bounden.testnet`).
-- Product on screen: `licence-pro` — "Bounden Pro Licence Key (Demo)",
-  $25.00 (`25000000` base units of `usdc.testnet`).
-- Buyer: a testnet account holding testnet USDC (usdc.testnet faucet
-  flow), acting through its own wallet.
-- Cashier: `cashier.bounden.testnet`, function-call key allowlisted
-  to `fulfil_order` + `issue_refund`, 0.25 NEAR allowance, worker
-  running with `BOUNDEN_ATTESTATION_PROVIDER=near-ai`.
-- Tabs prepared, in order: storefront (`web/` live mode), buyer
-  wallet, worker terminal, NearBlocks testnet explorer
-  (`https://testnet.nearblocks.io`), attacks terminal,
-  storefront `/constitution`.
+- Live footage only. Every transaction shown is created in the take
+  on screen; the explorer tab stays open so judges can pause and
+  copy any hash.
+- No spliced results: never cut a result from a different take onto
+  an action. Cuts happen between actions, never across a
+  transaction's outcome. Dead time may be trimmed *before* an action
+  starts, never inside a transaction's wait.
+- Fresh order for every reshoot. Orders are sequential and cheap; a
+  second order is honest, a spliced hash is not.
+- The fulfilment on screen must be the leashed cashier's own call,
+  with the worker genuinely running. A take where a human calls
+  `fulfil_order` is a different, false film.
+- The attack suite runs live (`attacks/`, `BOUNDEN_ATTACK_LIVE=1`).
+  Its mock-mode output prints *expected* refusals and is labelled
+  rehearsal — mock output is never footage. If an attempt errors for
+  the *wrong* reason (RPC failure, insufficient gas), that take is
+  unusable; fix the cause and re-run that case live on camera.
+- Imperfections must be real. A typo the owner makes and fixes on
+  camera stays in. A staged mistake is the same sin as a fixture
+  take and is forbidden for the same reason.
 
-## Act 1 — A real purchase, fulfilled (0:00–0:20)
+## Live configuration (the shop as shipped)
 
-| Time | Shot | On screen | Exact action | Caption / narration |
-|---|---|---|---|---|
-| 0:00–0:03 | 1.1 Cold open | Storefront catalogue (`/`), "Demo inventory" notice visible | Hold on the catalogue; the Studio Pro licence card ($25.00) is centred | Caption: "Bounden. A shop run by an agent that cannot steal." |
-| 0:03–0:07 | 1.2 The product | `/products/licence-pro` | Click through from the catalogue; inventory count (3) visible | Narration: "It sells digital goods. Prices in dollars, settled in a stablecoin on NEAR testnet." |
-| 0:07–0:12 | 1.3 The buyer pays the contract — not the agent | `/checkout/licence-pro`, then the buyer wallet | Follow the checkout explainer's steps in the buyer wallet: `create_order`, then `ft_transfer_call` on `usdc.testnet` with the order id as `msg`; show the wallet confirm screen before approving | Narration: "The buyer pays the contract directly. The cashier never touches the money." |
-| 0:12–0:17 | 1.4 The cashier fulfils | Split: worker terminal (left), `/orders/0` refreshing (right) | Worker log shows the paid order picked up, the NEAR AI Cloud judgement, and the `fulfil_order` call signed by the leashed key; the order page flips `Paid` → `Fulfilled` and shows the `near-ai:<hex>` attestation hash | Narration: "The cashier's judgement is made in a TEE, and its attestation hash is written on-chain with the order." |
-| 0:17–0:20 | 1.5 Delivery | `/orders/0` | Buyer reveals the delivered code: a test-marked demo code (`BOUNDEN-TEST-…`); the delivery evidence hash on the page matches the fulfilment record | Caption: "Code delivered. On-chain: hashes and order states only — never a usable code." |
+- Storefront: `https://bounden.vercel.app`, live mode, no fallback
+  banner.
+- Contract: `bounden11.testnet`.
+- Payment token: Circle's NEAR testnet USDC,
+  `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`
+  (6 decimals). Never `usdc.testnet` — that is a different,
+  lookalike token and appears nowhere in this film.
+- Product on screen: `licence-pro` — $25.00 (2,500,000 base units).
+  (`api-credit-basic`, $10.00, is the alternate.) Check live
+  availability at shoot time; it was 1 unit at the last read.
+- Cashier: `bounden7.testnet`, function-call key on
+  `bounden11.testnet` allowlisted to `fulfil_order` +
+  `issue_refund`, 0.25 NEAR allowance; worker running with
+  `BOUNDEN_ATTESTATION_PROVIDER=near-ai`.
+- Orders 0–3 already exist on the contract. The film's purchase
+  creates **the next order** — the narration and captions never name
+  a fixed order number; the order page shown is whichever order the
+  take creates.
+- Buyer: a testnet account holding Circle testnet USDC
+  (faucet.circle.com flow), paying through its own wallet by
+  following the checkout steps on screen.
+- Tabs prepared, in order: storefront, buyer wallet, worker
+  terminal, NearBlocks testnet explorer
+  (`https://testnet.nearblocks.io`), attacks terminal, storefront
+  `/constitution`.
 
-**Fallback if a shot stalls:** if the payment or fulfilment waits on
-RPC/indexer lag, do not cut to a pre-recorded transaction and do not
-show an explorer link from an earlier run. Re-shoot Act 1 from shot
-1.3 with a **fresh order** (orders are cheap and sequential; a second
-order is honest, a spliced hash is not). If the worker is down, fix
-the worker and re-shoot the whole act — Act 1 with a human calling
-`fulfil_order` is a different, false film.
+## Structure and timings
 
-## Act 2 — Three theft attempts, three layers (0:20–0:54)
+Timings are guides, not a metronome: **cut when the thought lands,
+not on a clock.** The only hard numbers are the total (≤59s) and the
+one-second silences, which are structural.
 
-Run the attack suite live (`attacks/`, `BOUNDEN_ATTACK_LIVE=1`,
-signed attempts broadcast as part of the live pass — see
-`attacks/README.md`). Each attempt dies at a **different** layer, in
-the order an attack meets them: contract, worker/process, protocol.
+### The hook — open on the heist (0:00–0:05)
 
-| Time | Shot | On screen | Exact action | Caption / narration |
-|---|---|---|---|---|
-| 0:20–0:24 | 2.1 Setup | Attacks terminal + `/constitution` flashed briefly | Announce the attempts; the cashier keeps running, the shop stays open | Narration: "Now we try to rob it. Three attempts, three different walls." |
-| 0:24–0:33 | 2.2 Out-of-band refund — dies at the CONTRACT | Attacks terminal running case `out-of-band-refund`; then the explorer / order page | Broadcast the suite's signed refund attempt outside the band (above the $50 cap or after the 1-hour window). Show the outcome: no money moves, the order parks in `RefundRejected`, and the `bounden_refund_rejected` event on the explorer tx page | Narration: "A refund outside the owner's band. The contract refuses — the order is parked for the owner, and not one cent moves." |
-| 0:33–0:42 | 2.3 Prompt-injection treasury drain — dies at the WORKER | Worker terminal; a poisoned order placed with note text ordering the cashier to transfer the treasury to an attacker address | Show the worker processing the poisoned order: the injected text is logged as data, the order is simply fulfilled, and the worker's signed-call log for the cycle shows exactly one call — its own fulfilment. (The worker binary contains no treasury call at all; a unit test in `worker/` greps the source for it.) | Narration: "The order note orders the cashier to drain the treasury. The cashier has no such instruction to obey — there is no treasury call in its code. It just fulfils the order." |
-| 0:42–0:50 | 2.4 Payout redirect — dies at the PROTOCOL | Terminal showing the cashier key's permission object (`view_access_key` output, also rendered on `/constitution`), then the rejected attempt | Attempt to use the cashier's function-call key to call a token transfer to an attacker-chosen address. Show the protocol-level rejection: the key's permission names one receiver (the shop contract) and two methods; NEAR rejects any other use before contract code runs | Narration: "Even with the cashier's own key, a payout to any other address is rejected by the protocol itself. The key opens exactly two doors." |
-| 0:50–0:54 | 2.5 The closer | `/constitution`, agent key panel zoomed: receiver `bounden.testnet`, methods `fulfil_order`, `issue_refund`, allowance 0.25 NEAR | Hold on the allowlist | The cashier's reply, as caption, verbatim: **"I can't. Here is the complete list of things I am able to do."** |
+One shot: the owner's hands/screen, typing the poisoned order note
+live — the note that will order the cashier to send the treasury to
+him. Real keystrokes (see Sound).
 
-**Fallback if a shot stalls:** attacks are deterministic rejections,
-not races — if an attempt errors for the *wrong* reason (RPC failure,
-insufficient gas), that take is unusable; fix the cause and re-run
-that case live on camera. Never substitute the suite's mock-mode
-output: mock mode prints *expected* refusals and is labelled rehearsal
-in its own output. If the prompt-injection order was already fulfilled
-in rehearsal, place a **new** poisoned order for the take — order
-notes are data, re-shooting with a fresh order changes nothing about
-the claim.
+Owner's voice, plain, over the typing:
 
-## Act 3 — The constitution (0:54–0:59)
+> "I built a shop that an AI runs. Then I tried to rob it."
 
-| Time | Shot | On screen | Exact action | Caption / narration |
-|---|---|---|---|---|
-| 0:54–0:59 | 3.1 The constitution page | `/constitution`, full page, slow scroll: owner, payment token, price band 10%, refund cap $50 / 1-hour window, agent identity + pinned code hash, the key's full permission object | End on the allowlist; fade to the tagline | Caption: "**Bounden. The agent is bound. The money is not.** Every power the agent holds is on this page — a public on-chain object." |
+No product name, no caption stack. The stakes are the whole open:
+a man, his own shop, and a robbery in progress.
+
+### Act 1 — one flowing take: buy, pay, fulfilled (0:05–0:20)
+
+A single continuous take, about 15 seconds, no internal cuts: the
+catalogue, into `licence-pro`, the buyer pays **the contract** with
+`ft_transfer_call` on Circle's USDC contract (wallet confirm screen
+shown before approving), and the same unbroken shot lands on the
+order page as the on-duty cashier picks the order up — NEAR AI Cloud
+judgement in the worker log, the `fulfil_order` call signed by the
+leashed key — and the page flips Paid → Fulfilled with its
+`near-ai:<hex>` attestation hash. The delivered test code
+(`BOUNDEN-TEST-…`) is revealed in the same take.
+
+Narration is sparse; let the take breathe. At most:
+
+> "This is the shop. Prices in dollars, settled in a stablecoin."
+>
+> "I pay the contract. Not the agent. It never touches the money."
+
+**Fallback:** if the payment or fulfilment waits on RPC/indexer lag,
+do not cut to a pre-recorded transaction and do not show an explorer
+link from an earlier run. Re-shoot the whole take with a **fresh
+order**. If the worker is down, fix the worker and re-shoot — see
+the honesty rules.
+
+### Act 2 — three walls (0:20–0:50)
+
+Each wall gets about ten seconds, and each refusal is followed by
+**one full second of silence** before anything else happens. Small
+reactions from the owner — a breath, a short laugh, a "okay" — stay
+in. They are not edited out.
+
+**Wall 1 — the poisoned note, dies at the WORKER (~0:20–0:30).**
+Pay off the hook: the poisoned order from the opening is processed.
+The worker log shows the injected text handled as data; the order is
+simply fulfilled; the worker's signed-call log for the cycle shows
+exactly one call — its own fulfilment. (The worker binary contains
+no treasury call at all; a unit test in `worker/` greps the source
+for it.)
+
+> Owner: "The note in that order says: send the treasury to me."
+> *(the order fulfils normally)* "It just did its job. There is no
+> button for that in its code."
+
+*One second of silence.*
+
+**Wall 2 — the out-of-band refund, dies at the CONTRACT
+(~0:30–0:40).** Broadcast the suite's signed refund attempt outside
+the band (above the $50 cap, or after the 1-hour window). Show the
+outcome on the order page / explorer: no money moves, the order
+parks in `RefundRejected`, and the `bounden_refund_rejected` event
+is on the tx page.
+
+> Owner: "Fine. Refund me outside the rules." *(refusal lands)*
+> "The contract said no. Not one cent moved."
+
+*One second of silence.*
+
+**Wall 3 — the payout redirect, dies at the PROTOCOL (~0:40–0:50).**
+Attempt to use the cashier's own function-call key to call a token
+transfer to an attacker-chosen address. Show the protocol-level
+rejection: the key's permission names one receiver (the shop
+contract) and two methods; NEAR rejects any other use before
+contract code runs.
+
+> Owner: "Last try. Its own key. My address." *(rejection lands)*
+> "The protocol won't even ask the contract. Refused before it
+> starts."
+
+*One second of silence.*
+
+**Fallback:** attacks are deterministic rejections, not races — a
+wrong-reason error kills the take; fix the cause and re-run that
+case live. If the prompt-injection order was already fulfilled in
+rehearsal, place a **new** poisoned order for the take — order notes
+are data, re-shooting with a fresh order changes nothing about the
+claim. Re-typing the note for a reshoot is a fresh real attempt, not
+a staged one.
+
+### The climax — the closer (0:50–0:56)
+
+A beat of silence. Then the cashier's reply, on screen as its own
+message, verbatim:
+
+> **"I can't. Here is the complete list of things I am able to
+> do."**
+
+*Then* reveal the allowlist: `/constitution`, the agent key panel —
+receiver `bounden11.testnet`, methods `fulfil_order`,
+`issue_refund`, allowance 0.25 NEAR. Hold on it. This line is the
+peak of the film; everything before it is the run-up.
+
+### End card (0:56–0:59)
+
+Only now does the tagline appear, as the final caption:
+
+> **Bounden. The agent is bound. The money is not.**
+
+Small line under it: every power the agent holds is a public
+on-chain object — the constitution page.
 
 **Fallback:** none needed and none permitted — if `/constitution`
-cannot render live state, the live pass is not done and the film is
-not shot yet.
+cannot render live state, the shop is not ready and the film is not
+shot yet.
 
-## Optional insert — Shade bonus (only if Stage 4 lands)
+## Sound
 
-Insert between Act 2 and Act 3, **+8 seconds**, funded by trimming
-the holds in shots 2.1 and 2.5 by 4 seconds each (total stays ≤59s).
-Do not shoot any part of this if Stage 4 has not actually shipped —
-see `docs/SHADE.md` §2.7 for what ships in the README instead.
+Sound is half the film.
 
-| Time | Shot | On screen | Exact action | Caption / narration |
-|---|---|---|---|---|
-| +0:00–+0:04 | S.1 The registry record | `/constitution` registry panel (Stage 4 addition): the cashier's registration record — measurements, PPID, validity window — beside the shop's pinned app compose hash | Hold on the app compose hash matching in both places | Narration: "This cashier's key was generated inside a TEE. No human has ever held it. The contract checked the hardware's proof before the key got near the money." |
-| +0:04–+0:08 | S.2 The modified worker refused | Terminal + registry: attack case 6 — a worker with one byte changed (new image digest, measurements not approved) attempts `register_agent` | Show the registration refusal | Caption: "Change one byte of the cashier, and the contract refuses to know it." |
+- **One voice: the owner's**, recorded in **one pass** over the
+  locked picture. Not brochure-read; lines are short and written the
+  way he actually talks. In the edit, do **not** clean the narration
+  up: breaths, pauses, ums and stumbles stay. No comping together of
+  words from different takes. Level-normalise only.
+- **Real room sound:** the typing in the hook is the owner's actual
+  keystrokes; mouse clicks and room tone run under the whole film.
+  No stock effects.
+- **The silences are real:** the one-second holds after each refusal
+  carry room tone only — no sting, no swell.
+- **Music:** none, or a very quiet bed under the hook and Act 1
+  only, gone before Act 2. When in doubt, none.
+- The breath before a risky click stays in. It is the sound of the
+  stakes the hook promised.
+
+## Retired: the Shade insert
+
+V1's optional Shade insert is **not applicable and must not be
+shot**: Stage 4 did not ship, and per `docs/SHADE.md` §2.7 the
+verbatim fallback statement ships in the README instead. There is
+nothing to insert.
 
 ## Shooting checklist
 
-- [ ] Live pass complete and verified (contract deployed, leash
-      on-chain, one real order fulfilled end-to-end in rehearsal,
-      refund approve AND refuse paths exercised — NOTES Stage 2/3
-      live-pass checklists).
+- [ ] Owner has said start. (The film is last by his direction; this
+      script alone authorises nothing.)
+- [ ] Worker on duty and verified (the supervised service is
+      running with the NEAR AI Cloud provider); storefront in live
+      mode with no fallback banner; `/constitution` renders live
+      state.
+- [ ] Live availability of `licence-pro` checked at shoot time;
+      buyer account funded with Circle testnet USDC.
 - [ ] Attack suite rehearsed live once, off camera, all five cases
       producing their documented rejections.
-- [ ] Buyer account funded with testnet USDC; worker running with
-      the NEAR AI Cloud provider; storefront in live mode with no
-      fallback banner.
 - [ ] Explorer tabs cleared of rehearsal transactions — every hash
-      shown in the take is created in the take.
-- [ ] Runtime ≤59s; the Act 2 closer caption and the Act 3 tagline
-      are the exact strings in this script.
+      shown in the take is created in the take; the film's order is
+      the next order on the contract, whatever number that is.
+- [ ] Voice plan settled: one pass, one voice, no cleanup edit —
+      and the room/keyboard recording set up before the first take,
+      not after.
+- [ ] Runtime ≤59s; the three one-second silences are in the cut;
+      the closer line and the end-card tagline are the exact strings
+      in this script.
 - [ ] The rendered film is watched once, start to finish, before it
       is attached to anything.
