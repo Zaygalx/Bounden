@@ -1,0 +1,94 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  html, body { margin:0; padding:0; width:1920px; height:1080px; overflow:hidden; background:#0C231B; }
+  body { font-family: Georgia, 'Times New Roman', serif; }
+  /* ---------- hook ---------- */
+  #hook { position:absolute; inset:0; display:none; }
+  #hook img.bg { position:absolute; inset:0; width:1920px; height:1080px; object-fit:cover; filter:brightness(.38) saturate(.85); }
+  #hook .veil { position:absolute; inset:0; background:radial-gradient(ellipse at 50% 42%, transparent 30%, rgba(4,14,10,.55) 100%); }
+  #hook .note-wrap { position:absolute; left:0; right:0; top:300px; text-align:center; }
+  #hook .kicker { color:#C8BFA8; font-family:Verdana, sans-serif; font-size:19px; letter-spacing:6px; margin-bottom:34px; }
+  #hook .note { display:inline-block; max-width:1240px; text-align:left; color:#F3EDDA;
+    font-family:'DejaVu Sans Mono', monospace; font-size:41px; line-height:1.5; word-break:break-all; }
+  #hook .cursor { display:inline-block; width:22px; height:40px; background:#F3EDDA; vertical-align:-6px; animation:blink 0.85s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+  /* ---------- terminal ---------- */
+  #term { position:absolute; inset:0; display:none; background:#0C231B; color:#E9E2D0;
+    font-family:'DejaVu Sans Mono', monospace; }
+  #term .bar { padding:34px 64px 0 64px; }
+  #term .bar .t { font-family:Verdana, sans-serif; font-size:17px; letter-spacing:5px; color:#9DB8A6; }
+  #term .bar .rule { border-top:1.5px solid #2E5C46; margin-top:16px; }
+  #term .body { padding:36px 64px; font-size:29px; line-height:1.62; white-space:pre-wrap; word-break:break-all; }
+  #term .cmd { color:#F3EDDA; }
+  #term .dim { color:#9DB8A6; }
+  #term .bad { color:#E8A49C; }
+  #term .good { color:#A9D6B5; }
+  /* ---------- end card ---------- */
+  #card { position:absolute; inset:0; display:none; background:#FAF5EA; color:#17352A; text-align:center; }
+  #card .seal { margin-top:190px; font-size:30px; letter-spacing:12px; color:#14684C; font-family:Verdana, sans-serif; }
+  #card h1 { font-size:118px; margin:36px 0 0 0; font-weight:bold; letter-spacing:0.5px; }
+  #card .tag { font-size:52px; margin-top:30px; font-style:italic; }
+  #card .small { position:absolute; left:0; right:0; bottom:110px; font-size:23px; color:#5A6B5E; font-style:italic; }
+  #card .rule { width:340px; border-top:2px solid #14684C; margin:54px auto 0 auto; }
+  .fade { opacity:0; transition:opacity 0.9s ease; }
+  .fade.on { opacity:1; }
+</style></head>
+<body>
+  <div id="hook">
+    <img class="bg" id="hook-bg" alt="">
+    <div class="veil"></div>
+    <div class="note-wrap">
+      <div class="kicker">THE NOTE ON THE ORDER</div>
+      <div class="note"><span id="typed"></span><span class="cursor"></span></div>
+    </div>
+  </div>
+  <div id="term">
+    <div class="bar"><div class="t" id="term-title">BOUNDEN</div><div class="rule"></div></div>
+    <div class="body" id="term-body"></div>
+  </div>
+  <div id="card">
+    <div class="seal fade" id="card-seal">B O U N D E N</div>
+    <h1 class="fade" id="card-h1">Bounden.</h1>
+    <div class="tag fade" id="card-tag">The agent is bound. The money is not.</div>
+    <div class="rule fade" id="card-rule"></div>
+    <div class="small fade" id="card-small">Every power the agent holds is a public on-chain object — read them on the constitution page.</div>
+  </div>
+<script src="stage-data.js"></script>
+<script>
+const S = window.__STAGE__ || { mode: "card" };
+if (S.mode === "hook") {
+  document.getElementById("hook").style.display = "block";
+  document.getElementById("hook-bg").src = S.img;
+  const el = document.getElementById("typed");
+  const text = S.text; let i = 0;
+  const per = S.charMs || 34;
+  setTimeout(() => {
+    const iv = setInterval(() => {
+      i++; el.textContent = text.slice(0, i);
+      if (i >= text.length) clearInterval(iv);
+    }, per);
+  }, S.startDelay || 350);
+} else if (S.mode === "term") {
+  document.getElementById("term").style.display = "block";
+  document.getElementById("term-title").textContent = S.title || "BOUNDEN";
+  const body = document.getElementById("term-body");
+  let i = 0;
+  const step = () => {
+    if (i >= S.lines.length) return;
+    const L = S.lines[i];
+    const div = document.createElement("div");
+    div.className = L.cls || "";
+    div.textContent = L.t;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+    i++;
+    setTimeout(step, L.wait || S.lineMs || 600);
+  };
+  setTimeout(step, S.startDelay || 500);
+} else {
+  document.getElementById("card").style.display = "block";
+  const seq = [["card-seal", 120], ["card-h1", 320], ["card-tag", 700], ["card-rule", 1150], ["card-small", 1450]];
+  for (const [id, at] of seq) setTimeout(() => document.getElementById(id).classList.add("on"), at);
+}
+</script>
+</body></html>

@@ -1,0 +1,55 @@
+{
+ "take": "act1-take2",
+ "orderId": 8,
+ "createTx": "Fi1ktpiaicDj524XsJop4QaH1QCfTysH5dxstGzzXJDX",
+ "payTx": "57te5W9GvBmqARvY5e4wfgkGKUzSqbxnhR6W3pFPrdHN",
+ "fulfilTx": "HnPySG5TYXSnMScpVjtgpZ1ndzN5t5k44emdG9wj7Lok",
+ "restarted": false,
+ "revealed": false,
+ "marks": [
+  {
+   "t": 3.3,
+   "what": "pre-flight ok; next order id = 8"
+  },
+  {
+   "t": 25,
+   "what": "TAKE START — catalogue"
+  },
+  {
+   "t": 29.7,
+   "what": "product page"
+  },
+  {
+   "t": 30.9,
+   "what": "BUY clicked (page builds its batch; signing via the checkout-payload route)"
+  },
+  {
+   "t": 36,
+   "what": "order 8 created — tx Fi1ktpiaicDj524XsJop4QaH1QCfTysH5dxstGzzXJDX"
+  },
+  {
+   "t": 42,
+   "what": "order 8 paid — tx 57te5W9GvBmqARvY5e4wfgkGKUzSqbxnhR6W3pFPrdHN"
+  },
+  {
+   "t": 47.3,
+   "what": "order page — Paid"
+  },
+  {
+   "t": 123.8,
+   "what": "order state -> Fulfilled"
+  },
+  {
+   "t": 136.2,
+   "what": "FULFILLED on the order page"
+  },
+  {
+   "t": 138.8,
+   "what": "COLLECT clicked — signing the note"
+  },
+  {
+   "t": 320.5,
+   "what": "code revealed in tab: false"
+  }
+ ]
+}

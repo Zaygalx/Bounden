@@ -1,0 +1,30 @@
+[
+ {
+  "t": 4,
+  "what": "explorer wall1: memo rendered = true"
+ },
+ {
+  "t": 13.4,
+  "what": "wall1 memo glance held"
+ },
+ {
+  "t": 15.3,
+  "what": "explorer wall2: event rendered = true"
+ },
+ {
+  "t": 22.9,
+  "what": "wall2 event glance held"
+ },
+ {
+  "t": 29.1,
+  "what": "order 9 page attempt 1: live = true"
+ },
+ {
+  "t": 40.1,
+  "what": "order 2 page attempt 1: live = true"
+ },
+ {
+  "t": 47.9,
+  "what": "EXPLORER + ORDER PAGES COMPLETE"
+ }
+]

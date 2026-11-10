@@ -1,0 +1,1 @@
+[{"at":1.2,"dur":1.6,"type":"glance","x":-6,"y":1},{"at":2.8,"dur":1.6,"dx":-46,"type":"walk"},{"at":4.6,"dur":1.4,"dx":46,"type":"walk"},{"at":6.4,"dur":0.9,"type":"speak"},{"at":7.6,"dur":1.7,"type":"puzzled"},{"at":9.45,"h":20,"type":"hop"},{"at":9.62,"text":"REFUSED","type":"stamp"},{"at":10.6,"dur":1.4,"type":"shake"},{"at":12.3,"dur":1.2,"type":"flat"}]

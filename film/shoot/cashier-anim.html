@@ -1,0 +1,170 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  html, body { margin:0; padding:0; background:transparent; overflow:hidden; }
+  #stage { position:relative; width:640px; height:720px; }
+  #stamp {
+    position:absolute; right:26px; top:64px; z-index:5;
+    font-family:Verdana, Geneva, sans-serif; font-weight:bold; letter-spacing:4px;
+    color:#A33327; border:5px solid #A33327; border-radius:8px; padding:10px 18px;
+    font-size:34px; opacity:0; transform:rotate(-13deg) scale(2.6);
+    mix-blend-mode:multiply; pointer-events:none; white-space:nowrap;
+  }
+</style></head>
+<body>
+<div id="stage"><div id="card"></div><div id="stamp">REFUSED</div></div>
+<script>
+const GREEN = "#14684C", INK = "#17352A", PAPER = "#FAF5EA";
+
+// ---- deterministic animation state --------------------------------
+// cues: [{type, at, dur, ...}] — set via window.__CUES__ before load
+// or window.__init__(cues). window.__setTime__(t) renders time t.
+const CUES = window.__CUES__ || [];
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const ramp = (t, a, b) => clamp01((t - a) / (b - a));
+const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+const easeInOut = (x) => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+
+function expressionAt(t) {
+  // returns blend params for puzzled / flat (0..1 each)
+  let puzzled = 0, flat = 0;
+  for (const c of CUES) {
+    if (c.type !== "puzzled" && c.type !== "flat") continue;
+    const w = ramp(t, c.at, c.at + 0.18) * (1 - ramp(t, c.at + c.dur - 0.22, c.at + c.dur));
+    if (c.type === "puzzled") puzzled = Math.max(puzzled, w); else flat = Math.max(flat, w);
+  }
+  return { puzzled, flat };
+}
+function speakingAt(t) {
+  for (const c of CUES) if (c.type === "speak" && t >= c.at && t <= c.at + c.dur) return true;
+  return false;
+}
+function shakeAt(t) {
+  let a = 0;
+  for (const c of CUES) {
+    if (c.type !== "shake") continue;
+    const lt = t - c.at;
+    if (lt >= 0 && lt <= c.dur) a = Math.sin(lt * Math.PI * 2 * 1.15) * 4.6 * (1 - lt / c.dur);
+  }
+  return a;
+}
+function walkAt(t) {
+  // returns {dx, hopY, tilt} from walk + hop cues
+  let dx = 0, hopY = 0, tilt = 0;
+  for (const c of CUES) {
+    if (c.type === "walk") {
+      const p = clamp01((t - c.at) / c.dur);
+      if (t >= c.at && t <= c.at + c.dur) {
+        dx += c.dx * easeInOut(p);
+        hopY += Math.abs(Math.sin(p * Math.PI * 4)) * 7 * Math.sin(p * Math.PI);
+        tilt += Math.sin(p * Math.PI * 4) * 1.8;
+      } else if (t > c.at + c.dur) dx += c.dx;
+    }
+    if (c.type === "hop") {
+      const lt = t - c.at;
+      if (lt >= 0 && lt <= 0.42) hopY += Math.sin((lt / 0.42) * Math.PI) * (c.h || 16);
+    }
+  }
+  return { dx, hopY, tilt };
+}
+function stampAt(t) {
+  for (const c of CUES) {
+    if (c.type !== "stamp") continue;
+    const lt = t - c.at;
+    if (lt >= 0) {
+      const s = lt < 0.16 ? 2.6 - 1.6 * easeOut(lt / 0.16) : 1;
+      return { shown: true, scale: s, opacity: lt < 0.05 ? lt / 0.05 : 1, text: c.text || "REFUSED" };
+    }
+  }
+  return { shown: false, scale: 2.6, opacity: 0, text: "REFUSED" };
+}
+function glanceAt(t) {
+  let x = 0, y = 0;
+  for (const c of CUES) {
+    if (c.type !== "glance") continue;
+    const w = ramp(t, c.at, c.at + 0.25) * (1 - ramp(t, c.at + c.dur - 0.3, c.at + c.dur));
+    x += (c.x || 0) * w; y += (c.y || 0) * w;
+  }
+  return { x, y };
+}
+function blinkAt(t) {
+  // deterministic blink: every 3.7s, closed for 0.13s
+  const cyc = t % 3.7;
+  if (cyc > 3.52) return Math.sin(((cyc - 3.52) / 0.18) * Math.PI); // 0..1..0 closure
+  return 0;
+}
+
+function render(t) {
+  const { puzzled, flat } = expressionAt(t);
+  const speaking = speakingAt(t);
+  const shake = shakeAt(t);
+  const { dx, hopY, tilt: walkTilt } = walkAt(t);
+  const stamp = stampAt(t);
+  const glance = glanceAt(t);
+  const blink = blinkAt(t);
+
+  const bob = Math.sin(t * (Math.PI * 2 / 2.6)) * 3.5;
+  const sway = Math.sin(t * (Math.PI * 2 / 3.4)) * 1.1;
+  const cardY = bob - hopY;
+  const cardRot = sway + walkTilt;
+  const sealTilt = shake + (-7 * puzzled) + walkTilt * 0.6;
+
+  const lidOpen = Math.max(0.06, (1 - blink) * (1 - 0.55 * flat));
+  const lidH = (1 - lidOpen) * 34;
+  const browRaiseR = puzzled * 14, browRaiseL = puzzled * 2;
+  const browY = -88 + flat * 5;
+  const pupilX = glance.x, pupilY = glance.y + flat * 1.5;
+  // mouth: flap while speaking, "o" when puzzled, else a line
+  let mouth;
+  if (speaking) {
+    const flap = (Math.sin(t * 26) > -0.2) ? 15 : 4;
+    mouth = `<ellipse cx="0" cy="108" rx="13" ry="${flap}" fill="${INK}"/>`;
+  } else if (puzzled > 0.5) {
+    mouth = `<circle cx="0" cy="106" r="9.5" fill="none" stroke="${INK}" stroke-width="6"/>`;
+  } else {
+    mouth = `<path d="M-24,104 h48" stroke="${INK}" stroke-width="6" stroke-linecap="round" fill="none"/>`;
+  }
+  const browR = puzzled > 0.25
+    ? `M36,${browY - browRaiseR} q22,-11 44,0`
+    : `M36,${browY - browRaiseR} h44`;
+
+  document.getElementById("card").innerHTML = `
+  <svg width="640" height="720" viewBox="0 0 640 720" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(${20 + dx} ${20 + cardY}) rotate(${cardRot} 300 340)">
+      <rect x="8" y="8" width="584" height="664" rx="30" fill="${PAPER}" stroke="${GREEN}" stroke-width="3"/>
+      <rect x="24" y="24" width="552" height="632" rx="22" fill="none" stroke="${GREEN}" stroke-width="1.4" opacity="0.55"/>
+      <g transform="rotate(${sealTilt} 300 268)">
+        <circle cx="300" cy="268" r="158" fill="none" stroke="${GREEN}" stroke-width="7"/>
+        <circle cx="300" cy="268" r="136" fill="none" stroke="${GREEN}" stroke-width="2.4"/>
+        <text x="300" y="316" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+              font-weight="bold" font-size="126" fill="${GREEN}">B</text>
+        <g transform="translate(300 268)">
+          <path d="M-80,${browY - browRaiseL} h44" stroke="${INK}" stroke-width="6.5" stroke-linecap="round" fill="none"/>
+          <path d="${browR}" stroke="${INK}" stroke-width="6.5" stroke-linecap="round" fill="none"/>
+          <g transform="translate(${pupilX} ${pupilY - 48})">
+            <ellipse cx="-58" cy="0" rx="11" ry="15" fill="${INK}"/>
+            <ellipse cx="58" cy="0" rx="11" ry="15" fill="${INK}"/>
+            <circle cx="-54" cy="-5" r="3.2" fill="${PAPER}"/>
+            <circle cx="62" cy="-5" r="3.2" fill="${PAPER}"/>
+          </g>
+          <rect x="-72" y="${-48 - 17}" width="30" height="${lidH}" fill="${PAPER}"/>
+          <rect x="42" y="${-48 - 17}" width="30" height="${lidH}" fill="${PAPER}"/>
+          ${mouth}
+        </g>
+      </g>
+      <line x1="150" y1="500" x2="450" y2="500" stroke="${GREEN}" stroke-width="1.6" opacity="0.7"/>
+      <text x="300" y="566" text-anchor="middle" font-family="Verdana, Geneva, sans-serif"
+            font-size="30" letter-spacing="10" fill="${INK}">THE CASHIER</text>
+      <text x="300" y="612" text-anchor="middle" font-family="Georgia, serif" font-style="italic"
+            font-size="21" fill="${INK}" opacity="0.75">bounden11.testnet &#183; on duty</text>
+    </g>
+  </svg>`;
+  const st = document.getElementById("stamp");
+  st.textContent = stamp.text;
+  st.style.opacity = stamp.opacity;
+  st.style.transform = `rotate(-13deg) scale(${stamp.scale})`;
+}
+window.__setTime__ = render;
+window.__init__ = (cues) => { CUES.length = 0; CUES.push(...cues); render(0); };
+render(0);
+</script>
+</body></html>

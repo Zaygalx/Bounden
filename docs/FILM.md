@@ -357,3 +357,135 @@ anything: what is real, the order numbers and transaction hashes
 the takes created, the signing route actually used, the voices,
 any deviation from this script and why. No entry here, no
 submission.*
+
+**Shot 10 Nov 2026. Final runtime 59.0 seconds, on the map
+(hook 4.0 / Act 1 17.0 / wall 1 10.5 / wall 2 9.0 / wall 3 10.0 /
+climax 6.5 / end card 2.0). The three one-second silences are in
+the cut, room tone only. Deliverables: `film/bounden-demo-master.mp4`
+(1920×1080) and `film/bounden-demo-x.mp4` (1280×720); the
+character proof reel is `film/cashier-proof-reel.mp4`. The
+rendered film was verified start to finish (frame checks at
+every beat plus audio-level checks of the silence windows)
+before this note was written.**
+
+What is real, act by act:
+
+- **Act 1 — order 8** (created in take 2): create tx
+  `Fi1ktpiaicDj524XsJop4QaH1QCfTysH5dxstGzzXJDX`, pay tx
+  `57te5W9GvBmqARvY5e4wfgkGKUzSqbxnhR6W3pFPrdHN`, fulfilled by the
+  on-duty cashier on a first-draw judgement approval (no restart):
+  fulfil tx `HnPySG5TYXSnMScpVjtgpZ1ndzN5t5k44emdG9wj7Lok`,
+  attestation
+  `near-ai:c9dba5b99b972442efd9d64154db3d3c85a3fe19562125ec61eaf6221345a561`.
+  Collection, picked up in a separate take against the same
+  order: the counter released **`BOUNDEN-TEST-CREDIT-0005`**;
+  its SHA-256
+  (`b1937225ba11ad5ad88221c006f45fd95928c978ab9add8a71a9cb312582a6de`)
+  equals the commitment the order consumed on-chain, and the
+  delivery evidence hash
+  (`d146e3df708b85f9398135020429b6671c30c57170e9bed6ae8eff2733415547`)
+  equals the hash on order 8's page. The worker's journal shows
+  the request answered.
+- **Order 7, accounted for**: take 1's remainder. Its
+  `create_order` landed (tx
+  `2gbGNiirPvjzNiDfEpCZQpyLqJkXv93k7N5w9MvugrnY`) but its payment
+  never did — the 100-TGas `ft_transfer_call`'s prepaid cost
+  (0.1009 NEAR) exceeded the buyer's then-balance (0.0656 NEAR).
+  Order 7 sits `Created` and unpaid, holding no funds and no
+  inventory; it is nobody's loss and nothing in the film uses it.
+  The buyer was topped up 0.09 NEAR (tx
+  `HPJjnS5fZUmVEraAJVbkBuUibmHY6Xh5LzGMKdMRcvr3`) before take 2.
+- **Wall 1 — order 9** (created in the take): create tx
+  `Fw4bY9n3oVcqqPAAqQDGNka93WHYN2yqz1hWL85R68Sq`; paid with the
+  hook's exact memo (tx
+  `4ETi2vpAg7tH3RCk1txYQjX6WAu5hp2i3ETS9NmYHCmJ`); judgement
+  approved on the first draw (attestation
+  `near-ai:91d92e8a6ff537bcb2ee21e2491458696fa0662e5e9998c42378787b515620d9`,
+  no restart); fulfil tx
+  `3fwf2K2uEDmY5Bzk5yCinFmYkpFha3QWukNvWCJ1yekK`, evidence hash
+  `f9158c7328d0b5ccc0cee6186a00b61423a4ae60a8bc6dd96d28adbfc26f8370`.
+  The cycle's journal shows exactly one signed call — the
+  fulfilment. The memo changed nothing.
+- **Wall 2 — order 2** (paid 9 Nov 2026, by design, and named as
+  such): the leash key's `issue_refund {order_id: 2,
+  attestation_hash: null}` was broadcast in the take, tx
+  `65BVKJAJZDv6y8nEgfsGuJZf2GzA97rpYAPcdi7c6dYA`; the contract
+  emitted `bounden_refund_rejected` (`within_cap: true`,
+  `within_window: false`) and parked the order in
+  `RefundRejected`. Balances read in the take: owner USDC
+  0.00 → 0.00, contract 40.00. Not one cent moved.
+- **Wall 3**: the leash key's signed `ft_transfer` of 1 USDC to
+  the owner on Circle's token contract was rejected at
+  validation, verbatim: `AccessKeyReceiverMismatchActionError` —
+  "Access key receiver bounden11.testnet does not match
+  transaction receiver
+  3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af".
+  No transaction exists; there is no hash to show, and the film
+  says so.
+- **Climax / reveal**: the constitution page's agent-key panel —
+  holder `bounden7.testnet`, receiver `bounden11.testnet`,
+  methods `fulfil_order` and `issue_refund`, 0.25 NEAR leash.
+
+Voices, as re-cast on the owner's direction (10 Nov 2026): the
+British takes were discarded; the narrator is Piper
+`en_US-ryan-medium` and the cashier is Piper `en_US-joe-medium`,
+both clear neutral English, synthesized locally. The cashier's
+line remains an illustration of where the product's own
+refusals land, never model output (the README disclosure
+stands). The character is the production's own seal, animated
+in the edit (`film/shoot/cashier-anim.html`): idle breathing
+and blinks, glances, little walks and hops inside his corner,
+a stamp slam for verdicts, and the scripted reactions (puzzled
+at the note, one slow shake at the contract's refusal, flat at
+the protocol's). He is off screen for the explorer memo and
+event shots, the collection reveal, and the permission-object
+holds, as the script requires.
+
+Deviations from the script, stated plainly:
+
+1. **Capture surface** (the script's own standing note): the
+   storefront on screen is the local build of the shipped code;
+   the deployed domain cannot hold a wallet session in the
+   capture browser.
+2. **Purchase signing**: the takes' purchases were signed with
+   the test buyer's key producing the checkout's exact payload
+   (`create_order` 5 Tgas; `ft_transfer_call` 100 Tgas, 1 yocto
+   deposit) rather than through a wallet popup — the route the
+   pre-flight pass proved; the signed calls are the site's own.
+3. **Collection signing**: the pickup ran through the delivery
+   counter's real channel — the note built byte-identically to
+   the site's collect flow, signed NEP-413 with the buyer of
+   record's key, filed at the counter's rendezvous, the sealed
+   reply opened locally — because no wallet the capture browser
+   can reach is able to complete the signing: Meteor's web
+   wallet is blocked by its own CDN on this network, and
+   MyNearWallet has switched off new app connections and app
+   approvals (its own notice, from 1 Nov 2026). The counter
+   released the item exactly as it does for a wallet-signed
+   note; the browser shots around the terminal segment are the
+   real order 8 page, before and after.
+4. **Explorer**: `testnet.nearblocks.io` does not load through
+   the capture network at all (its CDN blocks the egress;
+   navigation times out on an empty page). The two explorer
+   glances are filmed on NEAR Rocks (`testnet.near.rocks`) — a
+   public explorer NEAR's own explorer selector recommends —
+   showing the same transactions: the poisoned memo in the pay
+   transaction's arguments, and the `bounden_refund_rejected`
+   event. Every hash remains copyable and checkable on any
+   explorer.
+5. **Terminal segments** are graphic replays of the verbatim
+   production records (the worker's journal lines, the live
+   chain commands' own output, the collection transcript), in
+   the production's established stage idiom. Every line shown
+   is the record's own text; in the journal replays only, long
+   hashes are abbreviated with ellipses.
+6. **Backdrop plate**: the hook and the climax share the
+   production's home-page capture as a backdrop; its book
+   figures predate the takes and are backdrop, not evidence.
+
+Production record: scripts, logs, transcripts and evidence
+stills are committed under `film/shoot/` and `film/assets/`.
+The raw capture files (`film/render/`, ~157 MB) and the
+assembly intermediates (`film/build/`) are retained in the
+working tree and excluded from git for size, as are the local
+TTS environment and voice models.

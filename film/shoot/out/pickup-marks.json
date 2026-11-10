@@ -1,0 +1,25 @@
+{
+ "take": "act1-pickup",
+ "marks": [
+  {
+   "t": 6.9,
+   "what": "order 8 page — Fulfilled"
+  },
+  {
+   "t": 8.2,
+   "what": "delivery counter in frame — the buyer is asked to sign one note"
+  },
+  {
+   "t": 15.5,
+   "what": "counter hold ends"
+  },
+  {
+   "t": 16.5,
+   "what": "evidence block in frame"
+  },
+  {
+   "t": 23,
+   "what": "PICKUP COMPLETE"
+  }
+ ]
+}

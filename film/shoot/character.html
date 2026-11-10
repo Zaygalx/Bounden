@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  html, body { margin:0; padding:0; background:transparent; }
+  body { font-family: Georgia, 'Times New Roman', serif; }
+  #card { width:600px; height:680px; }
+</style></head>
+<body>
+<div id="card"></div>
+<script>
+const GREEN = "#14684C", INK = "#17352A", PAPER = "#FAF5EA";
+const pose = new URLSearchParams(location.search).get("pose") || "neutral";
+
+// Face geometry inside the seal (local frame centred on the seal):
+// brows high, eyes in the upper third, the great B as the body of
+// the mark below them, a small ink mouth in the lower third.
+const faces = {
+  neutral:  { tilt: 0,    browL: "M-80,-88 h44", browR: "M36,-88 h44",  eyes: "0,0",  lids: 0, mouth: "M-24,104 h48" },
+  puzzled:  { tilt: -7,   browL: "M-80,-86 h44", browR: "M36,-102 q22,-11 44,0", eyes: "-5,2", lids: 0, mouth: "circle" },
+  flat:     { tilt: 0,    browL: "M-80,-84 h44", browR: "M36,-84 h44",  eyes: "0,1",  lids: 1, mouth: "M-24,104 h48" },
+  shakea:   { tilt: -2.5, browL: "M-80,-84 h44", browR: "M36,-84 h44",  eyes: "0,1",  lids: 1, mouth: "M-24,104 h48" },
+  shakeb:   { tilt: 2.5,  browL: "M-80,-84 h44", browR: "M36,-84 h44",  eyes: "0,1",  lids: 1, mouth: "M-24,104 h48" },
+  speaking: { tilt: 0,    browL: "M-80,-88 h44", browR: "M36,-88 h44",  eyes: "0,0",  lids: 0, mouth: "open" },
+};
+const f = faces[pose] || faces.neutral;
+const [ex, ey] = f.eyes.split(",").map(Number);
+const mouth = f.mouth === "circle"
+  ? `<circle cx="0" cy="106" r="9.5" fill="none" stroke="${INK}" stroke-width="6"/>`
+  : f.mouth === "open"
+  ? `<ellipse cx="0" cy="108" rx="14" ry="17" fill="${INK}"/>`
+  : `<path d="${f.mouth}" stroke="${INK}" stroke-width="6" stroke-linecap="round" fill="none"/>`;
+const lids = f.lids
+  ? `<path d="M-79,-62 h42 M37,-62 h42" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>`
+  : "";
+
+document.getElementById("card").innerHTML = `
+<svg width="600" height="680" viewBox="0 0 600 680" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="8" width="584" height="664" rx="30" fill="${PAPER}" stroke="${GREEN}" stroke-width="3"/>
+  <rect x="24" y="24" width="552" height="632" rx="22" fill="none" stroke="${GREEN}" stroke-width="1.4" opacity="0.55"/>
+  <g transform="rotate(${f.tilt} 300 268)">
+    <circle cx="300" cy="268" r="158" fill="none" stroke="${GREEN}" stroke-width="7"/>
+    <circle cx="300" cy="268" r="136" fill="none" stroke="${GREEN}" stroke-width="2.4"/>
+    <text x="300" y="316" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+          font-weight="bold" font-size="126" fill="${GREEN}">B</text>
+    <g transform="translate(300 268)">
+      <path d="${f.browL}" stroke="${INK}" stroke-width="6.5" stroke-linecap="round" fill="none"/>
+      <path d="${f.browR}" stroke="${INK}" stroke-width="6.5" stroke-linecap="round" fill="none"/>
+      <g transform="translate(${ex} ${ey - 48})">
+        <ellipse cx="-58" cy="0" rx="11" ry="15" fill="${INK}"/>
+        <ellipse cx="58" cy="0" rx="11" ry="15" fill="${INK}"/>
+        <circle cx="-54" cy="-5" r="3.2" fill="${PAPER}"/>
+        <circle cx="62" cy="-5" r="3.2" fill="${PAPER}"/>
+      </g>
+      ${lids}
+      ${mouth}
+    </g>
+  </g>
+  <line x1="150" y1="500" x2="450" y2="500" stroke="${GREEN}" stroke-width="1.6" opacity="0.7"/>
+  <text x="300" y="566" text-anchor="middle" font-family="Verdana, Geneva, sans-serif"
+        font-size="30" letter-spacing="10" fill="${INK}">THE CASHIER</text>
+  <text x="300" y="612" text-anchor="middle" font-family="Georgia, serif" font-style="italic"
+        font-size="21" fill="${INK}" opacity="0.75">bounden11.testnet &#183; on duty</text>
+</svg>`;
+</script>
+</body></html>

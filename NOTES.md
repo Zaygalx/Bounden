@@ -2998,3 +2998,45 @@ leash verified, "delivery counter on duty", polling normal. The
 rendezvous secret value lives only in those two places and
 bounden-secrets/rendezvous-secret.txt (0600); it authenticates the
 worker to the rendezvous and unlocks nothing by itself.
+
+## Demo film — shot and assembled (10 Nov 2026)
+
+The film is finished: `film/bounden-demo-master.mp4` (1920×1080)
+and `film/bounden-demo-x.mp4` (1280×720), **59.0 seconds** on the
+Script v3 map, verified start to finish before write-up (frame
+checks at every beat; the three one-second silences measured as
+room-tone-only). Character proof reel:
+`film/cashier-proof-reel.mp4`. The full as-shot record — every
+order and transaction per act, the voices, and six plainly
+stated deviations — is in `docs/FILM.md` ("As-shot note"). The
+short version: Act 1 is order 8 (judgement approved first draw,
+collected: `BOUNDEN-TEST-CREDIT-0005`, hash-matched); wall 1 is
+order 9, paid with the poisoned memo and fulfilled like any
+other order (first-draw approval); wall 2 is the take-broadcast
+`issue_refund` on order 2, parked `RefundRejected` with the
+`bounden_refund_rejected` event and zero movement; wall 3 is
+the leash key's payout redirect rejected at validation
+(`AccessKeyReceiverMismatchActionError`). Order 7 (take 1) sits
+Created and unpaid — its payment's prepaid gas exceeded the
+buyer's then-balance; it holds nothing. Voices re-cast on the
+owner's direction to clear neutral English (narrator
+en_US-ryan-medium, cashier en_US-joe-medium, Piper local); the
+seal character is animated in the edit with the owner's
+required life (idle motion, walks and hops in his corner, a
+stamp slam, the three scripted reactions) and vacates every
+evidence close-up. Deviations worth naming here: purchases were
+signed with the buyer's key producing the checkout's exact
+payload; the collection was executed through the counter's real
+channel with a locally signed NEP-413 note because no reachable
+wallet can sign in the capture browser (Meteor's web wallet is
+CDN-blocked on this network; MyNearWallet has app approvals
+switched off); the explorer glances are on NEAR Rocks because
+NearBlocks does not load through the capture network at all.
+Production hygiene: `film/shoot/serve.sh` held the rendezvous
+secret and a Blob token as literals — both are now read from
+their canonical stores at runtime, and the scrubbed script was
+boot-tested. Raw captures and build intermediates are excluded
+from git for size (see `docs/FILM.md`); scripts, logs,
+transcripts and evidence stills are committed. The film is NOT
+posted and the form is NOT touched — the owner reviews first
+(SUBMISSION #11 done; #12–#13 wait on him).

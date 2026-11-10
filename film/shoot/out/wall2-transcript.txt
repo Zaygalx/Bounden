@@ -1,0 +1,7 @@
+order 2 before: Fulfilled paid_at: 1794247854805346800
+wall2 tx: 65BVKJAJZDv6y8nEgfsGuJZf2GzA97rpYAPcdi7c6dYA
+logs: [
+ "EVENT_JSON:{\"standard\":\"bounden\",\"version\":\"1.0.0\",\"event\":\"bounden_refund_rejected\",\"data\":[{\"order_id\":2,\"amount\":\"10000000\",\"within_cap\":true,\"within_window\":false}]}"
+]
+order 2 after: RefundRejected
+owner USDC before=0.00 after=0.00; contract USDC=40.00

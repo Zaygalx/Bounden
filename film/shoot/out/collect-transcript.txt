@@ -1,0 +1,10 @@
+collecting order 8 at the delivery counter
+buyer of record: fe9591cc09aa84478e6c8c622c402f2007eae6e65182976948ab23b1538b43f0
+note signed (NEP-413) with the buyer's key; filing it at the counter…
+note filed — request 3f4841cbaebbd72d…; waiting for the cashier…
+
+the cashier answered — the item for order 8 (api-credit-basic):
+  CODE: BOUNDEN-TEST-CREDIT-0005
+  SHA-256 of the code: b1937225ba11ad5ad88221c006f45fd95928c978ab9add8a71a9cb312582a6de
+  matches the commitment this order consumed on-chain: true
+  delivery evidence hash: d146e3df708b85f9398135020429b6671c30c57170e9bed6ae8eff2733415547
