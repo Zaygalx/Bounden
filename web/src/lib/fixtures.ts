@@ -103,3 +103,21 @@ export const FIXTURE_ORDERS: ChainOrder[] = [
 export function fixtureOrder(id: number): ChainOrder | null {
   return FIXTURE_ORDERS.find((o) => o.id === id) ?? null;
 }
+
+/**
+ * Fixture delivery evidence, keyed by order id — invented like
+ * everything in this file, rendered only under the fixture banner.
+ * The hash is hex-shaped but visibly patterned: a placeholder.
+ */
+export const FIXTURE_EVIDENCE: Record<
+  number,
+  { evidenceHash: string; attestationHash: string | null; at: number }
+> = {
+  0: {
+    evidenceHash:
+      "cafef00dcafef00dcafef00dcafef00dcafef00dcafef00dcafef00dcafef00d",
+    attestationHash:
+      "near-ai:feedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedface",
+    at: FIXTURE_EPOCH + 180_000_000_000,
+  },
+};

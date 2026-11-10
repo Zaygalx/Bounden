@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "How inventory stays secret",
+  description:
+    "Contract state is public, so no usable code ever touches the chain: commitments on-chain, a sealed vault off-chain, delivery re-encrypted to the buyer.",
+};
 
 /**
  * "How inventory stays secret on a public chain" — the explanation the
@@ -10,53 +17,76 @@ export const dynamic = "force-dynamic";
 export default function AboutPage() {
   return (
     <>
-      <h1>How inventory stays secret on a public chain</h1>
-      <p className="lede">
-        NEAR contract state is public: anyone can read everything a contract
-        stores. So Bounden's first design rule is simple —{" "}
-        <strong>no usable code ever touches the chain.</strong> What follows
-        is the whole mechanism; there is no other moving part.
-      </p>
+      <div className="page-head">
+        <span className="badge">The sealing design</span>
+        <h1>How inventory stays secret on a public chain</h1>
+        <p className="lede">
+          NEAR contract state is public: anyone can read everything a contract
+          stores. So Bounden's first design rule is simple —{" "}
+          <strong>no usable code ever touches the chain.</strong> What follows
+          is the whole mechanism; there is no other moving part.
+        </p>
+      </div>
 
-      <h2>1. On-chain: commitments only</h2>
-      <p>
-        Each inventory unit exists on-chain as a <strong>commitment</strong>:
-        the SHA-256 hash of the code, its product, and a consumed flag. The
-        owner registers commitments before any order exists. An explorer
-        shows hashes and order states — a hash tells you a code exists and
-        whether it has been spent, and nothing about what the code is.
-      </p>
+      <section className="prose-section">
+        <span className="sec-num">01</span>
+        <div>
+          <h2>On-chain: commitments only</h2>
+          <p>
+            Each inventory unit exists on-chain as a <strong>commitment</strong>:
+            the SHA-256 hash of the code, its product, and a consumed flag. The
+            owner registers commitments before any order exists. An explorer
+            shows hashes and order states — a hash tells you a code exists and
+            whether it has been spent, and nothing about what the code is.
+          </p>
+        </div>
+      </section>
 
-      <h2>2. Off-chain: the sealed vault</h2>
-      <p>
-        The plaintext codes live in the cashier's <strong>encrypted vault</strong>{" "}
-        off-chain (AES-256-GCM at rest). The cashier is the only decryptor —
-        and when the cashier runs as a Shade Agent, decryption happens inside
-        a hardware enclave (TEE) whose code hash is the one pinned in the
-        contract.
-      </p>
+      <section className="prose-section">
+        <span className="sec-num">02</span>
+        <div>
+          <h2>Off-chain: the sealed vault</h2>
+          <p>
+            The plaintext codes live in the cashier's <strong>encrypted vault</strong>{" "}
+            off-chain (AES-256-GCM at rest). The cashier is the only decryptor —
+            and when the cashier runs as a Shade Agent, decryption happens inside
+            a hardware enclave (TEE) whose code hash is the one pinned in the
+            contract.
+          </p>
+        </div>
+      </section>
 
-      <h2>3. On fulfilment: re-encrypted to the buyer</h2>
-      <p>
-        When an order is paid, the cashier takes the next sealed code,
-        re-encrypts it to the <strong>buyer</strong>, and calls{" "}
-        <code>fulfil_order</code> with only the <em>hash of the delivery
-        ciphertext</em> as evidence. The buyer can verify their delivery:
-        the hash of the code they received matches the commitment the chain
-        consumed for their order. If a delivered code ever leaks, it is one
-        buyer's key that leaked — not a platform breach, because no other
-        buyer's code was ever exposed to it.
-      </p>
+      <section className="prose-section">
+        <span className="sec-num">03</span>
+        <div>
+          <h2>On fulfilment: re-encrypted to the buyer</h2>
+          <p>
+            When an order is paid, the cashier takes the next sealed code,
+            re-encrypts it to the <strong>buyer</strong>, and calls{" "}
+            <code>fulfil_order</code> with only the <em>hash of the delivery
+            ciphertext</em> as evidence. The buyer can verify their delivery:
+            the hash of the code they received matches the commitment the chain
+            consumed for their order. If a delivered code ever leaks, it is one
+            buyer's key that leaked — not a platform breach, because no other
+            buyer's code was ever exposed to it.
+          </p>
+        </div>
+      </section>
 
-      <h2>4. Downloadable assets: signed, expiring links</h2>
-      <p>
-        Files are never stored on-chain and never served from a permanent
-        public URL. Fulfilment of a downloadable asset releases a{" "}
-        <strong>signed download link</strong> from the vault: it expires, it
-        works once, and its signature is bound to the order's fulfilment
-        record, so a link cannot be replayed for a different order. (Design:
-        docs/DOWNLOADS.md in the repository.)
-      </p>
+      <section className="prose-section">
+        <span className="sec-num">04</span>
+        <div>
+          <h2>Downloadable assets: signed, expiring links</h2>
+          <p>
+            Files are never stored on-chain and never served from a permanent
+            public URL. Fulfilment of a downloadable asset releases a{" "}
+            <strong>signed download link</strong> from the vault: it expires, it
+            works once, and its signature is bound to the order's fulfilment
+            record, so a link cannot be replayed for a different order. (Design:
+            docs/DOWNLOADS.md in the repository.)
+          </p>
+        </div>
+      </section>
 
       <h2>Stated plainly: the current demo limitation</h2>
       <p>
